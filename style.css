@@ -206,6 +206,64 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 }
 @keyframes apparaitre { from { opacity: 0; transform: scale(.5); } }
 
+/* ---------- Pile de cartes (ouverture type Pokémon) ---------- */
+
+.tirage.pile {
+  position: relative;
+  width: min(74vw, 300px);
+  aspect-ratio: 63 / 88;
+  margin: 8px auto 0;
+  perspective: 1400px;
+  flex-wrap: nowrap;
+}
+
+/* Chaque carte occupe toute la pile ; les cartes du dessous sont décalées. */
+.tirage.pile .emplacement {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  animation: none;
+  transform:
+    translate(calc(var(--profondeur, 0) * 5px), calc(var(--profondeur, 0) * 9px))
+    scale(calc(1 - var(--profondeur, 0) * 0.035));
+  transition: transform .45s cubic-bezier(.3, .7, .2, 1);
+}
+
+/* La carte révélée que l'on écarte : elle s'envole sur la droite et disparaît. */
+.tirage.pile .emplacement.ecartee {
+  transform: translateX(120%) rotate(13deg) scale(.92);
+  opacity: 0;
+  transition: transform .55s cubic-bezier(.4, 0, .5, 1), opacity .55s ease;
+}
+
+#consigne-pile { margin: 22px auto 0; }
+
+/* ---------- Étalement final des 5 cartes ---------- */
+
+.tirage.etalement {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(10px, 2vw, 22px);
+  max-width: 1200px;
+  margin: 0 auto;
+  perspective: 1400px;
+}
+
+.carte-etalee {
+  position: relative;
+  width: min(43vw, 200px);
+  aspect-ratio: 63 / 88;
+  padding: 0;
+  border: 0;
+  background: none;
+  container-type: inline-size;
+  cursor: pointer;
+  transition: transform .2s;
+  animation: distribuer .5s cubic-bezier(.2, .8, .3, 1.2) both;
+}
+.carte-etalee:hover { transform: translateY(-6px); }
+
 .actions { display: flex; justify-content: center; gap: 12px; margin-top: 32px; flex-wrap: wrap; }
 .bouton {
   border: 1px solid rgba(212, 178, 106, .5);

@@ -221,15 +221,17 @@ function afficherVue(nom) {
   if (nom === "collection") afficherCollection();
 }
 
-// --- Ouverture d'un booster ---
+// --- Ouverture d'un booster (style Pokémon : une pile de cartes) ---
 
 let enCours = false;
+let pileTirage = [];   // les 5 cartes, de la 1re révélée (dessus) à la plus rare (dessous)
+let indexPile = 0;     // indice de la carte actuellement sur le dessus
 
 function ouvrirBooster() {
   if (enCours || etat.boosters <= 0) return;
   enCours = true;
 
-  const tirage = tirerBooster();
+  const tirage = tirerBooster();   // trié : commune → … → la plus rare en dernier
   etat.boosters -= 1;
   tirage.forEach(c => { etat.collection[c.id] = (etat.collection[c.id] || 0) + 1; });
   sauvegarder();
@@ -241,56 +243,151 @@ function ouvrirBooster() {
   setTimeout(() => {
     $("#zone-booster").hidden = true;
     booster.classList.remove("ouverture");
-    afficherTirage(tirage);
+    afficherPile(tirage);
     enCours = false;
   }, 900);
 }
 
-function afficherTirage(tirage) {
+// Empile les cartes : la 1re à révéler sur le dessus, la plus rare tout au fond.
+function afficherPile(tirage) {
+  pileTirage = tirage;
+  indexPile = 0;
+
   const zone = $("#tirage");
+  zone.className = "tirage pile";
   zone.innerHTML = "";
   zone.hidden = false;
+
   $("#actions-tirage").hidden = false;
   $("#tout-reveler").hidden = false;
+  $("#tout-reveler").disabled = false;
+  toutReveler.enCours = false;
   $("#nouveau-booster").hidden = true;
+  $("#consigne-pile").hidden = false;
 
   tirage.forEach((carte, i) => {
     const emplacement = document.createElement("button");
     emplacement.className = `emplacement rarete-${carte.rarete}`;
-    emplacement.style.animationDelay = `${i * 110}ms`;
-    emplacement.setAttribute("aria-label", "Retourner la carte");
+    emplacement.dataset.index = i;
+    emplacement.style.zIndex = tirage.length - i;   // la 1re carte est au-dessus
+    emplacement.setAttribute("aria-label", "Révéler la carte");
     emplacement.innerHTML = `
       <div class="emplacement-interieur">
         <div class="face face-dos">${HTML_DOS}</div>
         <div class="face face-avant">${htmlCarte(carte)}</div>
       </div>`;
-    emplacement.addEventListener("click", () => {
-      if (!emplacement.classList.contains("revelee")) reveler(emplacement, carte);
-      else ouvrirModale(carte);
-    });
+    emplacement.addEventListener("click", () => actionPile(emplacement));
     zone.appendChild(emplacement);
   });
+
+  majPositions();
+  majConsignePile();
+}
+
+// Décale chaque carte selon sa profondeur dans la pile (0 = dessus) → effet « paquet ».
+function majPositions() {
+  pileTirage.forEach((carte, i) => {
+    const el = $(`.emplacement[data-index="${i}"]`);
+    if (el) el.style.setProperty("--profondeur", Math.max(i - indexPile, 0));
+  });
+}
+
+function majConsignePile() {
+  const c = $("#consigne-pile");
+  const restantes = pileTirage.length - indexPile;
+  const el = $(`.emplacement[data-index="${indexPile}"]`);
+  if (el && el.classList.contains("revelee")) {
+    c.textContent = indexPile === pileTirage.length - 1
+      ? "La plus belle du paquet !"
+      : "Touchez à nouveau pour la carte suivante";
+  } else {
+    c.textContent = `Touchez la carte pour la révéler  ·  ${restantes} restante${restantes > 1 ? "s" : ""}`;
+  }
+}
+
+// Clic sur la carte du dessus : d'abord on la révèle, puis on l'écarte.
+function actionPile(emplacement) {
+  const i = Number(emplacement.dataset.index);
+  if (i !== indexPile) return;                 // seule la carte du dessus réagit
+  const carte = pileTirage[i];
+
+  if (!emplacement.classList.contains("revelee")) {
+    reveler(emplacement, carte);
+    if (i === pileTirage.length - 1) {
+      majConsignePile();
+      setTimeout(terminerPile, 1200);          // dernière (la plus rare) : on laisse admirer
+    } else {
+      majConsignePile();
+    }
+  } else {
+    ecarter(emplacement);
+  }
 }
 
 function reveler(emplacement, carte) {
   emplacement.classList.add("revelee");
-  emplacement.setAttribute("aria-label", `${carte.nom}, ${RARETES[carte.rarete].nom}. Agrandir`);
+  emplacement.setAttribute("aria-label", `${carte.nom}, ${RARETES[carte.rarete].nom}`);
   if (etat.collection[carte.id] === 1 && !emplacement.querySelector(".nouvelle")) {
     emplacement.insertAdjacentHTML("beforeend", `<span class="nouvelle">Nouvelle</span>`);
   }
-  if (carte.rarete === "legendaire") notifier(`Carte légendaire : ${carte.nom}`);
-
-  if (document.querySelectorAll(".emplacement:not(.revelee)").length === 0) {
-    $("#tout-reveler").hidden = true;
-    $("#nouveau-booster").hidden = false;
-    $("#nouveau-booster").textContent = etat.boosters > 0
-      ? `Ouvrir un autre booster (${etat.boosters})` : "Retour";
-  }
+  if (carte.rarete === "legendaire") notifier(`Carte légendaire : ${carte.nom} !`);
+  else if (carte.rarete === "epique") notifier(`Carte épique : ${carte.nom}`);
 }
 
+function ecarter(emplacement) {
+  emplacement.classList.add("ecartee");
+  emplacement.style.pointerEvents = "none";
+  indexPile += 1;
+  majPositions();
+  majConsignePile();
+}
+
+// Fin de la pile : on étale les 5 cartes pour les admirer / agrandir.
+function terminerPile() {
+  const zone = $("#tirage");
+  zone.className = "tirage etalement";
+  zone.innerHTML = "";
+  pileTirage.forEach((carte, i) => {
+    const el = document.createElement("button");
+    el.className = `carte-etalee rarete-${carte.rarete}`;
+    el.style.animationDelay = `${i * 70}ms`;
+    el.innerHTML = htmlCarte(carte)
+      + (etat.collection[carte.id] === 1 ? `<span class="nouvelle">Nouvelle</span>` : "");
+    el.setAttribute("aria-label", `${carte.nom}, ${RARETES[carte.rarete].nom}, agrandir`);
+    el.addEventListener("click", () => ouvrirModale(carte));
+    zone.appendChild(el);
+  });
+
+  $("#tout-reveler").hidden = true;
+  $("#consigne-pile").hidden = true;
+  $("#nouveau-booster").hidden = false;
+  $("#nouveau-booster").textContent = etat.boosters > 0
+    ? `Ouvrir un autre booster (${etat.boosters})` : "Retour";
+}
+
+// Déroule automatiquement toute la pile (révéler puis écarter, étape par étape).
 function toutReveler() {
-  const restantes = [...document.querySelectorAll(".emplacement:not(.revelee)")];
-  restantes.forEach((e, i) => setTimeout(() => e.click(), i * 180));
+  if (toutReveler.enCours) return;
+  toutReveler.enCours = true;
+  $("#tout-reveler").disabled = true;
+
+  const etape = () => {
+    const el = $(`.emplacement[data-index="${indexPile}"]`);
+    if (!el) { toutReveler.enCours = false; return; }
+    if (!el.classList.contains("revelee")) {
+      reveler(el, pileTirage[indexPile]);
+      if (indexPile === pileTirage.length - 1) {
+        setTimeout(terminerPile, 900);
+        toutReveler.enCours = false;
+        return;
+      }
+      setTimeout(etape, 600);
+    } else {
+      ecarter(el);
+      setTimeout(etape, 320);
+    }
+  };
+  etape();
 }
 
 function revenirAuBooster() {
