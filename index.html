@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chronica — Cartes d'histoire du monde</title>
+<meta name="description" content="Collectionnez les grandes figures de l'histoire mondiale.">
+<meta name="theme-color" content="#101320">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="entete">
+  <div class="marque">
+    <span class="marque-titre">Chronica</span>
+    <span class="marque-sous">Cartes d'histoire du monde</span>
+  </div>
+  <nav class="onglets" aria-label="Navigation">
+    <button class="onglet actif" data-vue="booster">Boosters</button>
+    <button class="onglet" data-vue="collection">Collection <span id="compteur-collection"></span></button>
+  </nav>
+  <label class="region">
+    <span>Votre région</span>
+    <select id="choix-region"></select>
+  </label>
+</header>
+
+<main>
+  <!-- Vue : ouverture de booster -->
+  <section id="vue-booster" class="vue">
+    <div id="zone-booster" class="zone-booster">
+      <button id="booster" class="booster" aria-label="Ouvrir le booster">
+        <span class="booster-bord"></span>
+        <span class="booster-titre">Chronica</span>
+        <span class="booster-ext" id="booster-ext">Antiquité</span>
+        <span class="booster-sceau">C</span>
+        <span class="booster-info">5 cartes</span>
+      </button>
+      <p class="consigne" id="consigne"></p>
+    </div>
+
+    <div id="tirage" class="tirage" hidden></div>
+
+    <div id="actions-tirage" class="actions" hidden>
+      <button id="tout-reveler" class="bouton">Tout révéler</button>
+      <button id="nouveau-booster" class="bouton bouton-or" hidden>Ouvrir un autre booster</button>
+    </div>
+  </section>
+
+  <!-- Vue : collection -->
+  <section id="vue-collection" class="vue" hidden>
+    <div class="collection-entete">
+      <h1 id="titre-extension">Antiquité</h1>
+      <p id="sous-titre-extension"></p>
+      <div class="progression"><div id="barre-progression"></div></div>
+      <p id="texte-progression" class="texte-progression"></p>
+    </div>
+    <div id="grille-collection" class="grille-collection"></div>
+  </section>
+</main>
+
+<footer class="pied">
+  <p>Prototype — progression enregistrée dans ce navigateur.</p>
+  <button id="reinitialiser" class="lien">Réinitialiser la progression</button>
+</footer>
+
+<!-- Agrandissement d'une carte -->
+<div id="modale" class="modale" hidden>
+  <div class="modale-contenu" id="modale-contenu"></div>
+  <button class="modale-fermer" id="modale-fermer" aria-label="Fermer">×</button>
+</div>
+
+<div id="notification" class="notification" role="status" aria-live="polite"></div>
+
+<script src="cartes.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
