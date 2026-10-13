@@ -32,6 +32,20 @@ const EXTENSIONS = {
 // Laisser à null tant que l'illustration n'existe pas :
 // une illustration provisoire est alors dessinée automatiquement.
 const CARTES = [
+  // ---------- Mythiques (gamme mythologie, extrêmement rares) ----------
+  { id: "zeus", nom: "Zeus", dates: "Mythologie grecque", lieu: "Mont Olympe, Grèce", region: "europe", extension: "antiquite", rarete: "mythique", image: null,
+    texte: "Roi des dieux de l'Olympe dans la mythologie grecque, maître du ciel et de la foudre. Père de nombreux dieux et héros." },
+  { id: "anubis", nom: "Anubis", dates: "Mythologie égyptienne", lieu: "Égypte ancienne", region: "afrique", extension: "antiquite", rarete: "mythique", image: null,
+    texte: "Dieu funéraire de l'Égypte ancienne, figuré avec une tête de chacal. Il préside à l'embaumement et à la pesée du cœur des défunts." },
+  { id: "ishtar", nom: "Ishtar", dates: "Mythologie mésopotamienne", lieu: "Mésopotamie", region: "moyen-orient", extension: "antiquite", rarete: "mythique", image: null,
+    texte: "Déesse mésopotamienne de l'amour et de la guerre, associée à la planète Vénus. Elle était vénérée à Babylone, notamment à la porte d'Ishtar." },
+  { id: "nuwa", nom: "Nüwa", dates: "Mythologie chinoise", lieu: "Chine", region: "asie", extension: "antiquite", rarete: "mythique", image: null,
+    texte: "Déesse créatrice de la mythologie chinoise. La tradition lui attribue la création de l'humanité et la réparation du ciel après une catastrophe." },
+  { id: "quetzalcoatl", nom: "Quetzalcóatl", dates: "Mythologie mésoaméricaine", lieu: "Mésoamérique", region: "ameriques", extension: "antiquite", rarete: "mythique", image: null,
+    texte: "Le « serpent à plumes », divinité majeure de la Mésoamérique. Associé au vent, à la connaissance et à l'étoile du matin, vénéré par les Aztèques." },
+  { id: "maui", nom: "Māui", dates: "Mythologie polynésienne", lieu: "Polynésie", region: "oceanie", extension: "antiquite", rarete: "mythique", image: null,
+    texte: "Demi-dieu et héros espiègle de la mythologie polynésienne. De nombreux récits lui attribuent la pêche des îles et la capture du soleil." },
+
   // ---------- Légendaires ----------
   { id: "alexandre", nom: "Alexandre le Grand", dates: "356 – 323 av. J.-C.", lieu: "Macédoine", region: "europe", extension: "antiquite", rarete: "legendaire", image: null,
     texte: "Roi de Macédoine à vingt ans. Ses campagnes renversent l'Empire perse achéménide et étendent son pouvoir de la Grèce à la vallée de l'Indus." },
