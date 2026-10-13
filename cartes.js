@@ -7,10 +7,11 @@
 // =============================================================
 
 const RARETES = {
-  commune:    { nom: "Commune",    ordre: 1 },
+  ordinaire:  { nom: "Ordinaire",  ordre: 1 },
   rare:       { nom: "Rare",       ordre: 2 },
   epique:     { nom: "Épique",     ordre: 3 },
   legendaire: { nom: "Légendaire", ordre: 4 },
+  mythique:   { nom: "Mythique",   ordre: 5 },
 };
 
 const REGIONS = {
@@ -83,29 +84,29 @@ const CARTES = [
   { id: "zenobie", nom: "Zénobie", dates: "v. 240 – après 274", lieu: "Palmyre, Syrie", region: "moyen-orient", extension: "antiquite", rarete: "rare", image: null,
     texte: "Reine de Palmyre. Au nom de son fils, elle étend son autorité sur l'Égypte et une partie de l'Anatolie avant d'être vaincue par l'empereur Aurélien en 272." },
 
-  // ---------- Communes ----------
-  { id: "sappho", nom: "Sappho", dates: "v. 630 – 570 av. J.-C.", lieu: "Lesbos, Grèce", region: "europe", extension: "antiquite", rarete: "commune", image: null,
+  // ---------- Ordinaires ----------
+  { id: "sappho", nom: "Sappho", dates: "v. 630 – 570 av. J.-C.", lieu: "Lesbos, Grèce", region: "europe", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Poétesse lyrique. Son œuvre, très admirée dans l'Antiquité, ne nous est parvenue que par fragments." },
-  { id: "herodote", nom: "Hérodote", dates: "v. 484 – 425 av. J.-C.", lieu: "Halicarnasse, Anatolie", region: "moyen-orient", extension: "antiquite", rarete: "commune", image: null,
+  { id: "herodote", nom: "Hérodote", dates: "v. 484 – 425 av. J.-C.", lieu: "Halicarnasse, Anatolie", region: "moyen-orient", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Auteur des Histoires, récit des guerres médiques entre Grecs et Perses. Cicéron le surnomme « le père de l'histoire »." },
-  { id: "hypatie", nom: "Hypatie", dates: "v. 360 – 415 apr. J.-C.", lieu: "Alexandrie, Égypte", region: "afrique", extension: "antiquite", rarete: "commune", image: null,
+  { id: "hypatie", nom: "Hypatie", dates: "v. 360 – 415 apr. J.-C.", lieu: "Alexandrie, Égypte", region: "afrique", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Mathématicienne, astronome et philosophe néoplatonicienne. Elle enseigne à Alexandrie, où elle est tuée par une foule en 415." },
-  { id: "zhang-qian", nom: "Zhang Qian", dates: "mort en 113 av. J.-C.", lieu: "Chine", region: "asie", extension: "antiquite", rarete: "commune", image: null,
+  { id: "zhang-qian", nom: "Zhang Qian", dates: "mort en 113 av. J.-C.", lieu: "Chine", region: "asie", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Diplomate de la dynastie Han. Ses missions vers l'Asie centrale ouvrent des contacts réguliers qui préfigurent les routes de la soie." },
-  { id: "ban-zhao", nom: "Ban Zhao", dates: "v. 45 – 117 apr. J.-C.", lieu: "Chine", region: "asie", extension: "antiquite", rarete: "commune", image: null,
+  { id: "ban-zhao", nom: "Ban Zhao", dates: "v. 45 – 117 apr. J.-C.", lieu: "Chine", region: "asie", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Historienne et lettrée. Elle achève le Livre des Han, histoire officielle de la dynastie, commencé par son père et son frère." },
-  { id: "ezana", nom: "Ézana", dates: "IVe s. apr. J.-C.", lieu: "Aksoum (Éthiopie)", region: "afrique", extension: "antiquite", rarete: "commune", image: null,
+  { id: "ezana", nom: "Ézana", dates: "IVe s. apr. J.-C.", lieu: "Aksoum (Éthiopie)", region: "afrique", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Roi d'Aksoum, puissance commerciale de la mer Rouge. Il adopte le christianisme vers 330, comme en témoignent ses inscriptions et ses monnaies." },
-  { id: "imhotep", nom: "Imhotep", dates: "XXVIIe s. av. J.-C.", lieu: "Égypte", region: "afrique", extension: "antiquite", rarete: "commune", image: null,
+  { id: "imhotep", nom: "Imhotep", dates: "XXVIIe s. av. J.-C.", lieu: "Égypte", region: "afrique", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Haut dignitaire du pharaon Djéser, à qui l'on attribue la conception de la pyramide à degrés de Saqqarah. Il est divinisé bien après sa mort." },
-  { id: "siyaj-kak", nom: "Siyaj K'ak'", dates: "actif v. 378 apr. J.-C.", lieu: "Tikal (Guatemala)", region: "ameriques", extension: "antiquite", rarete: "commune", image: null,
+  { id: "siyaj-kak", nom: "Siyaj K'ak'", dates: "actif v. 378 apr. J.-C.", lieu: "Tikal (Guatemala)", region: "ameriques", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Personnage lié à Teotihuacan. Selon les inscriptions mayas, son arrivée à Tikal en 378 coïncide avec un changement de dynastie." },
-  { id: "yax-kuk-mo", nom: "K'inich Yax K'uk' Mo'", dates: "Ve s. apr. J.-C.", lieu: "Copán (Honduras)", region: "ameriques", extension: "antiquite", rarete: "commune", image: null,
+  { id: "yax-kuk-mo", nom: "K'inich Yax K'uk' Mo'", dates: "Ve s. apr. J.-C.", lieu: "Copán (Honduras)", region: "ameriques", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Fondateur, en 426, de la dynastie qui règne sur la cité maya de Copán pendant près de quatre siècles." },
-  { id: "thales", nom: "Thalès de Milet", dates: "v. 625 – 547 av. J.-C.", lieu: "Milet, Ionie", region: "moyen-orient", extension: "antiquite", rarete: "commune", image: null,
+  { id: "thales", nom: "Thalès de Milet", dates: "v. 625 – 547 av. J.-C.", lieu: "Milet, Ionie", region: "moyen-orient", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Considéré comme l'un des premiers philosophes grecs. La tradition lui attribue des travaux de géométrie et la prédiction d'une éclipse." },
-  { id: "kanishka", nom: "Kanishka", dates: "IIe s. apr. J.-C.", lieu: "Empire kouchan", region: "asie", extension: "antiquite", rarete: "commune", image: null,
+  { id: "kanishka", nom: "Kanishka", dates: "IIe s. apr. J.-C.", lieu: "Empire kouchan", region: "asie", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Souverain de l'Empire kouchan, de l'Asie centrale au nord de l'Inde. Il favorise le bouddhisme et l'essor de l'art du Gandhara." },
-  { id: "pytheas", nom: "Pythéas", dates: "IVe s. av. J.-C.", lieu: "Massalia (Marseille)", region: "europe", extension: "antiquite", rarete: "commune", image: null,
+  { id: "pytheas", nom: "Pythéas", dates: "IVe s. av. J.-C.", lieu: "Massalia (Marseille)", region: "europe", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Navigateur et astronome grec. Il explore les côtes de l'Atlantique nord et décrit une terre lointaine qu'il nomme Thulé." },
 ];

@@ -11,8 +11,9 @@ const BONUS_REGION = 3; // une carte de votre région a 3× plus de chances de s
 
 // Rareté de la 5e carte (la « carte spéciale ») : rare, épique ou légendaire.
 const CHANCES_CARTE_SPECIALE = [
+  { rarete: "mythique",   chance: 0.01 },  // palier ultime, extrêmement rare
   { rarete: "legendaire", chance: 0.08 },
-  { rarete: "epique",     chance: 0.27 },
+  { rarete: "epique",     chance: 0.26 },
   { rarete: "rare",       chance: 0.65 },
 ];
 
@@ -78,10 +79,21 @@ function tirerAuHasard(liste, poids) {
 }
 
 function tirerCarte(rarete, dejaTirees) {
-  let pool = cartesExtension.filter(c => c.rarete === rarete && !dejaTirees.includes(c.id));
-  if (pool.length === 0) pool = cartesExtension.filter(c => c.rarete === rarete);
-  const poids = pool.map(c => (c.region === etat.region ? BONUS_REGION : 1));
-  return tirerAuHasard(pool, poids);
+  // Paliers du plus rare au plus courant. Si une rareté n'a pas encore de
+  // carte (ex. Mythique au lancement), on redescend vers la rareté juste en dessous.
+  const paliers = Object.keys(RARETES).sort((a, b) => RARETES[b].ordre - RARETES[a].ordre);
+  let depart = paliers.indexOf(rarete);
+  if (depart === -1) depart = paliers.length - 1;
+
+  for (let i = depart; i < paliers.length; i++) {
+    const r = paliers[i];
+    let pool = cartesExtension.filter(c => c.rarete === r && !dejaTirees.includes(c.id));
+    if (pool.length === 0) pool = cartesExtension.filter(c => c.rarete === r);
+    if (pool.length === 0) continue;   // aucune carte à ce palier : on descend d'un cran
+    const poids = pool.map(c => (c.region === etat.region ? BONUS_REGION : 1));
+    return tirerAuHasard(pool, poids);
+  }
+  return cartesExtension[0];            // filet de sécurité ultime
 }
 
 function tirerRareteSpeciale() {
@@ -94,7 +106,7 @@ function tirerRareteSpeciale() {
 }
 
 function tirerBooster() {
-  const raretes = ["commune", "commune", "commune", "rare", tirerRareteSpeciale()];
+  const raretes = ["ordinaire", "ordinaire", "ordinaire", "rare", tirerRareteSpeciale()];
   const tirage = [];
   for (const rarete of raretes) {
     tirage.push(tirerCarte(rarete, tirage.map(c => c.id)));
@@ -231,7 +243,7 @@ function ouvrirBooster() {
   if (enCours || etat.boosters <= 0) return;
   enCours = true;
 
-  const tirage = tirerBooster();   // trié : commune → … → la plus rare en dernier
+  const tirage = tirerBooster();   // trié : ordinaire → … → la plus rare en dernier
   etat.boosters -= 1;
   tirage.forEach(c => { etat.collection[c.id] = (etat.collection[c.id] || 0) + 1; });
   sauvegarder();
@@ -330,7 +342,8 @@ function reveler(emplacement, carte) {
   if (etat.collection[carte.id] === 1 && !emplacement.querySelector(".nouvelle")) {
     emplacement.insertAdjacentHTML("beforeend", `<span class="nouvelle">Nouvelle</span>`);
   }
-  if (carte.rarete === "legendaire") notifier(`Carte légendaire : ${carte.nom} !`);
+  if (carte.rarete === "mythique") notifier(`✦ Carte MYTHIQUE : ${carte.nom} ✦`);
+  else if (carte.rarete === "legendaire") notifier(`Carte légendaire : ${carte.nom} !`);
   else if (carte.rarete === "epique") notifier(`Carte épique : ${carte.nom}`);
 }
 

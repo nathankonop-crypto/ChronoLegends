@@ -193,8 +193,10 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 /* Halo à la révélation selon la rareté */
 .emplacement.revelee.rarete-epique .face-avant { animation: halo-epique 1.4s .4s ease-out; }
 .emplacement.revelee.rarete-legendaire .face-avant { animation: halo-legendaire 1.8s .4s ease-out; }
+.emplacement.revelee.rarete-mythique .face-avant { animation: halo-mythique 2.2s .4s ease-out; }
 @keyframes halo-epique { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 26px #b07de0); } }
 @keyframes halo-legendaire { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 40px #ffd772) brightness(1.15); } }
+@keyframes halo-mythique { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 52px #ff5fb0) brightness(1.2); } }
 
 .nouvelle {
   position: absolute; top: -8px; right: -6px; z-index: 2;
@@ -383,7 +385,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 }
 
 /* Raretés : couleurs de cadre, filet, gemme */
-.rarete-commune {
+.rarete-ordinaire {
   --cadre: linear-gradient(150deg, #a59c8b, #6e6758 45%, #9a917f 70%, #5d574a);
   --filet: #9b8e72; --gemme: #8a8170; --encre-bandeau: #5a5240;
 }
@@ -398,6 +400,10 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .rarete-legendaire {
   --cadre: linear-gradient(150deg, #fff1b8, #c99a3b 30%, #f7da84 52%, #9c6f22 78%, #e8c46a);
   --filet: #b8913f; --gemme: #e8a92c; --encre-bandeau: #7a5410;
+}
+.rarete-mythique {
+  --cadre: linear-gradient(150deg, #ff6fd8, #7c3bd4 28%, #43e0e0 52%, #ffd36e 78%, #ff6fd8);
+  --filet: #c86ad0; --gemme: #ff5fb0; --encre-bandeau: #561a66;
 }
 
 /* Reflet doré animé sur les légendaires */
@@ -414,6 +420,20 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 
 /* Lueur discrète sur les épiques */
 .rarete-epique .carte-cadre { box-shadow: 0 14px 30px -10px rgba(0, 0, 0, .8), 0 0 18px rgba(162, 94, 224, .25), inset 0 0 0 .6cqw rgba(255, 255, 255, .2); }
+
+/* Mythique : le palier ultime, éclat iridescent animé et forte lueur */
+.rarete-mythique .carte-cadre {
+  box-shadow: 0 14px 34px -8px rgba(0, 0, 0, .85), 0 0 26px rgba(255, 95, 176, .45), inset 0 0 0 .6cqw rgba(255, 255, 255, .28);
+}
+.rarete-mythique .carte-cadre::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 25%, rgba(255, 160, 230, .5) 40%, rgba(120, 230, 230, .4) 50%, rgba(255, 215, 130, .4) 60%, transparent 75%);
+  background-size: 250% 100%;
+  mix-blend-mode: soft-light;
+  animation: reflet 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
 
 /* ---------- Collection ---------- */
 

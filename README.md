@@ -16,7 +16,8 @@ Pas de framework ni d'outil à installer : HTML, CSS et JavaScript, rien d'autre
 
 ## Règles du tirage (dans `app.js`)
 
-- 1 booster = 5 cartes : 3 communes, 1 rare, puis 1 carte spéciale (rare 65 %, épique 27 %, légendaire 8 %).
+- 1 booster = 5 cartes : 3 ordinaires, 1 rare, puis 1 carte spéciale (rare 65 %, épique 26 %, légendaire 8 %, mythique 1 %).
+- Raretés, de la plus courante à la plus rare : Ordinaire, Rare, Épique, Légendaire, Mythique.
 - Une carte de la région du joueur a 3 fois plus de chances de sortir (`BONUS_REGION`). La région est devinée à partir du fuseau horaire, sans demander d'autorisation, et le joueur peut la changer.
 - 3 boosters offerts à la première visite, puis 1 booster par jour.
 - Pour l'instant, la sauvegarde reste dans le navigateur (localStorage).
