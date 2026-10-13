@@ -1,5 +1,5 @@
 // =============================================================
-//  CHRONICA — Données des cartes
+//  CHRONOLEGENDS — Données des cartes
 //  Pour ajouter une carte : copiez un bloc { ... } et modifiez-le.
 //  Règle éditoriale : personnages décédés uniquement, ton neutre
 //  et factuel. La rareté reflète l'importance historique, jamais

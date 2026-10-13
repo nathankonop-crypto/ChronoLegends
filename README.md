@@ -1,4 +1,4 @@
-# Chronica — prototype
+# ChronoLegends — prototype
 
 Jeu de cartes à collectionner sur l'histoire mondiale. Ce prototype permet d'ouvrir des boosters et de consulter sa collection (extension 1 : Antiquité, 35 cartes).
 

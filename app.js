@@ -1,5 +1,5 @@
 // =============================================================
-//  CHRONICA — Logique du prototype
+//  CHRONOLEGENDS — Logique du prototype
 //  Tout est stocké dans le navigateur (localStorage) pour l'instant.
 //  Plus tard, la collection et la monnaie vivront sur un serveur.
 // =============================================================
