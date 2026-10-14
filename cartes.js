@@ -28,6 +28,8 @@ const REGIONS = {
 const EXTENSIONS = {
   antiquite:   { nom: "Antiquité",  sousTitre: "Des premiers empires au Ve siècle" },
   "moyen-age": { nom: "Moyen Âge",  sousTitre: "Du Ve au XVe siècle" },
+  "temps-modernes":       { nom: "Les Temps modernes",     sousTitre: "De la fin du XVe siècle à 1789" },
+  "epoque-contemporaine": { nom: "L'Époque contemporaine", sousTitre: "De 1789 à nos jours" },
 };
 
 // image : chemin vers l'illustration (ex. "images/cesar.webp").

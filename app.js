@@ -455,8 +455,11 @@ function afficherCollection() {
   $("#sous-titre-extension").textContent = ext.sousTitre;
 
   const possedees = cartesExtension.filter(c => etat.collection[c.id]).length;
-  $("#barre-progression").style.width = `${(possedees / cartesExtension.length) * 100}%`;
-  $("#texte-progression").textContent = `${possedees} carte${possedees > 1 ? "s" : ""} sur ${cartesExtension.length}`;
+  const total = cartesExtension.length;
+  $("#barre-progression").style.width = total ? `${(possedees / total) * 100}%` : "0%";
+  $("#texte-progression").textContent = total
+    ? `${possedees} carte${possedees > 1 ? "s" : ""} sur ${total}`
+    : "Les premières cartes de cette époque arrivent bientôt.";
 
   const grille = $("#grille-collection");
   grille.innerHTML = "";
