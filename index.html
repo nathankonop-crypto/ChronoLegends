@@ -29,16 +29,13 @@
 </header>
 
 <main>
-  <!-- Choix de l'époque (rempli par app.js) -->
-  <nav id="epoques" class="epoques" aria-label="Époque"></nav>
-
   <!-- Vue : ouverture de booster -->
   <section id="vue-booster" class="vue">
     <div id="zone-booster" class="zone-booster">
       <button id="booster" class="booster" aria-label="Ouvrir le booster">
         <span class="booster-bord"></span>
         <span class="booster-titre">ChronoLegends</span>
-        <span class="booster-ext" id="booster-ext">Antiquité</span>
+        <span class="booster-ext" id="booster-ext">Toutes époques</span>
         <span class="booster-sceau">C</span>
         <span class="booster-info">5 cartes</span>
       </button>
@@ -57,6 +54,8 @@
 
   <!-- Vue : collection -->
   <section id="vue-collection" class="vue" hidden>
+    <!-- Un onglet par époque (rempli par app.js) -->
+    <nav id="epoques" class="epoques" aria-label="Époque"></nav>
     <div class="collection-entete">
       <h1 id="titre-extension">Antiquité</h1>
       <p id="sous-titre-extension"></p>

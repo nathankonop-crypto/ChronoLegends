@@ -17,12 +17,11 @@ const CHANCES_CARTE_SPECIALE = [
   { rarete: "rare",       chance: 0.65 },
 ];
 
-const MIN_CARTES_BOOSTER = 10; // en dessous, l'extension est « en préparation » (pas de booster)
-
+// Les boosters mélangent toutes les époques ; les extensions servent
+// seulement à ranger la collection (un onglet par époque).
 const cartesDe = ext => CARTES.filter(c => c.extension === ext);
-const boosterPret = ext => cartesDe(ext).length >= MIN_CARTES_BOOSTER;
 
-// Extension affichée (boosters + collection). Choisie avec les boutons d'époque.
+// Époque affichée dans la collection. Choisie avec les boutons d'époque.
 let extensionActive = "antiquite";
 let cartesExtension = cartesDe(extensionActive);
 
@@ -97,13 +96,13 @@ function tirerCarte(rarete, dejaTirees) {
 
   for (let i = depart; i < paliers.length; i++) {
     const r = paliers[i];
-    let pool = cartesExtension.filter(c => c.rarete === r && !dejaTirees.includes(c.id));
-    if (pool.length === 0) pool = cartesExtension.filter(c => c.rarete === r);
+    let pool = CARTES.filter(c => c.rarete === r && !dejaTirees.includes(c.id));
+    if (pool.length === 0) pool = CARTES.filter(c => c.rarete === r);
     if (pool.length === 0) continue;   // aucune carte à ce palier : on descend d'un cran
     const poids = pool.map(c => (c.region === etat.region ? BONUS_REGION : 1));
     return tirerAuHasard(pool, poids);
   }
-  return cartesExtension[0];            // filet de sécurité ultime
+  return CARTES[0];                     // filet de sécurité ultime
 }
 
 function tirerRareteSpeciale() {
@@ -226,13 +225,10 @@ function notifier(message) {
 
 function majConsigne() {
   const b = etat.boosters;
-  const pret = boosterPret(extensionActive);
-  $("#booster").disabled = b === 0 || !pret;
-  $("#consigne").textContent = !pret
-    ? `Extension en préparation (${cartesExtension.length} carte${cartesExtension.length > 1 ? "s" : ""}) — ses boosters arrivent bientôt.`
-    : b > 0
-      ? `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`
-      : "Plus de booster pour aujourd'hui. Revenez demain pour votre booster quotidien.";
+  $("#booster").disabled = b === 0;
+  $("#consigne").textContent = b > 0
+    ? `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`
+    : "Plus de booster pour aujourd'hui. Revenez demain pour votre booster quotidien.";
 }
 
 // Compteur de l'en-tête : toutes extensions confondues.
@@ -241,36 +237,28 @@ function majCompteur() {
   $("#compteur-collection").textContent = `${possedees}/${CARTES.length}`;
 }
 
-// --- Choix de l'époque (extension) ---
+// --- Onglets d'époque de la collection ---
 
 function afficherEpoques() {
   const nav = $("#epoques");
   nav.innerHTML = "";
   for (const [cle, ext] of Object.entries(EXTENSIONS)) {
+    const possedees = cartesDe(cle).filter(c => etat.collection[c.id]).length;
     const b = document.createElement("button");
     b.className = "epoque" + (cle === extensionActive ? " actif" : "");
-    b.textContent = ext.nom;
-    if (!boosterPret(cle)) b.insertAdjacentHTML("beforeend", ` <span>bientôt</span>`);
+    b.innerHTML = `${ext.nom} <span>${possedees}/${cartesDe(cle).length}</span>`;
     b.addEventListener("click", () => choisirExtension(cle));
     nav.appendChild(b);
   }
 }
 
 function choisirExtension(cle) {
-  if (enCours || cle === extensionActive) return;
+  if (cle === extensionActive) return;
   extensionActive = cle;
   cartesExtension = cartesDe(cle);
   etat.extension = cle;
   sauvegarder();
-  afficherEpoques();
-  $("#booster-ext").textContent = EXTENSIONS[cle].nom;
-  // On revient à l'emballage du booster si un tirage était affiché.
-  $("#tirage").hidden = true;
-  $("#actions-tirage").hidden = true;
-  $("#consigne-pile").hidden = true;
-  $("#zone-booster").hidden = false;
-  majConsigne();
-  if (!$("#vue-collection").hidden) afficherCollection();
+  afficherCollection();
 }
 
 function afficherVue(nom) {
@@ -287,7 +275,7 @@ let pileTirage = [];   // les 5 cartes, de la 1re révélée (dessus) à la plus
 let indexPile = 0;     // indice de la carte actuellement sur le dessus
 
 function ouvrirBooster() {
-  if (enCours || etat.boosters <= 0 || !boosterPret(extensionActive)) return;
+  if (enCours || etat.boosters <= 0) return;
   enCours = true;
 
   const tirage = tirerBooster();   // trié : ordinaire → … → la plus rare en dernier
@@ -455,12 +443,13 @@ function revenirAuBooster() {
   $("#actions-tirage").hidden = true;
   $("#zone-booster").hidden = false;
   majConsigne();
-  if (etat.boosters > 0 && boosterPret(extensionActive)) ouvrirBooster();
+  if (etat.boosters > 0) ouvrirBooster();
 }
 
 // --- Collection ---
 
 function afficherCollection() {
+  afficherEpoques();
   const ext = EXTENSIONS[extensionActive];
   $("#titre-extension").textContent = ext.nom;
   $("#sous-titre-extension").textContent = ext.sousTitre;
@@ -521,7 +510,6 @@ select.addEventListener("change", () => {
   notifier(`Vos boosters favoriseront désormais : ${REGIONS[etat.region]}`);
 });
 
-$("#booster-ext").textContent = EXTENSIONS[extensionActive].nom;
 $("#booster").addEventListener("click", ouvrirBooster);
 $("#tout-reveler").addEventListener("click", toutReveler);
 $("#nouveau-booster").addEventListener("click", revenirAuBooster);
@@ -535,7 +523,6 @@ $("#reinitialiser").addEventListener("click", () => {
   }
 });
 
-afficherEpoques();
 majConsigne();
 majCompteur();
 if (messagesAccueil.length) setTimeout(() => notifier(messagesAccueil.join(" ")), 400);

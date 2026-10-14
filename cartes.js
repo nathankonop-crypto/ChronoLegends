@@ -23,9 +23,8 @@ const REGIONS = {
   "oceanie":      "Océanie",
 };
 
-// Chaque époque est une extension.
-// Les boosters d'une extension s'ouvrent dès qu'elle compte assez de cartes
-// (voir MIN_CARTES_BOOSTER dans app.js) ; avant, elle est « en préparation ».
+// Chaque époque est une extension. Les boosters mélangent toutes les époques ;
+// la collection a un onglet par époque pour s'y retrouver.
 const EXTENSIONS = {
   antiquite:   { nom: "Antiquité",  sousTitre: "Des premiers empires au Ve siècle" },
   "moyen-age": { nom: "Moyen Âge",  sousTitre: "Du Ve au XVe siècle" },
@@ -128,7 +127,7 @@ const CARTES = [
     texte: "Navigateur et astronome grec. Il explore les côtes de l'Atlantique nord et décrit une terre lointaine qu'il nomme Thulé." },
 
   // =============================================================
-  //  EXTENSION MOYEN ÂGE (en préparation)
+  //  EXTENSION MOYEN ÂGE
   // =============================================================
 
   // ---------- Légendaires ----------
