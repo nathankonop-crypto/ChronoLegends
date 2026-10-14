@@ -51,7 +51,7 @@
 
     <div id="actions-tirage" class="actions" hidden>
       <button id="tout-reveler" class="bouton" data-t="toutReveler">Tout révéler</button>
-      <button id="partager-tirage" class="bouton" hidden data-t="partagerMeilleure">📤 Partager ma plus belle carte</button>
+      <button id="partager-tirage" class="bouton bouton-partage" hidden><svg class="icone-partage" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M8 11H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-2"/></svg><span data-t="partagerMeilleure">Partager ma plus belle carte</span></button>
       <button id="nouveau-booster" class="bouton bouton-or" hidden data-t="ouvrirUnAutre">Ouvrir un autre booster</button>
     </div>
   </section>
@@ -78,7 +78,7 @@
 <!-- Agrandissement d'une carte -->
 <div id="modale" class="modale" hidden>
   <div class="modale-contenu" id="modale-contenu"></div>
-  <button class="bouton modale-partager" id="modale-partager" data-t="partager">📤 Partager</button>
+  <button class="bouton bouton-partage modale-partager" id="modale-partager"><svg class="icone-partage" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M8 11H6a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-2"/></svg><span data-t="partager">Partager</span></button>
   <button class="modale-fermer" id="modale-fermer" aria-label="Fermer" data-t-aria="fermer">×</button>
 </div>
 

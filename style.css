@@ -572,6 +572,10 @@ button.case-collection:hover { transform: translateY(-4px); }
 .affiche-carte .carte-cadre::after { animation: none; transform: translateX(-30%); }  /* reflet figé au milieu */
 .affiche-pied { margin-top: 10px !important; font-family: var(--serif-titre); font-size: 17px; letter-spacing: .12em; color: var(--or); }
 
+/* Boutons Partager : icône (flèche qui sort d'une boîte) + texte */
+.bouton-partage { display: inline-flex; align-items: center; gap: 9px; }
+.icone-partage { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; margin-top: -2px; }
+
 /* Bouton Partager sous la carte agrandie */
 .modale-partager { position: absolute; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); white-space: nowrap; }
 .modale-partager:hover { transform: translateX(-50%) translateY(-2px); }
