@@ -525,7 +525,8 @@ button.case-collection:hover { transform: translateY(-4px); }
   perspective: 1200px;
 }
 .modale.ouverte { opacity: 1; }
-.modale-contenu { width: min(86vw, 400px, calc((100vh - 60px) * 63 / 88)); transition: transform .15s ease-out; }
+/* touch-action: none : sur téléphone, glisser le doigt sur la carte la penche au lieu de faire défiler la page. */
+.modale-contenu { width: min(86vw, 400px, calc((100vh - 60px) * 63 / 88)); transition: transform .15s ease-out; touch-action: none; }
 .modale.ouverte .modale-contenu { animation: zoom .3s cubic-bezier(.2, .8, .3, 1.2); }
 @keyframes zoom { from { transform: scale(.8); } }
 .modale-fermer {

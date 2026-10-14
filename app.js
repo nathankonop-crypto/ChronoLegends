@@ -475,6 +475,9 @@ function afficherCollection() {
 function ouvrirModale(carte) {
   const contenu = $("#modale-contenu");
   contenu.innerHTML = htmlCarte(carte);
+  contenu.style.transform = "";
+  positionDeDepart = null; // le gyroscope repart de la façon dont on tient le téléphone
+  demanderGyroscope();
   $("#modale").hidden = false;
   requestAnimationFrame(() => $("#modale").classList.add("ouverte"));
 }
@@ -485,14 +488,47 @@ function fermerModale() {
   setTimeout(() => { m.hidden = true; }, 200);
 }
 
-// Légère inclinaison 3D de la carte agrandie, en suivant le doigt ou la souris.
+// Légère inclinaison 3D de la carte agrandie.
+// x et y vont de -0,5 à 0,5 (0 = carte bien de face).
+function incliner(x, y) {
+  const borne = v => Math.max(-0.5, Math.min(0.5, v));
+  $("#modale-contenu").style.transform = `rotateY(${borne(x) * 14}deg) rotateX(${-borne(y) * 14}deg)`;
+}
+
+// 1. En suivant la souris, ou le doigt qui glisse sur la carte
+//    (touch-action: none dans style.css empêche la page de défiler à la place).
 $("#modale-contenu").addEventListener("pointermove", e => {
   const zone = e.currentTarget.getBoundingClientRect();
-  const x = (e.clientX - zone.left) / zone.width - 0.5;
-  const y = (e.clientY - zone.top) / zone.height - 0.5;
-  e.currentTarget.style.transform = `rotateY(${x * 14}deg) rotateX(${-y * 14}deg)`;
+  incliner((e.clientX - zone.left) / zone.width - 0.5, (e.clientY - zone.top) / zone.height - 0.5);
 });
-$("#modale-contenu").addEventListener("pointerleave", e => { e.currentTarget.style.transform = ""; });
+for (const fin of ["pointerleave", "pointercancel"]) {
+  $("#modale-contenu").addEventListener(fin, e => { e.currentTarget.style.transform = ""; });
+}
+
+// 2. Sur téléphone : en penchant le téléphone (gyroscope).
+let positionDeDepart = null;
+let gyroscopeDemande = false;
+const animationsReduites = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function surOrientation(e) {
+  if ($("#modale").hidden || e.beta === null || e.gamma === null) return;
+  if (!positionDeDepart) { positionDeDepart = { beta: e.beta, gamma: e.gamma }; return; }
+  // 30° de penchement = inclinaison maximale de la carte.
+  incliner((e.gamma - positionDeDepart.gamma) / 30, (e.beta - positionDeDepart.beta) / 30);
+}
+
+// L'iPhone demande l'autorisation (une seule fois) ; Android l'accorde directement.
+function demanderGyroscope() {
+  if (gyroscopeDemande || animationsReduites || !("DeviceOrientationEvent" in window)) return;
+  gyroscopeDemande = true;
+  if (typeof DeviceOrientationEvent.requestPermission === "function") {
+    DeviceOrientationEvent.requestPermission()
+      .then(r => { if (r === "granted") addEventListener("deviceorientation", surOrientation); })
+      .catch(() => { /* refusé : le doigt suffit */ });
+  } else {
+    addEventListener("deviceorientation", surOrientation);
+  }
+}
 
 // ---------- Démarrage ----------
 
