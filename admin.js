@@ -55,6 +55,7 @@ function versIdentifiant(nom) {
 LANGUE = "fr";
 let langueApercu = "fr";
 const CHAMPS_EN = ["nom_en", "dates_en", "lieu_en", "description_en"];
+const CHAMPS_PLUS = ["en_savoir_plus", "en_savoir_plus_en"];   // « En savoir plus », personnages historiques
 
 // Ligne de la base → objet carte utilisé par le dessin (carte.js), dans la langue demandée.
 function versCarte(l, langue = "fr") {
@@ -202,7 +203,7 @@ function ouvrirFormulaire(ligne) {
 
   const l = ligne || { nom: "", id: "", gamme: "personnage", rarete: "ordinaire", finition: "normale",
     epoque: "antiquite", region: "moyen-orient", dates: "", lieu: "", description: "" };
-  for (const champ of ["nom", "id", "gamme", "rarete", "finition", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN]) {
+  for (const champ of ["nom", "id", "gamme", "rarete", "finition", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN, ...CHAMPS_PLUS]) {
     form.elements[champ].value = l[champ] ?? "";
   }
   form.elements.id.readOnly = !!ligne;
@@ -239,7 +240,7 @@ form.elements.nom.addEventListener("input", () => {
 // ---------- Remplir avec l'IA (Edge Function « remplir-carte ») ----------
 // L'IA propose un brouillon ; rien n'est enregistré avant « Enregistrer ».
 
-const CHAMPS_IA = ["dates", "lieu", "description", "region", "epoque", ...CHAMPS_EN];
+const CHAMPS_IA = ["dates", "lieu", "description", "region", "epoque", ...CHAMPS_EN, ...CHAMPS_PLUS];
 let avantIA = null;     // valeurs remplacées, pour « Annuler »
 let iaEnCours = false;
 
@@ -308,6 +309,8 @@ function valeursFormulaire() {
     dates: f.dates.value.trim(), lieu: f.lieu.value.trim(), description: f.description.value.trim(),
     // Anglais : vide = null, le jeu affiche alors le français.
     ...Object.fromEntries(CHAMPS_EN.map(c => [c, f[c].value.trim() || null])),
+    // « En savoir plus » : seulement pour les personnages historiques (vide = pas de bouton).
+    ...Object.fromEntries(CHAMPS_PLUS.map(c => [c, (f.gamme.value === "personnage" && f[c].value.trim()) || null])),
   };
 }
 
@@ -324,6 +327,9 @@ function majApercu() {
   const numero = `${String(n).padStart(String(total).length, "0")}/${total}`;
 
   $("#compte-description-en").textContent = form.elements.description_en.value.length;
+  $("#compte-plus").textContent = form.elements.en_savoir_plus.value.length;
+  $("#compte-plus-en").textContent = form.elements.en_savoir_plus_en.value.length;
+  $("#bloc-plus").hidden = $("#bloc-plus-en").hidden = v.gamme !== "personnage";
   const carte = versCarte({ ...v, nom: v.nom || "Nom de la carte", image: imageActuelle() }, langueApercu);
   LANGUE = langueApercu;                      // le dessin de la carte suit la langue de l'aperçu
   $("#apercu").innerHTML = rendreCarte(carte, numero);

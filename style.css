@@ -582,6 +582,40 @@ button.case-collection:hover { transform: translateY(-4px); }
   display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 0 12px;
 }
 .modale-actions .bouton { white-space: nowrap; padding: 10px 14px; font-size: 12px; letter-spacing: .04em; gap: 7px; }
+.activer-gyroscope {
+  position: absolute; top: max(14px, env(safe-area-inset-top)); left: 16px;
+  padding: 9px 13px; font-size: 11px; letter-spacing: .04em; gap: 7px; white-space: nowrap;
+}
+
+/* « En savoir plus » : panneau de parchemin qui monte du bas, par-dessus la carte */
+.savoir-plus {
+  position: absolute; left: 50%; bottom: 0; z-index: 2;
+  width: min(100%, 560px); max-height: 78vh; overflow-y: auto; overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: 26px clamp(20px, 5vw, 34px) max(28px, env(safe-area-inset-bottom));
+  border-radius: 18px 18px 0 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, .5), transparent 60%),
+    linear-gradient(180deg, var(--parchemin), var(--parchemin-2));
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(140, 105, 45, .45);
+  color: #2f2819;
+  text-align: left;
+  transform: translateX(-50%);
+  animation: monter .32s cubic-bezier(.2, .8, .3, 1);
+}
+@keyframes monter { from { transform: translate(-50%, 100%); } }
+.savoir-plus-sur {
+  margin: 0; font-family: var(--serif-titre); font-size: 11px; letter-spacing: .22em;
+  text-transform: uppercase; color: #8a6a2c;
+}
+.savoir-plus-nom { margin: 4px 40px 12px 0; font-family: var(--serif-titre); font-weight: 700; font-size: clamp(20px, 5vw, 24px); color: #231d12; }
+.savoir-plus-texte { margin: 0; font-size: 19px; line-height: 1.5; font-weight: 500; hyphens: auto; }
+.savoir-plus-fermer {
+  position: absolute; top: 14px; right: 14px;
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid rgba(140, 105, 45, .45); background: rgba(255, 255, 255, .35);
+  color: #5d4f36; font-size: 22px; line-height: 1;
+}
 
 /* ---------- Divers ---------- */
 

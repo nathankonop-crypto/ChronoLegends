@@ -102,6 +102,7 @@ const TEXTES = {
 
     partager: "Partager",
     gyroActiver: "Activer le mouvement",
+    enSavoirPlus: "En savoir plus",
     partagerMeilleure: "Partager ma plus belle carte",
     partageObtenu: "Je viens d'obtenir",
     partageTexte: p => `J'ai obtenu ${p.nom} (${p.rarete}) dans ChronoLegends ! Viens collectionner l'histoire du monde :`,
@@ -172,6 +173,7 @@ const TEXTES = {
 
     partager: "Share",
     gyroActiver: "Enable motion",
+    enSavoirPlus: "Learn more",
     partagerMeilleure: "Share my best card",
     partageObtenu: "I just got",
     partageTexte: p => `I got ${p.nom} (${p.rarete}) in ChronoLegends! Come and collect world history:`,

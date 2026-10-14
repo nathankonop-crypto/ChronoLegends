@@ -61,6 +61,7 @@ async function chargerCartes() {
     id: l.id, gamme: l.gamme, region: l.region, extension: l.epoque, rarete: l.rarete, finition: l.finition,
     nom: champ(l, "nom"), dates: champ(l, "dates"), lieu: champ(l, "lieu"), texte: champ(l, "description"),
     image: l.image, ordre: l.ordre,
+    enSavoirPlus: l.gamme === "personnage" ? champ(l, "en_savoir_plus") : "",
   }));
   cartesExtension = cartesDe(extensionActive);
 }
@@ -529,6 +530,11 @@ function ouvrirModale(carte) {
   contenu.innerHTML = htmlCarte(carte);
   carteModale = carte;
   setTimeout(() => preparerPartage(carte), 400);   // après l'animation d'ouverture
+  // « En savoir plus » : seulement pour les personnages historiques qui ont ce texte.
+  $("#bouton-savoir-plus").hidden = !carte.enSavoirPlus;
+  $("#savoir-plus").hidden = true;
+  $("#savoir-plus-nom").textContent = carte.nom;
+  $("#savoir-plus-texte").textContent = carte.enSavoirPlus || "";
   contenu.style.transform = "";
   positionDeDepart = null; // le gyroscope repart de la façon dont on tient le téléphone
   $("#activer-gyroscope").hidden = !gyroscopeAActiver();
@@ -620,9 +626,19 @@ $("#tout-reveler").addEventListener("click", toutReveler);
 $("#nouveau-booster").addEventListener("click", revenirAuBooster);
 $("#partager-tirage").addEventListener("click", () => partagerCarte(pileTirage[pileTirage.length - 1]));
 $("#modale-partager").addEventListener("click", () => { if (carteModale) partagerCarte(carteModale); });
+$("#bouton-savoir-plus").addEventListener("click", () => {
+  $("#savoir-plus").hidden = false;
+  $("#savoir-plus").scrollTop = 0;
+  $("#savoir-plus-fermer").focus();
+});
+$("#savoir-plus-fermer").addEventListener("click", () => { $("#savoir-plus").hidden = true; });
 document.querySelectorAll(".onglet").forEach(o => o.addEventListener("click", () => afficherVue(o.dataset.vue)));
 $("#modale").addEventListener("click", e => { if (e.target.id === "modale" || e.target.id === "modale-fermer") fermerModale(); });
-document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#modale").hidden) fermerModale(); });
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape" || $("#modale").hidden) return;
+  if (!$("#savoir-plus").hidden) $("#savoir-plus").hidden = true;   // d'abord le texte, puis la carte
+  else fermerModale();
+});
 // Toutes les 30 s : met à jour le compte à rebours, et redemande au serveur
 // le cadeau quotidien quand il devrait être dû (c'est lui qui tranche).
 setInterval(async () => {

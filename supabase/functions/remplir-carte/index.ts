@@ -1,7 +1,8 @@
 // =============================================================
 //  CHRONOLEGENDS — Edge Function « remplir-carte »
-//  Propose dates, lieu, description, région et époque d'une carte
-//  à partir de son nom, avec Claude. Réservée à l'administrateur.
+//  Propose dates, lieu, description, région, époque, version anglaise
+//  et texte « En savoir plus » d'une carte à partir de son nom, avec
+//  Claude. Réservée à l'administrateur.
 //
 //  La clé Anthropic est lue dans les secrets Supabase
 //  (ANTHROPIC_API_KEY) : elle n'apparaît jamais dans le code ni
@@ -35,12 +36,14 @@ Format des champs (respecte exactement le style des exemples) :
 - region : la région du jeu d'où vient le personnage. moyen-orient = Proche et Moyen-Orient, Turquie, Chypre, Mésopotamie, Perse, Levant ; l'Égypte est en afrique.
 - epoque : antiquite (jusqu'au Ve siècle), moyen-age (Ve – XVe siècle), temps-modernes (fin XVe siècle – 1789), epoque-contemporaine (après 1789).
 - probleme : chaîne vide si tout va bien ; sinon une phrase courte (personne vivante, dates très débattues, homonymes possibles…).
+- en_savoir_plus : texte du bouton « En savoir plus », pour les personnages historiques réels. Il PROLONGE la description sans la répéter : origines, épisodes marquants, œuvres, fin de vie, héritage, traces aujourd'hui. 4 à 6 phrases, 400 à 600 caractères, au présent de narration, même neutralité. Signale ce qui relève de la tradition ou reste débattu (« selon la tradition », « peut-être »). Pour une figure mythologique ou un archétype : chaîne vide.
 
 Version anglaise (champs *_en), pour les joueurs anglophones :
 - nom_en : le nom usuel en anglais (« Joan of Arc », « Julius Caesar », « Ramesses II ») ; identique au français s'il n'y a pas d'usage anglais distinct.
 - dates_en : même information, notation anglaise : « BCE » / « CE », « c. » pour vers, « r. » pour règne, « 5th c. BCE » pour un siècle, « died 113 BCE ». Ex. : « c. 1412 – 1431 », « r. c. 1479 – 1458 BCE ».
 - lieu_en : le lieu en anglais (« Kingdom of France », « Alexandria, Egypt »).
 - description_en : la même description en anglais naturel (pas mot à mot), même ton neutre, 140 à 230 caractères.
+- en_savoir_plus_en : le texte « Learn more » en anglais naturel, même contenu que en_savoir_plus (chaîne vide si celui-ci l'est).
 
 Exemples de cartes existantes :
 - Jules César | 100 – 44 av. J.-C. | Rome | Général et homme politique romain. Il conquiert la Gaule, remporte la guerre civile et devient dictateur. Il est assassiné lors d'une séance du Sénat.
@@ -61,8 +64,10 @@ const SCHEMA = {
     dates_en: { type: "string" },
     lieu_en: { type: "string" },
     description_en: { type: "string" },
+    en_savoir_plus: { type: "string" },
+    en_savoir_plus_en: { type: "string" },
   },
-  required: ["dates", "lieu", "description", "region", "epoque", "probleme", "nom_en", "dates_en", "lieu_en", "description_en"],
+  required: ["dates", "lieu", "description", "region", "epoque", "probleme", "nom_en", "dates_en", "lieu_en", "description_en", "en_savoir_plus", "en_savoir_plus_en"],
   additionalProperties: false,
 };
 
