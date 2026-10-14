@@ -198,6 +198,9 @@ function ouvrirFormulaire(ligne) {
     form.elements[champ].value = l[champ] ?? "";
   }
   form.elements.id.readOnly = !!ligne;
+  avantIA = null;
+  noteIA("");
+  $("#bouton-ia").disabled = iaEnCours || !form.elements.nom.value.trim();
   $("#aide-id").textContent = ligne
     ? "L'identifiant ne peut plus changer : il relie la carte aux collections des joueurs."
     : "Créé à partir du nom. Il ne pourra plus changer une fois la carte créée.";
@@ -216,6 +219,63 @@ $("#bouton-retour").addEventListener("click", afficherListe);
 
 form.elements.nom.addEventListener("input", () => {
   if (!carteEditee && !idModifieALaMain) form.elements.id.value = versIdentifiant(form.elements.nom.value);
+  if (!iaEnCours) $("#bouton-ia").disabled = !form.elements.nom.value.trim();
+});
+
+// ---------- Remplir avec l'IA (Edge Function « remplir-carte ») ----------
+// L'IA propose un brouillon ; rien n'est enregistré avant « Enregistrer ».
+
+const CHAMPS_IA = ["dates", "lieu", "description", "region", "epoque"];
+let avantIA = null;     // valeurs remplacées, pour « Annuler »
+let iaEnCours = false;
+
+function noteIA(texte, { alerte = false, annulable = false } = {}) {
+  $("#note-ia").hidden = !texte;
+  $("#note-ia").classList.toggle("alerte", alerte);
+  $("#texte-ia").textContent = texte;
+  $("#annuler-ia").hidden = !annulable;
+}
+
+$("#bouton-ia").addEventListener("click", async () => {
+  const nom = form.elements.nom.value.trim();
+  if (!nom || iaEnCours) return;
+  iaEnCours = true;
+  const bouton = $("#bouton-ia");
+  bouton.disabled = true;
+  bouton.textContent = "✨ Rédaction…";
+  noteIA("L'IA rédige la carte… (10 à 30 secondes)");
+
+  const { data, error } = await sb.functions.invoke("remplir-carte", { body: { nom } });
+
+  iaEnCours = false;
+  bouton.textContent = "✨ Remplir avec l'IA";
+  bouton.disabled = !form.elements.nom.value.trim();
+
+  if (error) {
+    let message = "L'IA n'a pas pu répondre. Réessayez.";
+    try { message = (await error.context.json()).erreur || message; } catch (e) { /* réponse sans détail */ }
+    noteIA(message, { alerte: true });
+    return;
+  }
+
+  avantIA = Object.fromEntries(CHAMPS_IA.map(c => [c, form.elements[c].value]));
+  for (const c of CHAMPS_IA) {
+    if (data[c] !== undefined) form.elements[c].value = data[c];
+  }
+  majApercu();
+  if (data.probleme) {
+    noteIA(`⚠️ ${data.probleme} Relisez avec attention avant d'enregistrer.`, { alerte: true, annulable: true });
+  } else {
+    noteIA("Rempli par l'IA : relisez et corrigez si besoin avant d'enregistrer.", { annulable: true });
+  }
+});
+
+$("#annuler-ia").addEventListener("click", () => {
+  if (!avantIA) return;
+  for (const c of CHAMPS_IA) form.elements[c].value = avantIA[c];
+  avantIA = null;
+  majApercu();
+  noteIA("");
 });
 form.elements.id.addEventListener("input", () => { idModifieALaMain = true; });
 form.addEventListener("input", majApercu);

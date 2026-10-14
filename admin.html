@@ -90,8 +90,15 @@
       <div class="edition">
         <form id="form-carte" class="form-carte" novalidate>
           <label><span>Nom <span class="requis">*</span></span>
-            <input type="text" name="nom" maxlength="60" required>
+            <span class="ligne-nom">
+              <input type="text" name="nom" maxlength="60" required>
+              <button type="button" class="bouton bouton-ia" id="bouton-ia" disabled>✨ Remplir avec l'IA</button>
+            </span>
           </label>
+          <div class="note-ia" id="note-ia" hidden>
+            <span id="texte-ia"></span>
+            <button type="button" class="lien" id="annuler-ia" hidden>Annuler</button>
+          </div>
           <label>Identifiant
             <input type="text" name="id" pattern="[a-z0-9-]+" maxlength="60">
             <small id="aide-id">Créé à partir du nom. Sert au nom du fichier image ; il ne change plus une fois la carte créée.</small>

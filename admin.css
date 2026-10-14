@@ -92,6 +92,19 @@ body.admin { font-size: 16px; }
 .actions-form { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
 .form-carte .lien { align-self: flex-start; margin-top: -10px; }
 
+/* Bouton « Remplir avec l'IA » */
+.ligne-nom { display: flex; gap: 8px; }
+.ligne-nom input { flex: 1; min-width: 0; }
+.bouton-ia { flex: none; padding: 8px 14px; font-size: 12px; white-space: nowrap; }
+.bouton-ia:disabled { opacity: .45; cursor: not-allowed; }
+.note-ia {
+  margin-top: -6px; padding: 10px 12px; border-radius: 8px;
+  background: rgba(212, 178, 106, .08); border: 1px solid rgba(212, 178, 106, .25);
+  font-size: 14px; color: var(--texte-doux);
+}
+.note-ia.alerte { background: rgba(220, 90, 80, .1); border-color: rgba(220, 90, 80, .4); color: #f1b3ab; }
+.note-ia .lien { margin: 0 0 0 6px; padding: 0; }
+
 .apercu { position: sticky; top: 16px; text-align: center; }
 .apercu-titre { margin: 0 0 10px; font-family: var(--serif-titre); font-size: 13px; letter-spacing: .14em; color: var(--texte-doux); text-transform: uppercase; }
 .apercu-carte { width: min(100%, 320px); margin: 0 auto; }
