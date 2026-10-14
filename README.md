@@ -45,7 +45,8 @@ Gardez **exactement** la même formulation de style d'une carte à l'autre et ne
 2. Sur GitHub, ouvrez le dépôt, puis **Settings → Pages**.
 3. Dans **Source**, choisissez *Deploy from a branch*, puis la branche `main` et le dossier `/ (root)`, et cliquez sur **Save**.
 4. Une à deux minutes plus tard, le site est en ligne à l'adresse :
-   `https://nathankonop-crypto.github.io/chronolegends/`
+   `https://chronolegendsgames.com/` (nom de domaine acheté chez Cloudflare, relié par le fichier `CNAME` ;
+   l'ancienne adresse `https://nathankonop-crypto.github.io/chronolegends/` y renvoie automatiquement).
 
 ## Étapes suivantes envisagées
 
