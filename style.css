@@ -541,7 +541,7 @@ button.case-collection:hover { transform: translateY(-4px); }
 }
 .modale.ouverte { opacity: 1; }
 /* touch-action: none : sur téléphone, glisser le doigt sur la carte la penche au lieu de faire défiler la page. */
-.modale-contenu { width: min(86vw, 400px, calc((100vh - 60px) * 63 / 88)); transition: transform .15s ease-out; touch-action: none; }
+.modale-contenu { width: min(86vw, 400px, calc((100vh - 150px) * 63 / 88)); transition: transform .15s ease-out; touch-action: none; }
 .modale.ouverte .modale-contenu { animation: zoom .3s cubic-bezier(.2, .8, .3, 1.2); }
 @keyframes zoom { from { transform: scale(.8); } }
 .modale-fermer {
@@ -551,6 +551,30 @@ button.case-collection:hover { transform: translateY(-4px); }
   background: var(--encre-2); color: var(--or-clair);
   font-size: 24px; line-height: 1;
 }
+
+/* ---------- Partage : affiche photographiée hors de l'écran (voir partage.js) ---------- */
+
+.coulisse-partage { position: fixed; left: -10000px; top: 0; pointer-events: none; }
+.affiche-partage {
+  width: 540px; height: 675px;            /* ×2 à l'export = 1080×1350, format portrait des réseaux */
+  box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  background:
+    radial-gradient(circle at 50% 56%, color-mix(in srgb, var(--gemme, #d4b26a) 38%, transparent), transparent 58%),
+    linear-gradient(170deg, #1d2342, #0b0d18);
+  color: var(--texte);
+  text-align: center;
+}
+.affiche-partage > p { margin: 0; white-space: nowrap; }
+.affiche-titre { font-family: var(--serif-titre); font-weight: 700; font-size: 34px; letter-spacing: .16em; color: var(--or-clair); }
+.affiche-sous { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--texte-doux); margin-bottom: 6px !important; }
+.affiche-carte { width: 330px; }
+.affiche-carte .carte-cadre::after { animation: none; transform: translateX(-30%); }  /* reflet figé au milieu */
+.affiche-pied { margin-top: 10px !important; font-family: var(--serif-titre); font-size: 17px; letter-spacing: .12em; color: var(--or); }
+
+/* Bouton Partager sous la carte agrandie */
+.modale-partager { position: absolute; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); white-space: nowrap; }
+.modale-partager:hover { transform: translateX(-50%) translateY(-2px); }
 
 /* ---------- Divers ---------- */
 

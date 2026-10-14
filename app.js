@@ -303,6 +303,7 @@ function afficherPile(tirage, nouvelles) {
   $("#tout-reveler").disabled = false;
   toutReveler.enCours = false;
   $("#nouveau-booster").hidden = true;
+  $("#partager-tirage").hidden = true;
   $("#consigne-pile").hidden = false;
 
   tirage.forEach((carte, i) => {
@@ -448,6 +449,9 @@ function terminerPile() {
   $("#tout-reveler").hidden = true;
   $("#consigne-pile").hidden = true;
   $("#nouveau-booster").hidden = false;
+  // La plus rare (dernière de la pile) : son image de partage se prépare tout de suite.
+  $("#partager-tirage").hidden = false;
+  preparerPartage(pileTirage[pileTirage.length - 1]);
   $("#nouveau-booster").textContent = etat.boosters > 0
     ? t("ouvrirUnAutreN", { n: etat.boosters }) : t("retour");
 }
@@ -518,9 +522,13 @@ function afficherCollection() {
 
 // --- Agrandissement ---
 
+let carteModale = null;
+
 function ouvrirModale(carte) {
   const contenu = $("#modale-contenu");
   contenu.innerHTML = htmlCarte(carte);
+  carteModale = carte;
+  setTimeout(() => preparerPartage(carte), 400);   // après l'animation d'ouverture
   contenu.style.transform = "";
   positionDeDepart = null; // le gyroscope repart de la façon dont on tient le téléphone
   demanderGyroscope();
@@ -581,6 +589,8 @@ function demanderGyroscope() {
 $("#booster").addEventListener("click", ouvrirBooster);
 $("#tout-reveler").addEventListener("click", toutReveler);
 $("#nouveau-booster").addEventListener("click", revenirAuBooster);
+$("#partager-tirage").addEventListener("click", () => partagerCarte(pileTirage[pileTirage.length - 1]));
+$("#modale-partager").addEventListener("click", () => { if (carteModale) partagerCarte(carteModale); });
 document.querySelectorAll(".onglet").forEach(o => o.addEventListener("click", () => afficherVue(o.dataset.vue)));
 $("#modale").addEventListener("click", e => { if (e.target.id === "modale" || e.target.id === "modale-fermer") fermerModale(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#modale").hidden) fermerModale(); });

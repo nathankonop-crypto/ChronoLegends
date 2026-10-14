@@ -100,6 +100,15 @@ const TEXTES = {
     retour: "Retour",
     ouvrirUnAutreN: p => `Ouvrir un autre booster (${p.n})`,
 
+    partager: "📤 Partager",
+    partagerMeilleure: "📤 Partager ma plus belle carte",
+    partageObtenu: "Je viens d'obtenir",
+    partageTexte: p => `J'ai obtenu ${p.nom} (${p.rarete}) dans ChronoLegends ! Viens collectionner l'histoire du monde :`,
+    partagePreparation: "Préparation de l'image…",
+    partageReessayer: "L'image est prête : appuyez encore sur Partager.",
+    partageTelecharge: "Image enregistrée et texte copié : collez-les où vous voulez !",
+    partageCopie: "Texte copié : collez-le où vous voulez !",
+
     progression: p => `${p.n} ${pluriel(p.n, "carte", "cartes")} sur ${p.total}`,
     epoqueVide: "Les premières cartes de cette époque arrivent bientôt.",
     quotidien: "Votre booster quotidien est arrivé.",
@@ -159,6 +168,15 @@ const TEXTES = {
     agrandir: "enlarge",
     retour: "Back",
     ouvrirUnAutreN: p => `Open another booster (${p.n})`,
+
+    partager: "📤 Share",
+    partagerMeilleure: "📤 Share my best card",
+    partageObtenu: "I just got",
+    partageTexte: p => `I got ${p.nom} (${p.rarete}) in ChronoLegends! Come and collect world history:`,
+    partagePreparation: "Preparing the image…",
+    partageReessayer: "The image is ready: tap Share again.",
+    partageTelecharge: "Image saved and text copied: paste them anywhere!",
+    partageCopie: "Text copied: paste it anywhere!",
 
     progression: p => `${p.n} of ${p.total} ${pluriel(p.total, "card", "cards")}`,
     epoqueVide: "The first cards of this era are coming soon.",

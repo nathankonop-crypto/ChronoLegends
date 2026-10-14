@@ -51,6 +51,7 @@
 
     <div id="actions-tirage" class="actions" hidden>
       <button id="tout-reveler" class="bouton" data-t="toutReveler">Tout révéler</button>
+      <button id="partager-tirage" class="bouton" hidden data-t="partagerMeilleure">📤 Partager ma plus belle carte</button>
       <button id="nouveau-booster" class="bouton bouton-or" hidden data-t="ouvrirUnAutre">Ouvrir un autre booster</button>
     </div>
   </section>
@@ -77,6 +78,7 @@
 <!-- Agrandissement d'une carte -->
 <div id="modale" class="modale" hidden>
   <div class="modale-contenu" id="modale-contenu"></div>
+  <button class="bouton modale-partager" id="modale-partager" data-t="partager">📤 Partager</button>
   <button class="modale-fermer" id="modale-fermer" aria-label="Fermer" data-t-aria="fermer">×</button>
 </div>
 
@@ -89,6 +91,7 @@
 <script src="langue.js"></script>
 <script src="anti-robot.js"></script>
 <script src="carte.js"></script>
+<script src="partage.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
