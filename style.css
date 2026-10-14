@@ -441,17 +441,23 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   --filet: #c86ad0; --gemme: #ff5fb0; --encre-bandeau: #561a66;
 }
 
-/* Reflet doré animé sur les légendaires */
-.rarete-legendaire .carte-cadre::after {
+/* Reflet animé (légendaires et mythiques) : une bande lumineuse, trois fois
+   plus large que la carte, glisse de gauche à droite. Pas de mix-blend-mode
+   ni d'animation du fond : beaucoup de téléphones ne les affichent pas sur
+   les cartes en 3D ; un simple déplacement (transform) marche partout. */
+.rarete-legendaire .carte-cadre::after,
+.rarete-mythique .carte-cadre::after {
   content: "";
-  position: absolute; inset: 0;
-  background: linear-gradient(115deg, transparent 30%, rgba(255, 250, 220, .55) 45%, rgba(255, 220, 140, .25) 52%, transparent 65%);
-  background-size: 250% 100%;
-  mix-blend-mode: soft-light;
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 300%;
   animation: reflet 4.5s ease-in-out infinite;
+  will-change: transform;
   pointer-events: none;
 }
-@keyframes reflet { 0% { background-position: 120% 0; } 60%, 100% { background-position: -120% 0; } }
+.rarete-legendaire .carte-cadre::after {
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 248, 215, .32) 47%, rgba(255, 225, 150, .14) 51%, transparent 57%);
+}
+@keyframes reflet { 0% { transform: translateX(-64%); } 60%, 100% { transform: translateX(-3%); } }
 
 /* Lueur discrète sur les épiques */
 .rarete-epique .carte-cadre { box-shadow: 0 14px 30px -10px rgba(0, 0, 0, .8), 0 0 18px rgba(162, 94, 224, .25), inset 0 0 0 .6cqw rgba(255, 255, 255, .2); }
@@ -461,13 +467,8 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   box-shadow: 0 14px 34px -8px rgba(0, 0, 0, .85), 0 0 26px rgba(255, 95, 176, .45), inset 0 0 0 .6cqw rgba(255, 255, 255, .28);
 }
 .rarete-mythique .carte-cadre::after {
-  content: "";
-  position: absolute; inset: 0;
-  background: linear-gradient(115deg, transparent 25%, rgba(255, 160, 230, .5) 40%, rgba(120, 230, 230, .4) 50%, rgba(255, 215, 130, .4) 60%, transparent 75%);
-  background-size: 250% 100%;
-  mix-blend-mode: soft-light;
-  animation: reflet 3.2s ease-in-out infinite;
-  pointer-events: none;
+  background: linear-gradient(115deg, transparent 37%, rgba(255, 170, 235, .26) 43%, rgba(130, 235, 235, .22) 48%, rgba(255, 220, 140, .22) 53%, transparent 59%);
+  animation-duration: 3.2s;
 }
 
 /* ---------- Collection ---------- */
