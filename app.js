@@ -17,8 +17,14 @@ const CHANCES_CARTE_SPECIALE = [
   { rarete: "rare",       chance: 0.65 },
 ];
 
-const extensionActive = "antiquite";
-const cartesExtension = CARTES.filter(c => c.extension === extensionActive);
+const MIN_CARTES_BOOSTER = 10; // en dessous, l'extension est « en préparation » (pas de booster)
+
+const cartesDe = ext => CARTES.filter(c => c.extension === ext);
+const boosterPret = ext => cartesDe(ext).length >= MIN_CARTES_BOOSTER;
+
+// Extension affichée (boosters + collection). Choisie avec les boutons d'époque.
+let extensionActive = "antiquite";
+let cartesExtension = cartesDe(extensionActive);
 
 // ---------- Sauvegarde ----------
 
@@ -63,6 +69,10 @@ if (!etat) {
   etat.boosters += 1;
   etat.dernierQuotidien = aujourdhui();
   messagesAccueil.push("Votre booster quotidien est arrivé.");
+}
+if (EXTENSIONS[etat.extension]) {
+  extensionActive = etat.extension;
+  cartesExtension = cartesDe(extensionActive);
 }
 sauvegarder();
 
@@ -156,8 +166,9 @@ function illustrationProvisoire(carte) {
 }
 
 function numero(carte) {
-  const n = cartesExtension.indexOf(carte) + 1;
-  const total = String(cartesExtension.length);
+  const liste = cartesDe(carte.extension);
+  const n = liste.indexOf(carte) + 1;
+  const total = String(liste.length);
   return `${String(n).padStart(total.length, "0")}/${total}`;
 }
 
@@ -215,15 +226,51 @@ function notifier(message) {
 
 function majConsigne() {
   const b = etat.boosters;
-  $("#booster").disabled = b === 0;
-  $("#consigne").textContent = b > 0
-    ? `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`
-    : "Plus de booster pour aujourd'hui. Revenez demain pour votre booster quotidien.";
+  const pret = boosterPret(extensionActive);
+  $("#booster").disabled = b === 0 || !pret;
+  $("#consigne").textContent = !pret
+    ? `Extension en préparation (${cartesExtension.length} carte${cartesExtension.length > 1 ? "s" : ""}) — ses boosters arrivent bientôt.`
+    : b > 0
+      ? `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`
+      : "Plus de booster pour aujourd'hui. Revenez demain pour votre booster quotidien.";
 }
 
+// Compteur de l'en-tête : toutes extensions confondues.
 function majCompteur() {
-  const possedees = cartesExtension.filter(c => etat.collection[c.id]).length;
-  $("#compteur-collection").textContent = `${possedees}/${cartesExtension.length}`;
+  const possedees = CARTES.filter(c => etat.collection[c.id]).length;
+  $("#compteur-collection").textContent = `${possedees}/${CARTES.length}`;
+}
+
+// --- Choix de l'époque (extension) ---
+
+function afficherEpoques() {
+  const nav = $("#epoques");
+  nav.innerHTML = "";
+  for (const [cle, ext] of Object.entries(EXTENSIONS)) {
+    const b = document.createElement("button");
+    b.className = "epoque" + (cle === extensionActive ? " actif" : "");
+    b.textContent = ext.nom;
+    if (!boosterPret(cle)) b.insertAdjacentHTML("beforeend", ` <span>bientôt</span>`);
+    b.addEventListener("click", () => choisirExtension(cle));
+    nav.appendChild(b);
+  }
+}
+
+function choisirExtension(cle) {
+  if (enCours || cle === extensionActive) return;
+  extensionActive = cle;
+  cartesExtension = cartesDe(cle);
+  etat.extension = cle;
+  sauvegarder();
+  afficherEpoques();
+  $("#booster-ext").textContent = EXTENSIONS[cle].nom;
+  // On revient à l'emballage du booster si un tirage était affiché.
+  $("#tirage").hidden = true;
+  $("#actions-tirage").hidden = true;
+  $("#consigne-pile").hidden = true;
+  $("#zone-booster").hidden = false;
+  majConsigne();
+  if (!$("#vue-collection").hidden) afficherCollection();
 }
 
 function afficherVue(nom) {
@@ -240,7 +287,7 @@ let pileTirage = [];   // les 5 cartes, de la 1re révélée (dessus) à la plus
 let indexPile = 0;     // indice de la carte actuellement sur le dessus
 
 function ouvrirBooster() {
-  if (enCours || etat.boosters <= 0) return;
+  if (enCours || etat.boosters <= 0 || !boosterPret(extensionActive)) return;
   enCours = true;
 
   const tirage = tirerBooster();   // trié : ordinaire → … → la plus rare en dernier
@@ -408,7 +455,7 @@ function revenirAuBooster() {
   $("#actions-tirage").hidden = true;
   $("#zone-booster").hidden = false;
   majConsigne();
-  if (etat.boosters > 0) ouvrirBooster();
+  if (etat.boosters > 0 && boosterPret(extensionActive)) ouvrirBooster();
 }
 
 // --- Collection ---
@@ -488,6 +535,7 @@ $("#reinitialiser").addEventListener("click", () => {
   }
 });
 
+afficherEpoques();
 majConsigne();
 majCompteur();
 if (messagesAccueil.length) setTimeout(() => notifier(messagesAccueil.join(" ")), 400);

@@ -24,8 +24,11 @@ const REGIONS = {
 };
 
 // Chaque époque est une extension.
+// Les boosters d'une extension s'ouvrent dès qu'elle compte assez de cartes
+// (voir MIN_CARTES_BOOSTER dans app.js) ; avant, elle est « en préparation ».
 const EXTENSIONS = {
-  antiquite: { nom: "Antiquité", sousTitre: "Des premiers empires au Ve siècle" },
+  antiquite:   { nom: "Antiquité",  sousTitre: "Des premiers empires au Ve siècle" },
+  "moyen-age": { nom: "Moyen Âge",  sousTitre: "Du Ve au XVe siècle" },
 };
 
 // image : chemin vers l'illustration (ex. "images/cesar.webp").
@@ -123,4 +126,12 @@ const CARTES = [
     texte: "Souverain de l'Empire kouchan, de l'Asie centrale au nord de l'Inde. Il favorise le bouddhisme et l'essor de l'art du Gandhara." },
   { id: "pytheas", nom: "Pythéas", dates: "IVe s. av. J.-C.", lieu: "Massalia (Marseille)", region: "europe", extension: "antiquite", rarete: "ordinaire", image: null,
     texte: "Navigateur et astronome grec. Il explore les côtes de l'Atlantique nord et décrit une terre lointaine qu'il nomme Thulé." },
+
+  // =============================================================
+  //  EXTENSION MOYEN ÂGE (en préparation)
+  // =============================================================
+
+  // ---------- Légendaires ----------
+  { id: "jeanne-d-arc", nom: "Jeanne d'Arc", dates: "v. 1412 – 1431", lieu: "Royaume de France", region: "europe", extension: "moyen-age", rarete: "legendaire", image: "images/jeanne-d-arc.webp",
+    texte: "Pendant la guerre de Cent Ans, cette jeune paysanne contribue à lever le siège d'Orléans en 1429 et fait sacrer Charles VII à Reims. Capturée, elle est brûlée à Rouen en 1431." },
 ];
