@@ -49,6 +49,39 @@ function illustrationProvisoire(carte) {
   </svg>`;
 }
 
+// ---------- Le texte doit toujours tenir dans la carte ----------
+// Sur certains téléphones (taille de police du système agrandie…), le
+// navigateur grossit le texte et la description déborde. On réduit alors
+// le texte de la carte, petit à petit, jusqu'à ce qu'il tienne.
+function ajusterTexte(corps) {
+  if (!corps.isConnected || corps.clientHeight === 0) return; // carte cachée : on attendra
+  let reduction = 1;
+  corps.style.setProperty("--reduction", reduction);
+  while (corps.scrollHeight > corps.clientHeight + 1 && reduction > 0.55) {
+    reduction -= 0.04;
+    corps.style.setProperty("--reduction", reduction.toFixed(2));
+  }
+}
+
+// Réajuste quand une carte change de taille (apparition, rotation de l'écran…).
+const observateurTaille = new ResizeObserver(entrees => {
+  for (const e of entrees) ajusterTexte(e.target);
+});
+
+// Surveille toute la page : chaque carte affichée, dans le jeu comme dans l'admin, est prise en charge.
+new MutationObserver(mutations => {
+  for (const m of mutations) {
+    for (const n of m.addedNodes) {
+      if (n.nodeType !== 1) continue;
+      const corps = n.matches(".carte-corps") ? [n] : n.querySelectorAll(".carte-corps");
+      for (const c of corps) { observateurTaille.observe(c); ajusterTexte(c); }
+    }
+  }
+}).observe(document.documentElement, { childList: true, subtree: true });
+
+// Les polices arrivent parfois après la carte : on revérifie toutes les cartes.
+document.fonts?.ready.then(() => document.querySelectorAll(".carte-corps").forEach(ajusterTexte));
+
 // carte : objet carte du jeu ; numeroTexte : ex. "08/41"
 function rendreCarte(carte, numeroTexte) {
   const nom = echapper(carte.nom);

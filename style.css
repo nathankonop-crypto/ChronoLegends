@@ -399,10 +399,11 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 }
 .gemme { width: 2.2cqw; height: 2.2cqw; transform: rotate(45deg); background: var(--gemme); box-shadow: 0 0 1.5cqw var(--gemme); flex: none; }
 
-.carte-corps { flex: 1; padding: 2cqw 6cqw 0; overflow: hidden; display: flex; flex-direction: column; }
-.carte-dates { margin: 0; font-family: var(--serif-titre); font-size: 3.9cqw; font-weight: 600; letter-spacing: .03em; }
-.carte-lieu { margin: .4cqw 0 1.6cqw; font-style: italic; font-size: 4.1cqw; color: #5d4f36; }
-.carte-texte { margin: 0; font-size: 4.35cqw; line-height: 1.22; font-weight: 500; text-align: left; hyphens: auto; color: #2f2819; }
+/* --reduction : rétrécit le texte si le téléphone l'agrandit et qu'il déborde (voir carte.js). */
+.carte-corps { --reduction: 1; flex: 1; min-height: 0; padding: 2cqw 6cqw 0; overflow: hidden; display: flex; flex-direction: column; }
+.carte-dates { margin: 0; font-family: var(--serif-titre); font-size: calc(3.9cqw * var(--reduction)); font-weight: 600; letter-spacing: .03em; }
+.carte-lieu { margin: .4cqw 0 1.6cqw; font-style: italic; font-size: calc(4.1cqw * var(--reduction)); color: #5d4f36; }
+.carte-texte { margin: 0; font-size: calc(4.35cqw * var(--reduction)); line-height: 1.22; font-weight: 500; text-align: left; hyphens: auto; color: #2f2819; }
 
 .carte-pied {
   display: flex; justify-content: space-between;
