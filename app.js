@@ -23,8 +23,7 @@ function chargerPrefs() {
 }
 
 function sauvegarderPrefs() {
-  const { region, sourceRegion, extension } = etat;
-  try { localStorage.setItem(CLE_PREFS, JSON.stringify({ region, sourceRegion, extension })); } catch (e) {}
+  try { localStorage.setItem(CLE_PREFS, JSON.stringify({ extension: etat.extension })); } catch (e) {}
 }
 
 // ---------- Données du jeu ----------
@@ -36,8 +35,8 @@ const etat = {
   collection: {},          // { id_carte: nombre d'exemplaires } — copie de ce que dit le serveur
   boosters: 0,             // copie de ce que dit le serveur
   prochainQuotidien: null, // instant (local) où le serveur dira qu'un nouveau cadeau est dû
-  region: prefs.region || devinerRegion(),
-  sourceRegion: prefs.sourceRegion || null,
+  region: null,            // décidée par le serveur (adresse IP)
+  pays: null,
   extension: prefs.extension,
 };
 
@@ -70,7 +69,13 @@ async function chargerCollection() {
 
 async function connecterJoueur() {
   const { data: { session } } = await sb.auth.getSession();
-  if (session) return;
+  if (session) {
+    // On vérifie auprès du serveur que le compte existe toujours
+    // (il a pu être supprimé) ; sinon on en crée un nouveau.
+    const { error } = await sb.auth.getUser();
+    if (!error) return;
+    await sb.auth.signOut({ scope: "local" });
+  }
   const { error } = await sb.auth.signInAnonymously();
   if (error) throw error;
 }
@@ -82,91 +87,23 @@ async function reclamerQuotidien() {
   if (error) throw error;
   etat.boosters = data.boosters;
   etat.prochainQuotidien = Date.now() + data.attente_secondes * 1000;
+  appliquerRegion(data);
   return data;
 }
 
-// ---------- Géolocalisation ----------
-//  Deux axes : 1) l'adresse IP (immédiat, sans autorisation)
-//              2) le GPS (plus précis, le navigateur demande l'autorisation).
-//  Le service BigDataCloud transforme l'IP ou les coordonnées en pays.
-//  Rien n'est conservé : seule la région (ex. « moyen-orient ») est sauvegardée.
+// ---------- Région du joueur ----------
+//  Décidée par le SERVEUR à partir de l'adresse IP (pays fourni par Cloudflare,
+//  impossible à falsifier depuis le navigateur). Le jeu ne fait que l'afficher.
 
-const API_GEO = "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=fr";
+const nomsPays = (() => { try { return new Intl.DisplayNames(["fr"], { type: "region" }); } catch (e) { return null; } })();
 
-// Pays rattachés à la région Moyen-Orient (codes ISO à 2 lettres).
-const PAYS_MOYEN_ORIENT = ["IL", "PS", "JO", "LB", "SY", "IQ", "IR", "SA", "AE", "QA", "BH",
-  "KW", "OM", "YE", "TR", "CY"];
-const REGION_PAR_CONTINENT = { EU: "europe", AF: "afrique", AS: "asie", NA: "ameriques", SA: "ameriques", OC: "oceanie" };
-
-// Dernier recours si l'IP et le GPS échouent : le fuseau horaire de l'appareil.
-function devinerRegion() {
-  const fuseau = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-  const moyenOrient = ["Riyadh", "Tehran", "Baghdad", "Dubai", "Jerusalem", "Beirut", "Damascus",
-    "Amman", "Kuwait", "Qatar", "Bahrain", "Muscat", "Aden", "Nicosia", "Gaza", "Hebron"];
-  if (fuseau === "Europe/Istanbul" || moyenOrient.some(v => fuseau.endsWith(v))) return "moyen-orient";
-  if (fuseau.startsWith("Europe/")) return "europe";
-  if (fuseau.startsWith("Africa/")) return "afrique";
-  if (fuseau.startsWith("America/")) return "ameriques";
-  if (fuseau.startsWith("Asia/")) return "asie";
-  if (fuseau.startsWith("Australia/") || fuseau.startsWith("Pacific/")) return "oceanie";
-  return "europe";
-}
-
-function regionDuPays(pays, continent) {
-  if (PAYS_MOYEN_ORIENT.includes(pays)) return "moyen-orient";
-  return REGION_PAR_CONTINENT[continent] || null;
-}
-
-async function regionDepuisApi(coords) {
-  const url = coords ? `${API_GEO}&latitude=${coords.latitude}&longitude=${coords.longitude}` : API_GEO;
-  const controle = new AbortController();
-  const minuterie = setTimeout(() => controle.abort(), 6000);
-  try {
-    const rep = await fetch(url, { signal: controle.signal });
-    if (!rep.ok) return null;
-    const d = await rep.json();
-    return regionDuPays(d.countryCode, d.continentCode);
-  } catch (e) {
-    return null;   // hors ligne, service indisponible…
-  } finally {
-    clearTimeout(minuterie);
-  }
-}
-
-function positionGps() {
-  return new Promise(resoudre => {
-    if (!navigator.geolocation) return resoudre(null);
-    navigator.geolocation.getCurrentPosition(
-      p => resoudre(p.coords),
-      () => resoudre(null),            // refusé ou introuvable
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10 * 60 * 1000 }
-    );
-  });
-}
-
-let localisationEnCours = true;
-
-function appliquerRegion(region, source) {
-  if (!region) return;
-  const change = etat.region !== region;
-  etat.region = region;
-  etat.sourceRegion = source;
-  sauvegarderPrefs();
+function appliquerRegion(data) {
+  if (!data.region) return;
+  const change = etat.region && etat.region !== data.region;
+  etat.region = data.region;
+  if (data.pays) etat.pays = data.pays;
   majRegion();
-  if (change && source !== "fuseau") notifier(`Vous êtes en ${REGIONS[region]} : vos boosters contiendront ses personnages.`);
-}
-
-async function localiser() {
-  // Axe 1 : adresse IP. On débloque les boosters dès qu'on a une réponse.
-  const parIp = await regionDepuisApi(null);
-  if (parIp) appliquerRegion(parIp, "IP");
-  else if (!etat.sourceRegion) appliquerRegion(devinerRegion(), "fuseau");
-  localisationEnCours = false;
-  majConsigne();
-
-  // Axe 2 : GPS, prioritaire s'il est autorisé.
-  const coords = await positionGps();
-  if (coords) appliquerRegion(await regionDepuisApi(coords), "GPS");
+  if (change) notifier(`Vous êtes en ${REGIONS[etat.region]} : vos boosters contiendront ses personnages.`);
 }
 
 // Filtre géographique : un booster ne contient QUE des cartes de la région du joueur
@@ -225,22 +162,23 @@ function notifier(message) {
 function majConsigne() {
   const b = etat.boosters;
   const vide = cartesRegion().length === 0;
-  $("#booster").disabled = b === 0 || !etatJeu.pret || localisationEnCours || vide;
+  $("#booster").disabled = b === 0 || !etatJeu.pret || !etat.region || vide;
   let texte;
   if (etatJeu.erreur) texte = "Impossible de joindre le serveur. Vérifiez votre connexion puis rechargez la page.";
   else if (!etatJeu.pret) texte = "Chargement…";
-  else if (localisationEnCours) texte = "Localisation en cours…";
+  else if (!etat.region) texte = "Impossible de déterminer votre pays (VPN ou réseau anonyme ?). Désactivez-le puis rechargez la page.";
   else if (vide) texte = `Pas encore de cartes pour la région ${REGIONS[etat.region]}. Elles arrivent bientôt !`;
   else if (b > 0) texte = `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`;
   else texte = `Plus de booster pour l'instant. Prochain booster quotidien dans ${formatAttente(etat.prochainQuotidien - Date.now())}.`;
   $("#consigne").textContent = texte;
 }
 
-// Région affichée sous le booster (non modifiable : elle vient de la géolocalisation).
+// Région affichée sous le booster (non modifiable : décidée par le serveur).
 function majRegion() {
-  const sources = { GPS: "position GPS", IP: "connexion internet", fuseau: "fuseau horaire" };
+  let pays = etat.pays;
+  try { if (pays && nomsPays) pays = nomsPays.of(pays); } catch (e) {}
   $("#region-joueur").textContent = REGIONS[etat.region]
-    ? `Région : ${REGIONS[etat.region]}${etat.sourceRegion ? ` · d'après votre ${sources[etat.sourceRegion]}` : ""}`
+    ? `Région : ${REGIONS[etat.region]}${pays ? ` · connexion depuis : ${pays}` : ""}`
     : "";
   majConsigne();
 }
@@ -292,11 +230,11 @@ let indexPile = 0;     // indice de la carte actuellement sur le dessus
 const MESSAGES_SERVEUR = {
   plus_de_booster: "Plus de booster disponible.",
   region_vide: "Pas encore de cartes pour votre région.",
-  region_inconnue: "Région inconnue.",
+  region_inconnue: "Impossible de déterminer votre pays (VPN ou réseau anonyme ?).",
 };
 
 async function ouvrirBooster() {
-  if (enCours || etat.boosters <= 0 || !etatJeu.pret || localisationEnCours || cartesRegion().length === 0) return;
+  if (enCours || etat.boosters <= 0 || !etatJeu.pret || !etat.region || cartesRegion().length === 0) return;
   enCours = true;
 
   const booster = $("#booster");
@@ -304,7 +242,8 @@ async function ouvrirBooster() {
   const animation = new Promise(r => setTimeout(r, 900));
 
   // C'est le SERVEUR qui vérifie le stock, tire les cartes et les ajoute à la collection.
-  const { data, error } = await sb.rpc("ouvrir_booster", { p_region: etat.region });
+  // Aucune région envoyée : le serveur la déduit lui-même de l'adresse IP.
+  const { data, error } = await sb.rpc("ouvrir_booster");
   if (error) {
     booster.classList.remove("ouverture");
     enCours = false;
@@ -319,6 +258,7 @@ async function ouvrirBooster() {
   if (data.cartes.some(c => !CARTES.find(x => x.id === c.id))) await chargerCartes();
   const tirage = data.cartes.map(c => CARTES.find(x => x.id === c.id));   // trié : la plus rare en dernier
   etat.boosters = data.boosters;
+  appliquerRegion({ region: data.region });
   tirage.forEach(c => { etat.collection[c.id] = (etat.collection[c.id] || 0) + 1; });
   majCompteur();
 
@@ -576,6 +516,4 @@ async function demarrer() {
   }
 }
 
-majRegion();
-localiser();
 demarrer();
