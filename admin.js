@@ -82,9 +82,18 @@ $("#form-connexion").addEventListener("submit", async e => {
   const bouton = $("#bouton-connexion");
   bouton.disabled = true;
   $("#erreur-connexion").textContent = "";
+  let captchaToken;
+  try {
+    captchaToken = await jetonAntiRobot($("#anti-robot-admin"));   // jeton à usage unique, vérifié par Supabase
+  } catch (err) {
+    bouton.disabled = false;
+    $("#erreur-connexion").textContent = "La vérification anti-robot a échoué. Réessayez.";
+    return;
+  }
   const { error } = await sb.auth.signInWithPassword({
     email: $("#email").value.trim(),
     password: $("#mot-de-passe").value,
+    options: { captchaToken },
   });
   bouton.disabled = false;
   $("#mot-de-passe").value = "";

@@ -76,7 +76,12 @@ async function connecterJoueur() {
     if (!error) return;
     await sb.auth.signOut({ scope: "local" });
   }
-  const { error } = await sb.auth.signInAnonymously();
+  // Nouveau compte : preuve anti-robot d'abord (vérifiée par Supabase).
+  etatJeu.verification = true;
+  majConsigne();
+  const captchaToken = await jetonAntiRobot($("#anti-robot"));
+  etatJeu.verification = false;
+  const { error } = await sb.auth.signInAnonymously({ options: { captchaToken } });
   if (error) throw error;
 }
 
@@ -166,7 +171,9 @@ function majConsigne() {
   const vide = cartesRegion().length === 0;
   $("#booster").disabled = b === 0 || !etatJeu.pret || !etat.region || vide;
   let texte;
-  if (etatJeu.erreur) texte = "Impossible de joindre le serveur. Vérifiez votre connexion puis rechargez la page.";
+  if (etatJeu.erreur === "anti_robot") texte = "La vérification anti-robot a échoué. Rechargez la page pour réessayer.";
+  else if (etatJeu.erreur) texte = "Impossible de joindre le serveur. Vérifiez votre connexion puis rechargez la page.";
+  else if (etatJeu.verification) texte = "Petite vérification avant votre premier booster…";
   else if (!etatJeu.pret) texte = "Chargement…";
   else if (!etat.region) texte = "Impossible de déterminer votre pays (VPN ou réseau anonyme ?). Désactivez-le puis rechargez la page.";
   else if (vide) texte = `Pas encore de cartes pour la région ${REGIONS[etat.region]}. Elles arrivent bientôt !`;
@@ -523,7 +530,8 @@ async function demarrer() {
     else if (q.accorde) notifier("Votre booster quotidien est arrivé.");
   } catch (err) {
     console.error(err);
-    etatJeu.erreur = true;
+    etatJeu.verification = false;
+    etatJeu.erreur = /anti_robot|captcha/i.test(err?.message || "") ? "anti_robot" : true;
     majConsigne();
   }
 }

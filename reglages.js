@@ -12,6 +12,11 @@
 const SUPABASE_URL = "https://qhyvdodkzdhmobkvahwa.supabase.co";
 const SUPABASE_CLE_PUBLIQUE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoeXZkb2RremRobW9ia3ZhaHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5ODU3OTAsImV4cCI6MjEwNzU2MTc5MH0.Hhq92tBVTB2tiIn24_QfD8mNaMnjQU3tsz_DKjng2EI";
 
+// Anti-robot Cloudflare Turnstile : clé de SITE (publique). La clé SECRÈTE
+// n'est jamais ici : elle est rangée dans Supabase (Attack Protection).
+// Vide = pas de vérification (Supabase ne doit alors pas l'exiger).
+const TURNSTILE_CLE_SITE = "";
+
 const RARETES = {
   ordinaire:  { nom: "Ordinaire",  ordre: 1 },
   notable:    { nom: "Notable",    ordre: 2 },
