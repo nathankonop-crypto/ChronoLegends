@@ -48,14 +48,18 @@ const cartesDe = ext => CARTES.filter(c => c.extension === ext);
 let extensionActive = EXTENSIONS[etat.extension] ? etat.extension : "antiquite";
 let cartesExtension = [];
 
+// Texte d'un champ dans la langue du joueur : « nom_en » en anglais s'il existe, sinon « nom ».
+const champ = (ligne, nom) => (LANGUE === "en" && ligne[`${nom}_en`]) || ligne[nom] || "";
+
 async function chargerCartes() {
   const { data, error } = await sb.from("cartes").select("*")
     .order("epoque").order("ordre").order("nom");
   if (error) throw error;
   // On garde les noms de champs utilisés partout dans le jeu.
   CARTES = data.map(l => ({
-    id: l.id, nom: l.nom, gamme: l.gamme, dates: l.dates, lieu: l.lieu, region: l.region,
-    extension: l.epoque, rarete: l.rarete, finition: l.finition, texte: l.description,
+    // Contenu en anglais si le joueur joue en anglais (le français sert de secours).
+    id: l.id, gamme: l.gamme, region: l.region, extension: l.epoque, rarete: l.rarete, finition: l.finition,
+    nom: champ(l, "nom"), dates: champ(l, "dates"), lieu: champ(l, "lieu"), texte: champ(l, "description"),
     image: l.image, ordre: l.ordre,
   }));
   cartesExtension = cartesDe(extensionActive);
@@ -100,8 +104,6 @@ async function reclamerQuotidien() {
 //  Décidée par le SERVEUR à partir de l'adresse IP (pays fourni par Cloudflare,
 //  impossible à falsifier depuis le navigateur). Le jeu ne fait que l'afficher.
 
-const nomsPays = (() => { try { return new Intl.DisplayNames(["fr"], { type: "region" }); } catch (e) { return null; } })();
-
 function appliquerRegion(data) {
   if (!data.region) return;
   const change = etat.region && etat.region !== data.region;
@@ -110,7 +112,7 @@ function appliquerRegion(data) {
   // Verrou de région : changement en attente (null s'il n'y en a pas).
   if ("verrou" in data) etat.verrou = data.verrou;
   majRegion();
-  if (change) notifier(`Vous êtes en ${REGIONS[etat.region]} : vos boosters contiendront ses personnages.`);
+  if (change) notifier(t("nouvelleRegion", { region: nomRegion(etat.region) }));
 }
 
 // Filtre géographique : un booster ne contient QUE des cartes de la région du joueur
@@ -120,7 +122,7 @@ const cartesRegion = () => CARTES.filter(c => c.region === etat.region);
 // « 5 h 12 min », « 12 min »…
 function formatAttente(ms) {
   const min = Math.ceil(Math.max(ms, 0) / 60000);
-  if (min < 1) return "moins d'une minute";
+  if (min < 1) return t("moinsDUneMinute");
   const h = Math.floor(min / 60), m = min % 60;
   return h ? `${h} h ${String(m).padStart(2, "0")} min` : `${m} min`;
 }
@@ -171,33 +173,30 @@ function majConsigne() {
   const vide = cartesRegion().length === 0;
   $("#booster").disabled = b === 0 || !etatJeu.pret || !etat.region || vide;
   let texte;
-  if (etatJeu.erreur === "anti_robot") texte = "La vérification anti-robot a échoué. Rechargez la page pour réessayer.";
-  else if (etatJeu.erreur) texte = "Impossible de joindre le serveur. Vérifiez votre connexion puis rechargez la page.";
-  else if (etatJeu.verification) texte = "Petite vérification avant votre premier booster…";
-  else if (!etatJeu.pret) texte = "Chargement…";
-  else if (!etat.region) texte = "Impossible de déterminer votre pays (VPN ou réseau anonyme ?). Désactivez-le puis rechargez la page.";
-  else if (vide) texte = `Pas encore de cartes pour la région ${REGIONS[etat.region]}. Elles arrivent bientôt !`;
-  else if (b > 0) texte = `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`;
-  else texte = `Plus de booster pour l'instant. Prochain booster quotidien dans ${formatAttente(etat.prochainQuotidien - Date.now())}.`;
+  if (etatJeu.erreur === "anti_robot") texte = t("erreurAntiRobot");
+  else if (etatJeu.erreur) texte = t("erreurServeur");
+  else if (etatJeu.verification) texte = t("verification");
+  else if (!etatJeu.pret) texte = t("chargement");
+  else if (!etat.region) texte = t("paysInconnu");
+  else if (vide) texte = t("regionVide", { region: nomRegion(etat.region) });
+  else if (b > 0) texte = t("boostersDispo", { n: b });
+  else texte = t("plusDeBooster", { attente: formatAttente(etat.prochainQuotidien - Date.now()) });
   $("#consigne").textContent = texte;
 }
 
 // Région affichée sous le booster (non modifiable : décidée par le serveur).
 function majRegion() {
-  let pays = etat.pays;
-  try { if (pays && nomsPays) pays = nomsPays.of(pays); } catch (e) {}
   $("#region-joueur").textContent = REGIONS[etat.region]
-    ? `Région : ${REGIONS[etat.region]}${pays ? ` · connexion depuis : ${pays}` : ""}`
+    ? t("ligneRegion", { region: nomRegion(etat.region), pays: etat.pays ? nomPays(etat.pays) : "" })
     : "";
 
   // Changement de région en attente (verrou anti-VPN décidé par le serveur).
   const v = etat.verrou;
   $("#verrou-region").hidden = !v;
   if (v) {
-    const quand = new Date(v.changement_le).toLocaleString("fr-FR",
+    const quand = new Date(v.changement_le).toLocaleString(LANGUE === "en" ? "en-GB" : "fr-FR",
       { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
-    $("#verrou-region").textContent = `Vous semblez être en ${REGIONS[v.region_detectee]}. `
-      + `Si vous y êtes toujours à partir du ${quand}, vos boosters passeront à cette région.`;
+    $("#verrou-region").textContent = t("verrou", { region: nomRegion(v.region_detectee), quand });
   }
   majConsigne();
 }
@@ -217,7 +216,7 @@ function afficherEpoques() {
     const possedees = cartesDe(cle).filter(c => etat.collection[c.id]).length;
     const b = document.createElement("button");
     b.className = "epoque" + (cle === extensionActive ? " actif" : "");
-    b.innerHTML = `${ext.nom} <span>${possedees}/${cartesDe(cle).length}</span>`;
+    b.innerHTML = `${nomEpoque(cle)} <span>${possedees}/${cartesDe(cle).length}</span>`;
     b.addEventListener("click", () => choisirExtension(cle));
     nav.appendChild(b);
   }
@@ -247,9 +246,9 @@ let pileNouvelles = []; // pour chaque carte de la pile : jamais obtenue avant c
 let indexPile = 0;     // indice de la carte actuellement sur le dessus
 
 const MESSAGES_SERVEUR = {
-  plus_de_booster: "Plus de booster disponible.",
-  region_vide: "Pas encore de cartes pour votre région.",
-  region_inconnue: "Impossible de déterminer votre pays (VPN ou réseau anonyme ?).",
+  plus_de_booster: "serveurPlusDeBooster",
+  region_vide: "serveurRegionVide",
+  region_inconnue: "serveurRegionInconnue",
 };
 
 async function ouvrirBooster() {
@@ -268,7 +267,7 @@ async function ouvrirBooster() {
     enCours = false;
     const code = Object.keys(MESSAGES_SERVEUR).find(c => error.message.includes(c));
     if (code === "plus_de_booster") etat.boosters = 0;
-    notifier(MESSAGES_SERVEUR[code] || "Le serveur n'a pas pu ouvrir le booster. Réessayez.");
+    notifier(t(MESSAGES_SERVEUR[code] || "serveurErreurOuverture"));
     majConsigne();
     return;
   }
@@ -311,7 +310,7 @@ function afficherPile(tirage, nouvelles) {
     emplacement.className = `emplacement rarete-${carte.rarete}`;
     emplacement.dataset.index = i;
     emplacement.style.zIndex = tirage.length - i;   // la 1re carte est au-dessus
-    emplacement.setAttribute("aria-label", "Révéler la carte");
+    emplacement.setAttribute("aria-label", t("revelerLaCarte"));
     emplacement.innerHTML = `
       <div class="emplacement-interieur">
         <div class="face face-dos">${HTML_DOS}</div>
@@ -339,10 +338,10 @@ function majConsignePile() {
   const el = $(`.emplacement[data-index="${indexPile}"]`);
   if (el && el.classList.contains("revelee")) {
     c.textContent = indexPile === pileTirage.length - 1
-      ? "La plus belle du paquet !"
-      : "Touchez à nouveau pour la carte suivante";
+      ? t("plusBelle")
+      : t("touchezSuivante");
   } else {
-    c.textContent = `Touchez la carte pour la révéler  ·  ${restantes} restante${restantes > 1 ? "s" : ""}`;
+    c.textContent = t("touchezReveler", { n: restantes });
   }
 }
 
@@ -367,13 +366,13 @@ function actionPile(emplacement) {
 
 function reveler(emplacement, carte) {
   emplacement.classList.add("revelee");
-  emplacement.setAttribute("aria-label", `${carte.nom}, ${RARETES[carte.rarete].nom}`);
+  emplacement.setAttribute("aria-label", `${carte.nom}, ${nomRarete(carte.rarete)}`);
   if (pileNouvelles[Number(emplacement.dataset.index)] && !emplacement.querySelector(".nouvelle")) {
-    emplacement.insertAdjacentHTML("beforeend", `<span class="nouvelle">Nouvelle</span>`);
+    emplacement.insertAdjacentHTML("beforeend", `<span class="nouvelle">${t("nouvelle")}</span>`);
   }
-  if (carte.rarete === "mythique") notifier(`✦ Carte MYTHIQUE : ${carte.nom} ✦`);
-  else if (carte.rarete === "legendaire") notifier(`Carte légendaire : ${carte.nom} !`);
-  else if (carte.rarete === "epique") notifier(`Carte épique : ${carte.nom}`);
+  if (carte.rarete === "mythique") notifier(t("notifMythique", { nom: carte.nom }));
+  else if (carte.rarete === "legendaire") notifier(t("notifLegendaire", { nom: carte.nom }));
+  else if (carte.rarete === "epique") notifier(t("notifEpique", { nom: carte.nom }));
 }
 
 function ecarter(emplacement) {
@@ -394,8 +393,8 @@ function terminerPile() {
     el.className = `carte-etalee rarete-${carte.rarete}`;
     el.style.animationDelay = `${i * 70}ms`;
     el.innerHTML = htmlCarte(carte)
-      + (pileNouvelles[i] ? `<span class="nouvelle">Nouvelle</span>` : "");
-    el.setAttribute("aria-label", `${carte.nom}, ${RARETES[carte.rarete].nom}, agrandir`);
+      + (pileNouvelles[i] ? `<span class="nouvelle">${t("nouvelle")}</span>` : "");
+    el.setAttribute("aria-label", `${carte.nom}, ${nomRarete(carte.rarete)}, ${t("agrandir")}`);
     el.addEventListener("click", () => ouvrirModale(carte));
     zone.appendChild(el);
   });
@@ -404,7 +403,7 @@ function terminerPile() {
   $("#consigne-pile").hidden = true;
   $("#nouveau-booster").hidden = false;
   $("#nouveau-booster").textContent = etat.boosters > 0
-    ? `Ouvrir un autre booster (${etat.boosters})` : "Retour";
+    ? t("ouvrirUnAutreN", { n: etat.boosters }) : t("retour");
 }
 
 // Déroule automatiquement toute la pile (révéler puis écarter, étape par étape).
@@ -444,16 +443,15 @@ function revenirAuBooster() {
 
 function afficherCollection() {
   afficherEpoques();
-  const ext = EXTENSIONS[extensionActive];
-  $("#titre-extension").textContent = ext.nom;
-  $("#sous-titre-extension").textContent = ext.sousTitre;
+  $("#titre-extension").textContent = nomEpoque(extensionActive);
+  $("#sous-titre-extension").textContent = sousTitreEpoque(extensionActive);
 
   const possedees = cartesExtension.filter(c => etat.collection[c.id]).length;
   const total = cartesExtension.length;
   $("#barre-progression").style.width = total ? `${(possedees / total) * 100}%` : "0%";
   $("#texte-progression").textContent = total
-    ? `${possedees} carte${possedees > 1 ? "s" : ""} sur ${total}`
-    : "Les premières cartes de cette époque arrivent bientôt.";
+    ? t("progression", { n: possedees, total })
+    : t("epoqueVide");
 
   const grille = $("#grille-collection");
   grille.innerHTML = "";
@@ -463,10 +461,10 @@ function afficherCollection() {
     el.className = "case-collection";
     if (nb) {
       el.innerHTML = htmlCarte(carte) + (nb > 1 ? `<span class="exemplaires">×${nb}</span>` : "");
-      el.setAttribute("aria-label", `${carte.nom}, agrandir`);
+      el.setAttribute("aria-label", `${carte.nom}, ${t("agrandir")}`);
       el.addEventListener("click", () => ouvrirModale(carte));
     } else {
-      el.innerHTML = `<div class="manquante"><span>N° ${numero(carte)}</span><span class="manquante-rarete">${RARETES[carte.rarete].nom}</span></div>`;
+      el.innerHTML = `<div class="manquante"><span>${t("numero")} ${numero(carte)}</span><span class="manquante-rarete">${nomRarete(carte.rarete)}</span></div>`;
     }
     grille.appendChild(el);
   }
@@ -511,13 +509,17 @@ setInterval(async () => {
   if (etat.boosters === 0 && etat.prochainQuotidien && Date.now() >= etat.prochainQuotidien) {
     try {
       const q = await reclamerQuotidien();
-      if (q.accorde) notifier("Votre booster quotidien est arrivé.");
+      if (q.accorde) notifier(t("quotidien"));
     } catch (e) { /* on réessaiera au prochain passage */ }
   }
   majConsigne();
 }, 30000);
 
 async function demarrer() {
+  traduirePage();
+  document.title = t("titrePage");
+  document.querySelector('meta[name="description"]')?.setAttribute("content", t("descriptionPage"));
+  majConsigne();
   try {
     await connecterJoueur();
     await Promise.all([chargerCartes(), chargerCollection()]);
@@ -526,8 +528,8 @@ async function demarrer() {
     majCompteur();
     majConsigne();
     if (!$("#vue-collection").hidden) afficherCollection();
-    if (q.nouveau) notifier(`Bienvenue ! Voici ${q.boosters} boosters offerts.`);
-    else if (q.accorde) notifier("Votre booster quotidien est arrivé.");
+    if (q.nouveau) notifier(t("bienvenue", { n: q.boosters }));
+    else if (q.accorde) notifier(t("quotidien"));
   } catch (err) {
     console.error(err);
     etatJeu.verification = false;

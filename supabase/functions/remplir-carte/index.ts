@@ -36,10 +36,17 @@ Format des champs (respecte exactement le style des exemples) :
 - epoque : antiquite (jusqu'au Ve siècle), moyen-age (Ve – XVe siècle), temps-modernes (fin XVe siècle – 1789), epoque-contemporaine (après 1789).
 - probleme : chaîne vide si tout va bien ; sinon une phrase courte (personne vivante, dates très débattues, homonymes possibles…).
 
+Version anglaise (champs *_en), pour les joueurs anglophones :
+- nom_en : le nom usuel en anglais (« Joan of Arc », « Julius Caesar », « Ramesses II ») ; identique au français s'il n'y a pas d'usage anglais distinct.
+- dates_en : même information, notation anglaise : « BCE » / « CE », « c. » pour vers, « r. » pour règne, « 5th c. BCE » pour un siècle, « died 113 BCE ». Ex. : « c. 1412 – 1431 », « r. c. 1479 – 1458 BCE ».
+- lieu_en : le lieu en anglais (« Kingdom of France », « Alexandria, Egypt »).
+- description_en : la même description en anglais naturel (pas mot à mot), même ton neutre, 140 à 230 caractères.
+
 Exemples de cartes existantes :
 - Jules César | 100 – 44 av. J.-C. | Rome | Général et homme politique romain. Il conquiert la Gaule, remporte la guerre civile et devient dictateur. Il est assassiné lors d'une séance du Sénat.
 - Hatchepsout | règne v. 1479 – 1458 av. J.-C. | Égypte | Femme pharaon de la XVIIIe dynastie. Son règne prospère est marqué par de grands chantiers, dont le temple de Deir el-Bahari, et une expédition vers le pays de Pount.
-- Jeanne d'Arc | v. 1412 – 1431 | Royaume de France | Pendant la guerre de Cent Ans, cette jeune paysanne contribue à lever le siège d'Orléans en 1429 et fait sacrer Charles VII à Reims. Capturée, elle est brûlée à Rouen en 1431.`;
+- Jeanne d'Arc | v. 1412 – 1431 | Royaume de France | Pendant la guerre de Cent Ans, cette jeune paysanne contribue à lever le siège d'Orléans en 1429 et fait sacrer Charles VII à Reims. Capturée, elle est brûlée à Rouen en 1431.
+  (en anglais : Joan of Arc | c. 1412 – 1431 | Kingdom of France | During the Hundred Years' War, this young peasant helps lift the siege of Orléans in 1429 and has Charles VII crowned at Reims. Captured, she is burned at Rouen in 1431.)`;
 
 const SCHEMA = {
   type: "object",
@@ -50,8 +57,12 @@ const SCHEMA = {
     region: { type: "string", enum: REGIONS },
     epoque: { type: "string", enum: EPOQUES },
     probleme: { type: "string" },
+    nom_en: { type: "string" },
+    dates_en: { type: "string" },
+    lieu_en: { type: "string" },
+    description_en: { type: "string" },
   },
-  required: ["dates", "lieu", "description", "region", "epoque", "probleme"],
+  required: ["dates", "lieu", "description", "region", "epoque", "probleme", "nom_en", "dates_en", "lieu_en", "description_en"],
   additionalProperties: false,
 };
 

@@ -122,6 +122,19 @@
             <small><span id="compte-description">0</span>/260 caractères — ton neutre et factuel.</small>
           </label>
 
+          <fieldset class="version-en">
+            <legend>Version anglaise <small>(vide = le jeu anglais affiche le français)</small></legend>
+            <div class="ligne-champs">
+              <label>Name<input type="text" name="nom_en" maxlength="60" placeholder="ex. Joan of Arc"></label>
+              <label>Dates<input type="text" name="dates_en" maxlength="60" placeholder="ex. c. 1412 – 1431"></label>
+              <label>Place<input type="text" name="lieu_en" maxlength="60" placeholder="ex. Kingdom of France"></label>
+            </div>
+            <label>Description
+              <textarea name="description_en" rows="4" maxlength="260" lang="en"></textarea>
+              <small><span id="compte-description-en">0</span>/260 — dates en BCE / CE, « c. » = vers, « r. » = règne.</small>
+            </label>
+          </fieldset>
+
           <label>Illustration
             <input type="file" id="fichier-image" accept="image/*">
             <small id="info-image">Recadrée automatiquement au centre en paysage 4:3, puis compressée (WebP 800×600).</small>
@@ -136,6 +149,10 @@
 
         <aside class="apercu">
           <p class="apercu-titre">Aperçu en direct</p>
+          <div class="langues langues-apercu" role="group" aria-label="Langue de l'aperçu">
+            <button type="button" data-apercu="fr" class="actif">FR</button>
+            <button type="button" data-apercu="en">EN</button>
+          </div>
           <div class="apercu-carte" id="apercu"></div>
           <p class="apercu-note" id="apercu-note"></p>
         </aside>
@@ -162,6 +179,7 @@
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
 <script src="reglages.js"></script>
+<script src="langue.js"></script>
 <script src="anti-robot.js"></script>
 <script src="carte.js"></script>
 <script src="admin.js"></script>

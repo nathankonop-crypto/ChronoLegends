@@ -97,6 +97,13 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 
 /* ---------- Booster scellé ---------- */
 
+.langues { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--encre-2); border: 1px solid rgba(212, 178, 106, .2); }
+.langues button {
+  border: 0; background: transparent; padding: 5px 10px; border-radius: 999px;
+  font-family: var(--serif-titre); font-size: 12px; letter-spacing: .08em; color: var(--texte-doux);
+}
+.langues button.actif { background: var(--encre-3); color: var(--or-clair); }
+
 .epoques { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 0 auto 22px; }
 .epoque {
   border: 1px solid rgba(212, 178, 106, .35);

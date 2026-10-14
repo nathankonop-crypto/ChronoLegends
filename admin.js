@@ -51,9 +51,17 @@ function versIdentifiant(nom) {
 }
 
 // Ligne de la base → objet carte utilisé par le dessin (carte.js)
-function versCarte(l) {
-  return { id: l.id, nom: l.nom, gamme: l.gamme, dates: l.dates, lieu: l.lieu, region: l.region,
-    extension: l.epoque, rarete: l.rarete, finition: l.finition, texte: l.description, image: l.image };
+// L'admin est en français ; l'aperçu peut basculer en anglais (bouton FR / EN).
+LANGUE = "fr";
+let langueApercu = "fr";
+const CHAMPS_EN = ["nom_en", "dates_en", "lieu_en", "description_en"];
+
+// Ligne de la base → objet carte utilisé par le dessin (carte.js), dans la langue demandée.
+function versCarte(l, langue = "fr") {
+  const champ = nom => (langue === "en" && l[`${nom}_en`]) || l[nom] || "";
+  return { id: l.id, nom: champ("nom"), gamme: l.gamme, dates: champ("dates"), lieu: champ("lieu"),
+    region: l.region, extension: l.epoque, rarete: l.rarete, finition: l.finition,
+    texte: champ("description"), image: l.image };
 }
 
 function cartesEpoque(epoque) {
@@ -142,7 +150,7 @@ function afficherListe() {
 
   const visibles = cartes.filter(c =>
     Object.entries(filtres).every(([champ, v]) => !v || c[champ] === v) &&
-    (!texte || [c.nom, c.lieu, c.dates, c.id].join(" ").toLowerCase().includes(texte)));
+    (!texte || [c.nom, c.nom_en, c.lieu, c.dates, c.id].join(" ").toLowerCase().includes(texte)));
 
   $("#nb-cartes").textContent = visibles.length === cartes.length
     ? `(${cartes.length})` : `(${visibles.length} sur ${cartes.length})`;
@@ -194,7 +202,7 @@ function ouvrirFormulaire(ligne) {
 
   const l = ligne || { nom: "", id: "", gamme: "personnage", rarete: "ordinaire", finition: "normale",
     epoque: "antiquite", region: "moyen-orient", dates: "", lieu: "", description: "" };
-  for (const champ of ["nom", "id", "gamme", "rarete", "finition", "epoque", "region", "dates", "lieu", "description"]) {
+  for (const champ of ["nom", "id", "gamme", "rarete", "finition", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN]) {
     form.elements[champ].value = l[champ] ?? "";
   }
   form.elements.id.readOnly = !!ligne;
@@ -215,6 +223,12 @@ function ouvrirFormulaire(ligne) {
 }
 
 $("#bouton-nouvelle").addEventListener("click", () => ouvrirFormulaire(null));
+
+document.querySelectorAll("[data-apercu]").forEach(b => b.addEventListener("click", () => {
+  langueApercu = b.dataset.apercu;
+  document.querySelectorAll("[data-apercu]").forEach(x => x.classList.toggle("actif", x === b));
+  majApercu();
+}));
 $("#bouton-retour").addEventListener("click", afficherListe);
 
 form.elements.nom.addEventListener("input", () => {
@@ -225,7 +239,7 @@ form.elements.nom.addEventListener("input", () => {
 // ---------- Remplir avec l'IA (Edge Function « remplir-carte ») ----------
 // L'IA propose un brouillon ; rien n'est enregistré avant « Enregistrer ».
 
-const CHAMPS_IA = ["dates", "lieu", "description", "region", "epoque"];
+const CHAMPS_IA = ["dates", "lieu", "description", "region", "epoque", ...CHAMPS_EN];
 let avantIA = null;     // valeurs remplacées, pour « Annuler »
 let iaEnCours = false;
 
@@ -292,6 +306,8 @@ function valeursFormulaire() {
     id: f.id.value.trim(), nom: f.nom.value.trim(), gamme: f.gamme.value, rarete: f.rarete.value,
     finition: f.finition.value, epoque: f.epoque.value, region: f.region.value,
     dates: f.dates.value.trim(), lieu: f.lieu.value.trim(), description: f.description.value.trim(),
+    // Anglais : vide = null, le jeu affiche alors le français.
+    ...Object.fromEntries(CHAMPS_EN.map(c => [c, f[c].value.trim() || null])),
   };
 }
 
@@ -307,8 +323,11 @@ function majApercu() {
   const n = garde ? cartesEpoque(v.epoque).findIndex(c => c.id === carteEditee.id) + 1 : total;
   const numero = `${String(n).padStart(String(total).length, "0")}/${total}`;
 
-  const carte = versCarte({ ...v, nom: v.nom || "Nom de la carte", image: imageActuelle() });
+  $("#compte-description-en").textContent = form.elements.description_en.value.length;
+  const carte = versCarte({ ...v, nom: v.nom || "Nom de la carte", image: imageActuelle() }, langueApercu);
+  LANGUE = langueApercu;                      // le dessin de la carte suit la langue de l'aperçu
   $("#apercu").innerHTML = rendreCarte(carte, numero);
+  LANGUE = "fr";
   $("#apercu-note").textContent = v.finition !== "normale"
     ? `Finition « ${FINITIONS[v.finition]} » enregistrée, mais pas encore dessinée dans le jeu.` : "";
 }

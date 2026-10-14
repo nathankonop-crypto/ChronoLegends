@@ -16,45 +16,49 @@
 <header class="entete">
   <div class="marque">
     <span class="marque-titre">ChronoLegends</span>
-    <span class="marque-sous">Cartes d'histoire du monde</span>
+    <span class="marque-sous" data-t="sousTitreMarque">Cartes d'histoire du monde</span>
   </div>
   <nav class="onglets" aria-label="Navigation">
-    <button class="onglet actif" data-vue="booster">Boosters</button>
-    <button class="onglet" data-vue="collection">Collection <span id="compteur-collection"></span></button>
+    <button class="onglet actif" data-vue="booster" data-t="ongletBoosters">Boosters</button>
+    <button class="onglet" data-vue="collection"><span data-t="ongletCollection">Collection</span> <span id="compteur-collection"></span></button>
   </nav>
+  <div class="langues" role="group" aria-label="Langue" data-t-aria="langue">
+    <button data-langue="fr" lang="fr">FR</button>
+    <button data-langue="en" lang="en">EN</button>
+  </div>
 </header>
 
 <main>
   <!-- Vue : ouverture de booster -->
   <section id="vue-booster" class="vue">
     <div id="zone-booster" class="zone-booster">
-      <button id="booster" class="booster" aria-label="Ouvrir le booster">
+      <button id="booster" class="booster" aria-label="Ouvrir le booster" data-t-aria="ouvrirLeBooster">
         <span class="booster-bord"></span>
         <span class="booster-titre">ChronoLegends</span>
-        <span class="booster-ext" id="booster-ext">Toutes époques</span>
+        <span class="booster-ext" id="booster-ext" data-t="toutesEpoques">Toutes époques</span>
         <span class="booster-sceau">C</span>
-        <span class="booster-info">5 cartes</span>
+        <span class="booster-info" data-t="cinqCartes">5 cartes</span>
       </button>
       <p class="consigne" id="consigne"></p>
       <div class="anti-robot" id="anti-robot" hidden></div>
       <p class="region-joueur" id="region-joueur"></p>
       <p class="verrou-region" id="verrou-region" hidden></p>
-      <p class="slogan">« La chasse ne s'arrête jamais »</p>
+      <p class="slogan" data-t="slogan">« La chasse ne s'arrête jamais »</p>
     </div>
 
     <div id="tirage" class="tirage" hidden></div>
     <p class="consigne" id="consigne-pile" hidden></p>
 
     <div id="actions-tirage" class="actions" hidden>
-      <button id="tout-reveler" class="bouton">Tout révéler</button>
-      <button id="nouveau-booster" class="bouton bouton-or" hidden>Ouvrir un autre booster</button>
+      <button id="tout-reveler" class="bouton" data-t="toutReveler">Tout révéler</button>
+      <button id="nouveau-booster" class="bouton bouton-or" hidden data-t="ouvrirUnAutre">Ouvrir un autre booster</button>
     </div>
   </section>
 
   <!-- Vue : collection -->
   <section id="vue-collection" class="vue" hidden>
     <!-- Un onglet par époque (rempli par app.js) -->
-    <nav id="epoques" class="epoques" aria-label="Époque"></nav>
+    <nav id="epoques" class="epoques" aria-label="Époque" data-t-aria="epoque"></nav>
     <div class="collection-entete">
       <h1 id="titre-extension">Antiquité</h1>
       <p id="sous-titre-extension"></p>
@@ -66,14 +70,14 @@
 </main>
 
 <footer class="pied">
-  <p>Prototype — votre collection est enregistrée sur nos serveurs, liée à ce navigateur.</p>
-  <p class="pied-geo">Un compte anonyme (sans e-mail) est créé automatiquement pour garder votre collection. Vos boosters dépendent de votre région, déterminée par notre serveur à partir du pays de votre adresse IP. Seuls le pays et la région sont enregistrés, jamais votre adresse IP ni votre position.</p>
+  <p data-t="piedPrototype">Prototype — votre collection est enregistrée sur nos serveurs, liée à ce navigateur.</p>
+  <p class="pied-geo" data-t="piedGeo">Un compte anonyme (sans e-mail) est créé automatiquement pour garder votre collection. Vos boosters dépendent de votre région, déterminée par notre serveur à partir du pays de votre adresse IP. Seuls le pays et la région sont enregistrés, jamais votre adresse IP ni votre position.</p>
 </footer>
 
 <!-- Agrandissement d'une carte -->
 <div id="modale" class="modale" hidden>
   <div class="modale-contenu" id="modale-contenu"></div>
-  <button class="modale-fermer" id="modale-fermer" aria-label="Fermer">×</button>
+  <button class="modale-fermer" id="modale-fermer" aria-label="Fermer" data-t-aria="fermer">×</button>
 </div>
 
 <div id="notification" class="notification" role="status" aria-live="polite"></div>
@@ -82,6 +86,7 @@
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
 <script src="reglages.js"></script>
+<script src="langue.js"></script>
 <script src="anti-robot.js"></script>
 <script src="carte.js"></script>
 <script src="app.js"></script>

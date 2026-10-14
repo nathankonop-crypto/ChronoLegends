@@ -92,6 +92,12 @@ body.admin { font-size: 16px; }
 .actions-form { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
 .form-carte .lien { align-self: flex-start; margin-top: -10px; }
 
+/* Version anglaise */
+.version-en { margin: 0; padding: 14px 16px 16px; border: 1px solid rgba(212, 178, 106, .25); border-radius: 12px; display: flex; flex-direction: column; gap: 12px; }
+.version-en legend { padding: 0 6px; font-family: var(--serif-titre); font-size: 13px; letter-spacing: .08em; color: var(--or-clair); }
+.version-en legend small { font-family: var(--serif); letter-spacing: 0; text-transform: none; }
+.langues-apercu { width: fit-content; margin: 0 auto 12px; }
+
 /* Bouton « Remplir avec l'IA » */
 .ligne-nom { display: flex; gap: 8px; }
 .ligne-nom input { flex: 1; min-width: 0; }
