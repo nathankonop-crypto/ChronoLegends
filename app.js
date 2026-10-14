@@ -7,7 +7,6 @@
 const CLE_SAUVEGARDE = "chronica.v1";
 const CARTES_PAR_BOOSTER = 5;
 const BOOSTERS_BIENVENUE = 3;
-const BONUS_REGION = 3; // une carte de votre région a 3× plus de chances de sortir
 
 // Rareté de la 5e carte (la « carte spéciale ») : rare, épique ou légendaire.
 const CHANCES_CARTE_SPECIALE = [
@@ -44,7 +43,7 @@ function sauvegarder() {
   try { localStorage.setItem(CLE_SAUVEGARDE, JSON.stringify(etat)); } catch (e) {}
 }
 
-// Devine la région à partir du fuseau horaire (aucune autorisation demandée).
+// Dernier recours si l'IP et le GPS échouent : le fuseau horaire de l'appareil.
 function devinerRegion() {
   const fuseau = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
   const moyenOrient = ["Riyadh", "Tehran", "Baghdad", "Dubai", "Jerusalem", "Beirut", "Damascus",
@@ -75,6 +74,76 @@ if (EXTENSIONS[etat.extension]) {
 }
 sauvegarder();
 
+// ---------- Géolocalisation ----------
+//  Deux axes : 1) l'adresse IP (immédiat, sans autorisation)
+//              2) le GPS (plus précis, le navigateur demande l'autorisation).
+//  Le service BigDataCloud transforme l'IP ou les coordonnées en pays.
+//  Rien n'est conservé : seule la région (ex. « moyen-orient ») est sauvegardée.
+
+const API_GEO = "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=fr";
+
+// Pays rattachés à la région Moyen-Orient (codes ISO à 2 lettres).
+const PAYS_MOYEN_ORIENT = ["IL", "PS", "JO", "LB", "SY", "IQ", "IR", "SA", "AE", "QA", "BH",
+  "KW", "OM", "YE", "TR", "CY"];
+const REGION_PAR_CONTINENT = { EU: "europe", AF: "afrique", AS: "asie", NA: "ameriques", SA: "ameriques", OC: "oceanie" };
+
+function regionDuPays(pays, continent) {
+  if (PAYS_MOYEN_ORIENT.includes(pays)) return "moyen-orient";
+  return REGION_PAR_CONTINENT[continent] || null;
+}
+
+async function regionDepuisApi(coords) {
+  const url = coords ? `${API_GEO}&latitude=${coords.latitude}&longitude=${coords.longitude}` : API_GEO;
+  const controle = new AbortController();
+  const minuterie = setTimeout(() => controle.abort(), 6000);
+  try {
+    const rep = await fetch(url, { signal: controle.signal });
+    if (!rep.ok) return null;
+    const d = await rep.json();
+    return regionDuPays(d.countryCode, d.continentCode);
+  } catch (e) {
+    return null;   // hors ligne, service indisponible…
+  } finally {
+    clearTimeout(minuterie);
+  }
+}
+
+function positionGps() {
+  return new Promise(resoudre => {
+    if (!navigator.geolocation) return resoudre(null);
+    navigator.geolocation.getCurrentPosition(
+      p => resoudre(p.coords),
+      () => resoudre(null),            // refusé ou introuvable
+      { enableHighAccuracy: false, timeout: 15000, maximumAge: 10 * 60 * 1000 }
+    );
+  });
+}
+
+let localisationEnCours = true;
+
+function appliquerRegion(region, source) {
+  if (!region) return;
+  const change = etat.region !== region;
+  etat.region = region;
+  etat.sourceRegion = source;
+  sauvegarder();
+  majRegion();
+  if (change && source !== "fuseau") notifier(`Vous êtes en ${REGIONS[region]} : vos boosters contiendront ses personnages.`);
+}
+
+async function localiser() {
+  // Axe 1 : adresse IP. On débloque les boosters dès qu'on a une réponse.
+  const parIp = await regionDepuisApi(null);
+  if (parIp) appliquerRegion(parIp, "IP");
+  else if (!etat.sourceRegion) appliquerRegion(devinerRegion(), "fuseau");
+  localisationEnCours = false;
+  majConsigne();
+
+  // Axe 2 : GPS, prioritaire s'il est autorisé.
+  const coords = await positionGps();
+  if (coords) appliquerRegion(await regionDepuisApi(coords), "GPS");
+}
+
 // ---------- Tirage ----------
 
 function tirerAuHasard(liste, poids) {
@@ -87,22 +156,33 @@ function tirerAuHasard(liste, poids) {
   return liste[liste.length - 1];
 }
 
+// Filtre géographique : on ne tire QUE les cartes de la région du joueur.
+// Les cartes des autres régions s'obtiendront par échange.
+const cartesRegion = () => CARTES.filter(c => c.region === etat.region);
+
 function tirerCarte(rarete, dejaTirees) {
-  // Paliers du plus rare au plus courant. Si une rareté n'a pas encore de
-  // carte (ex. Mythique au lancement), on redescend vers la rareté juste en dessous.
+  const cartes = cartesRegion();
+  if (cartes.length === 0) return null;
+
+  // Paliers du plus rare au plus courant.
   const paliers = Object.keys(RARETES).sort((a, b) => RARETES[b].ordre - RARETES[a].ordre);
   let depart = paliers.indexOf(rarete);
   if (depart === -1) depart = paliers.length - 1;
+  const enDessous = paliers.slice(depart);              // la rareté demandée, puis plus courant
+  const auDessus = paliers.slice(0, depart).reverse();  // seulement si la région n'a rien en dessous
 
-  for (let i = depart; i < paliers.length; i++) {
-    const r = paliers[i];
-    let pool = CARTES.filter(c => c.rarete === r && !dejaTirees.includes(c.id));
-    if (pool.length === 0) pool = CARTES.filter(c => c.rarete === r);
-    if (pool.length === 0) continue;   // aucune carte à ce palier : on descend d'un cran
-    const poids = pool.map(c => (c.region === etat.region ? BONUS_REGION : 1));
-    return tirerAuHasard(pool, poids);
+  const essais = [
+    [enDessous, true],   // 1. rareté demandée ou en dessous, sans doublon dans le booster
+    [enDessous, false],  // 2. idem, doublon autorisé
+    [auDessus, false],   // 3. dernier recours : région sans aucune carte plus courante
+  ];
+  for (const [liste, sansDoublon] of essais) {
+    for (const r of liste) {
+      const pool = cartes.filter(c => c.rarete === r && !(sansDoublon && dejaTirees.includes(c.id)));
+      if (pool.length) return tirerAuHasard(pool, pool.map(() => 1));
+    }
   }
-  return CARTES[0];                     // filet de sécurité ultime
+  return cartes[0];
 }
 
 function tirerRareteSpeciale() {
@@ -225,10 +305,24 @@ function notifier(message) {
 
 function majConsigne() {
   const b = etat.boosters;
-  $("#booster").disabled = b === 0;
-  $("#consigne").textContent = b > 0
-    ? `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`
-    : "Plus de booster pour aujourd'hui. Revenez demain pour votre booster quotidien.";
+  const vide = cartesRegion().length === 0;
+  $("#booster").disabled = b === 0 || localisationEnCours || vide;
+  $("#consigne").textContent = localisationEnCours
+    ? "Localisation en cours…"
+    : vide
+      ? `Pas encore de cartes pour la région ${REGIONS[etat.region]}. Elles arrivent bientôt !`
+      : b > 0
+        ? `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`
+        : "Plus de booster pour aujourd'hui. Revenez demain pour votre booster quotidien.";
+}
+
+// Région affichée sous le booster (non modifiable : elle vient de la géolocalisation).
+function majRegion() {
+  const sources = { GPS: "position GPS", IP: "connexion internet", fuseau: "fuseau horaire" };
+  $("#region-joueur").textContent = REGIONS[etat.region]
+    ? `Région : ${REGIONS[etat.region]}${etat.sourceRegion ? ` · d'après votre ${sources[etat.sourceRegion]}` : ""}`
+    : "";
+  majConsigne();
 }
 
 // Compteur de l'en-tête : toutes extensions confondues.
@@ -275,7 +369,7 @@ let pileTirage = [];   // les 5 cartes, de la 1re révélée (dessus) à la plus
 let indexPile = 0;     // indice de la carte actuellement sur le dessus
 
 function ouvrirBooster() {
-  if (enCours || etat.boosters <= 0) return;
+  if (enCours || etat.boosters <= 0 || localisationEnCours || cartesRegion().length === 0) return;
   enCours = true;
 
   const tirage = tirerBooster();   // trié : ordinaire → … → la plus rare en dernier
@@ -443,7 +537,7 @@ function revenirAuBooster() {
   $("#actions-tirage").hidden = true;
   $("#zone-booster").hidden = false;
   majConsigne();
-  if (etat.boosters > 0) ouvrirBooster();
+  ouvrirBooster();   // ne fait rien s'il n'y a plus de booster
 }
 
 // --- Collection ---
@@ -504,15 +598,6 @@ $("#modale-contenu").addEventListener("pointerleave", e => { e.currentTarget.sty
 
 // ---------- Démarrage ----------
 
-const select = $("#choix-region");
-for (const [cle, nom] of Object.entries(REGIONS)) select.add(new Option(nom, cle));
-select.value = etat.region;
-select.addEventListener("change", () => {
-  etat.region = select.value;
-  sauvegarder();
-  notifier(`Vos boosters favoriseront désormais : ${REGIONS[etat.region]}`);
-});
-
 $("#booster").addEventListener("click", ouvrirBooster);
 $("#tout-reveler").addEventListener("click", toutReveler);
 $("#nouveau-booster").addEventListener("click", revenirAuBooster);
@@ -526,6 +611,7 @@ $("#reinitialiser").addEventListener("click", () => {
   }
 });
 
-majConsigne();
+majRegion();
 majCompteur();
+localiser();
 if (messagesAccueil.length) setTimeout(() => notifier(messagesAccueil.join(" ")), 400);

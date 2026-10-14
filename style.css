@@ -83,16 +83,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .onglet.actif { background: linear-gradient(180deg, #e3c682, #b18d45); color: var(--encre); }
 .onglet span { opacity: .75; font-size: 12px; }
 
-.region { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--texte-doux); font-style: italic; }
-.region select {
-  font: inherit;
-  font-style: normal;
-  color: var(--texte);
-  background: var(--encre-2);
-  border: 1px solid rgba(212, 178, 106, .3);
-  border-radius: 8px;
-  padding: 6px 10px;
-}
+.region-joueur { margin: -12px 0 0; font-family: var(--serif-titre); font-size: 12px; letter-spacing: .08em; color: var(--or); text-align: center; }
+.region-joueur:empty { display: none; }
 
 @media (max-width: 640px) {
   .entete { justify-content: center; text-align: center; }
@@ -551,6 +543,7 @@ button.case-collection:hover { transform: translateY(-4px); }
 
 .pied { text-align: center; padding: 24px 16px 32px; color: var(--texte-doux); font-size: 14px; font-style: italic; }
 .pied p { margin: 0 0 6px; }
+.pied .pied-geo { max-width: 60ch; margin: 0 auto 6px; font-size: 12px; opacity: .8; }
 .lien { border: 0; background: none; color: var(--texte-doux); text-decoration: underline; font-size: 13px; padding: 4px; }
 
 @media (prefers-reduced-motion: reduce) {

@@ -22,10 +22,6 @@
     <button class="onglet actif" data-vue="booster">Boosters</button>
     <button class="onglet" data-vue="collection">Collection <span id="compteur-collection"></span></button>
   </nav>
-  <label class="region">
-    <span>Votre région</span>
-    <select id="choix-region"></select>
-  </label>
 </header>
 
 <main>
@@ -40,6 +36,7 @@
         <span class="booster-info">5 cartes</span>
       </button>
       <p class="consigne" id="consigne"></p>
+      <p class="region-joueur" id="region-joueur"></p>
       <p class="slogan">« La chasse ne s'arrête jamais »</p>
     </div>
 
@@ -68,6 +65,7 @@
 
 <footer class="pied">
   <p>Prototype — progression enregistrée dans ce navigateur.</p>
+  <p class="pied-geo">Vos boosters dépendent de votre région. Pour la trouver, votre adresse IP et, si vous l'autorisez, votre position GPS sont envoyées au service BigDataCloud. Seule la région est gardée, jamais votre position.</p>
   <button id="reinitialiser" class="lien">Réinitialiser la progression</button>
 </footer>
 
