@@ -15,7 +15,7 @@ const SUPABASE_CLE_PUBLIQUE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJz
 // Anti-robot Cloudflare Turnstile : clé de SITE (publique). La clé SECRÈTE
 // n'est jamais ici : elle est rangée dans Supabase (Attack Protection).
 // Vide = pas de vérification (Supabase ne doit alors pas l'exiger).
-const TURNSTILE_CLE_SITE = "";
+const TURNSTILE_CLE_SITE = "0x4AAAAAAFW1Hh6Pqu1owEGT";
 
 const RARETES = {
   ordinaire:  { nom: "Ordinaire",  ordre: 1 },
