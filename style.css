@@ -261,9 +261,24 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   transition: transform .45s cubic-bezier(.3, .7, .2, 1);
 }
 
-/* La carte révélée que l'on écarte : elle s'envole sur la droite et disparaît. */
+/* Sur smartphone, la pile laisse défiler la page verticalement, mais le
+   glissement horizontal sert à écarter la carte (voir activerGlissement dans app.js). */
+.tirage.pile .emplacement { touch-action: pan-y; -webkit-user-select: none; user-select: none; }
+.tirage.pile .emplacement.glisse { transition: none; }
+
+/* Appui simple sur une carte déjà révélée (smartphone) : petit frémissement
+   qui invite à la faire glisser. */
+.tirage.pile .emplacement.fremit { animation: fremir .5s ease; }
+@keyframes fremir {
+  25% { translate: 14px 0; rotate: 2deg; }
+  55% { translate: -8px 0; rotate: -1deg; }
+  80% { translate: 4px 0; rotate: 0deg; }
+}
+
+/* La carte révélée que l'on écarte : elle s'envole sur le côté (droite par
+   défaut, ou du côté où on l'a fait glisser : --sens = -1 ou 1) et disparaît. */
 .tirage.pile .emplacement.ecartee {
-  transform: translateX(120%) rotate(13deg) scale(.92);
+  transform: translateX(calc(var(--sens, 1) * 120%)) rotate(calc(var(--sens, 1) * 13deg)) scale(.92);
   opacity: 0;
   transition: transform .55s cubic-bezier(.4, 0, .5, 1), opacity .55s ease;
 }

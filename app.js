@@ -317,6 +317,7 @@ function afficherPile(tirage, nouvelles) {
         <div class="face face-avant">${htmlCarte(carte)}</div>
       </div>`;
     emplacement.addEventListener("click", () => actionPile(emplacement));
+    activerGlissement(emplacement);
     zone.appendChild(emplacement);
   });
 
@@ -339,7 +340,7 @@ function majConsignePile() {
   if (el && el.classList.contains("revelee")) {
     c.textContent = indexPile === pileTirage.length - 1
       ? t("plusBelle")
-      : t("touchezSuivante");
+      : t(ecranTactile.matches ? "glissezSuivante" : "touchezSuivante");
   } else {
     c.textContent = t("touchezReveler", { n: restantes });
   }
@@ -359,9 +360,54 @@ function actionPile(emplacement) {
     } else {
       majConsignePile();
     }
+  } else if (ecranTactile.matches) {
+    // Sur smartphone, une carte révélée s'écarte en la faisant glisser :
+    // un simple appui la fait juste frémir pour montrer le geste.
+    emplacement.classList.remove("fremit");
+    void emplacement.offsetWidth;               // relance l'animation
+    emplacement.classList.add("fremit");
   } else {
     ecarter(emplacement);
   }
+}
+
+// ---------- Glisser la carte sur le côté (smartphone) ----------
+const ecranTactile = matchMedia("(pointer: coarse)");
+
+function activerGlissement(emplacement) {
+  let depart = null;   // { x, y, temps } au moment où le doigt se pose
+
+  emplacement.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" || !emplacement.classList.contains("revelee")
+        || Number(emplacement.dataset.index) !== indexPile || toutReveler.enCours) return;
+    depart = { x: e.clientX, y: e.clientY, temps: performance.now() };
+    try { emplacement.setPointerCapture(e.pointerId); } catch { /* le doigt est déjà levé */ }
+    emplacement.classList.add("glisse");
+  });
+
+  emplacement.addEventListener("pointermove", e => {
+    if (!depart) return;
+    const dx = e.clientX - depart.x;
+    const dy = (e.clientY - depart.y) * 0.25;   // suit un peu le doigt verticalement
+    emplacement.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx * 0.06}deg)`;
+  });
+
+  const lacher = e => {
+    if (!depart) return;
+    const dx = e.clientX - depart.x;
+    const vitesse = Math.abs(dx) / (performance.now() - depart.temps);   // px par ms
+    depart = null;
+    emplacement.classList.remove("glisse");
+    emplacement.style.transform = "";
+    // Assez loin (un tiers de la carte) ou un geste vif : la carte part de ce côté.
+    if (e.type === "pointerup" && (Math.abs(dx) > emplacement.offsetWidth / 3 || (vitesse > 0.5 && Math.abs(dx) > 30))) {
+      emplacement.style.setProperty("--sens", dx < 0 ? -1 : 1);
+      ecarter(emplacement);
+    }
+    // Sinon, elle revient doucement sur la pile (transition CSS).
+  };
+  emplacement.addEventListener("pointerup", lacher);
+  emplacement.addEventListener("pointercancel", lacher);
 }
 
 function reveler(emplacement, carte) {
