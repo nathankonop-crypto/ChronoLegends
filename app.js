@@ -1,68 +1,102 @@
 // =============================================================
-//  CHRONOLEGENDS — Logique du prototype
-//  Tout est stocké dans le navigateur (localStorage) pour l'instant.
-//  Plus tard, la collection et la monnaie vivront sur un serveur.
+//  CHRONOLEGENDS — Logique du jeu
+//  Tout ce qui a de la valeur est décidé par le SERVEUR (Supabase) :
+//  le booster quotidien (avec l'heure du serveur), le stock de
+//  boosters, le tirage des cartes et la collection. Ce fichier ne
+//  fait qu'afficher ; modifier l'heure du téléphone ou la console
+//  ne donne rien.
 // =============================================================
 
-const CLE_SAUVEGARDE = "chronica.v1";
-const CARTES_PAR_BOOSTER = 5;
-const BOOSTERS_BIENVENUE = 3;
+// Chaque joueur reçoit un compte anonyme automatique (sans e-mail).
+// La clé de stockage est distincte de celle de la page d'administration.
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_CLE_PUBLIQUE, {
+  auth: { storageKey: "chronolegends-joueur" },
+});
 
-// Un booster = 2 Ordinaires + 1 Notable + 1 Rare + 1 « carte spéciale ».
-// Rareté de la carte spéciale :
-const CHANCES_CARTE_SPECIALE = [
-  { rarete: "mythique",   chance: 0.01 },  // palier ultime, extrêmement rare
-  { rarete: "legendaire", chance: 0.08 },
-  { rarete: "epique",     chance: 0.26 },
-  { rarete: "rare",       chance: 0.65 },
-];
+// ---------- Préférences d'affichage (sans valeur : restent dans le navigateur) ----------
 
-// ---------- Chargement des cartes depuis la base de données ----------
+const CLE_PREFS = "chronolegends.prefs";
+try { localStorage.removeItem("chronica.v1"); } catch (e) {}   // ancienne sauvegarde locale : tout le monde repart à zéro
 
-let CARTES = [];   // rempli au démarrage par chargerCartes()
-const etatCartes = { pret: false, erreur: false };
-
-async function chargerCartes() {
-  const url = `${SUPABASE_URL}/rest/v1/cartes?select=*&order=epoque.asc,ordre.asc,nom.asc`;
-  const rep = await fetch(url, {
-    headers: { apikey: SUPABASE_CLE_PUBLIQUE, Authorization: `Bearer ${SUPABASE_CLE_PUBLIQUE}` },
-  });
-  if (!rep.ok) throw new Error(`Base de données : erreur ${rep.status}`);
-  const lignes = await rep.json();
-  // On garde les noms de champs utilisés partout dans le jeu.
-  CARTES = lignes.map(l => ({
-    id: l.id, nom: l.nom, gamme: l.gamme, dates: l.dates, lieu: l.lieu, region: l.region,
-    extension: l.epoque, rarete: l.rarete, finition: l.finition, texte: l.description,
-    image: l.image, ordre: l.ordre,
-  }));
+function chargerPrefs() {
+  try { return JSON.parse(localStorage.getItem(CLE_PREFS)) || {}; } catch (e) { return {}; }
 }
+
+function sauvegarderPrefs() {
+  const { region, sourceRegion, extension } = etat;
+  try { localStorage.setItem(CLE_PREFS, JSON.stringify({ region, sourceRegion, extension })); } catch (e) {}
+}
+
+// ---------- Données du jeu ----------
+
+let CARTES = [];
+const etatJeu = { pret: false, erreur: false };
+const prefs = chargerPrefs();
+const etat = {
+  collection: {},          // { id_carte: nombre d'exemplaires } — copie de ce que dit le serveur
+  boosters: 0,             // copie de ce que dit le serveur
+  prochainQuotidien: null, // instant (local) où le serveur dira qu'un nouveau cadeau est dû
+  region: prefs.region || devinerRegion(),
+  sourceRegion: prefs.sourceRegion || null,
+  extension: prefs.extension,
+};
 
 // Les boosters mélangent toutes les époques ; les extensions servent
 // seulement à ranger la collection (un onglet par époque).
 const cartesDe = ext => CARTES.filter(c => c.extension === ext);
 
 // Époque affichée dans la collection. Choisie avec les boutons d'époque.
-let extensionActive = "antiquite";
-let cartesExtension = cartesDe(extensionActive);
+let extensionActive = EXTENSIONS[etat.extension] ? etat.extension : "antiquite";
+let cartesExtension = [];
 
-// ---------- Sauvegarde ----------
-
-function aujourdhui() {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+async function chargerCartes() {
+  const { data, error } = await sb.from("cartes").select("*")
+    .order("epoque").order("ordre").order("nom");
+  if (error) throw error;
+  // On garde les noms de champs utilisés partout dans le jeu.
+  CARTES = data.map(l => ({
+    id: l.id, nom: l.nom, gamme: l.gamme, dates: l.dates, lieu: l.lieu, region: l.region,
+    extension: l.epoque, rarete: l.rarete, finition: l.finition, texte: l.description,
+    image: l.image, ordre: l.ordre,
+  }));
+  cartesExtension = cartesDe(extensionActive);
 }
 
-function charger() {
-  try {
-    const brut = localStorage.getItem(CLE_SAUVEGARDE);
-    if (brut) return JSON.parse(brut);
-  } catch (e) { /* stockage indisponible : on repart de zéro */ }
-  return null;
+async function chargerCollection() {
+  const { data, error } = await sb.from("collection").select("carte_id, exemplaires");
+  if (error) throw error;
+  etat.collection = Object.fromEntries(data.map(l => [l.carte_id, l.exemplaires]));
 }
 
-function sauvegarder() {
-  try { localStorage.setItem(CLE_SAUVEGARDE, JSON.stringify(etat)); } catch (e) {}
+async function connecterJoueur() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) return;
+  const { error } = await sb.auth.signInAnonymously();
+  if (error) throw error;
 }
+
+// Demande au SERVEUR si le booster quotidien est dû. Il répond avec sa propre
+// heure : le stock de boosters et le temps restant avant le prochain cadeau.
+async function reclamerQuotidien() {
+  const { data, error } = await sb.rpc("reclamer_quotidien");
+  if (error) throw error;
+  etat.boosters = data.boosters;
+  etat.prochainQuotidien = Date.now() + data.attente_secondes * 1000;
+  return data;
+}
+
+// ---------- Géolocalisation ----------
+//  Deux axes : 1) l'adresse IP (immédiat, sans autorisation)
+//              2) le GPS (plus précis, le navigateur demande l'autorisation).
+//  Le service BigDataCloud transforme l'IP ou les coordonnées en pays.
+//  Rien n'est conservé : seule la région (ex. « moyen-orient ») est sauvegardée.
+
+const API_GEO = "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=fr";
+
+// Pays rattachés à la région Moyen-Orient (codes ISO à 2 lettres).
+const PAYS_MOYEN_ORIENT = ["IL", "PS", "JO", "LB", "SY", "IQ", "IR", "SA", "AE", "QA", "BH",
+  "KW", "OM", "YE", "TR", "CY"];
+const REGION_PAR_CONTINENT = { EU: "europe", AF: "afrique", AS: "asie", NA: "ameriques", SA: "ameriques", OC: "oceanie" };
 
 // Dernier recours si l'IP et le GPS échouent : le fuseau horaire de l'appareil.
 function devinerRegion() {
@@ -77,33 +111,6 @@ function devinerRegion() {
   if (fuseau.startsWith("Australia/") || fuseau.startsWith("Pacific/")) return "oceanie";
   return "europe";
 }
-
-let etat = charger();
-const messagesAccueil = [];
-
-if (!etat) {
-  etat = { collection: {}, boosters: BOOSTERS_BIENVENUE, dernierQuotidien: aujourdhui(), region: devinerRegion() };
-  messagesAccueil.push(`Bienvenue ! Voici ${BOOSTERS_BIENVENUE} boosters offerts.`);
-} else if (etat.dernierQuotidien !== aujourdhui()) {
-  etat.boosters += 1;
-  etat.dernierQuotidien = aujourdhui();
-  messagesAccueil.push("Votre booster quotidien est arrivé.");
-}
-if (EXTENSIONS[etat.extension]) extensionActive = etat.extension;
-sauvegarder();
-
-// ---------- Géolocalisation ----------
-//  Deux axes : 1) l'adresse IP (immédiat, sans autorisation)
-//              2) le GPS (plus précis, le navigateur demande l'autorisation).
-//  Le service BigDataCloud transforme l'IP ou les coordonnées en pays.
-//  Rien n'est conservé : seule la région (ex. « moyen-orient ») est sauvegardée.
-
-const API_GEO = "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=fr";
-
-// Pays rattachés à la région Moyen-Orient (codes ISO à 2 lettres).
-const PAYS_MOYEN_ORIENT = ["IL", "PS", "JO", "LB", "SY", "IQ", "IR", "SA", "AE", "QA", "BH",
-  "KW", "OM", "YE", "TR", "CY"];
-const REGION_PAR_CONTINENT = { EU: "europe", AF: "afrique", AS: "asie", NA: "ameriques", SA: "ameriques", OC: "oceanie" };
 
 function regionDuPays(pays, continent) {
   if (PAYS_MOYEN_ORIENT.includes(pays)) return "moyen-orient";
@@ -144,7 +151,7 @@ function appliquerRegion(region, source) {
   const change = etat.region !== region;
   etat.region = region;
   etat.sourceRegion = source;
-  sauvegarder();
+  sauvegarderPrefs();
   majRegion();
   if (change && source !== "fuseau") notifier(`Vous êtes en ${REGIONS[region]} : vos boosters contiendront ses personnages.`);
 }
@@ -162,64 +169,16 @@ async function localiser() {
   if (coords) appliquerRegion(await regionDepuisApi(coords), "GPS");
 }
 
-// ---------- Tirage ----------
-
-function tirerAuHasard(liste, poids) {
-  const total = poids.reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
-  for (let i = 0; i < liste.length; i++) {
-    r -= poids[i];
-    if (r < 0) return liste[i];
-  }
-  return liste[liste.length - 1];
-}
-
-// Filtre géographique : on ne tire QUE les cartes de la région du joueur.
-// Les cartes des autres régions s'obtiendront par échange.
+// Filtre géographique : un booster ne contient QUE des cartes de la région du joueur
+// (le serveur applique la même règle lors du tirage).
 const cartesRegion = () => CARTES.filter(c => c.region === etat.region);
 
-function tirerCarte(rarete, dejaTirees) {
-  const cartes = cartesRegion();
-  if (cartes.length === 0) return null;
-
-  // Paliers du plus rare au plus courant.
-  const paliers = Object.keys(RARETES).sort((a, b) => RARETES[b].ordre - RARETES[a].ordre);
-  let depart = paliers.indexOf(rarete);
-  if (depart === -1) depart = paliers.length - 1;
-  const enDessous = paliers.slice(depart);              // la rareté demandée, puis plus courant
-  const auDessus = paliers.slice(0, depart).reverse();  // seulement si la région n'a rien en dessous
-
-  const essais = [
-    [enDessous, true],   // 1. rareté demandée ou en dessous, sans doublon dans le booster
-    [enDessous, false],  // 2. idem, doublon autorisé
-    [auDessus, false],   // 3. dernier recours : région sans aucune carte plus courante
-  ];
-  for (const [liste, sansDoublon] of essais) {
-    for (const r of liste) {
-      const pool = cartes.filter(c => c.rarete === r && !(sansDoublon && dejaTirees.includes(c.id)));
-      if (pool.length) return tirerAuHasard(pool, pool.map(() => 1));
-    }
-  }
-  return cartes[0];
-}
-
-function tirerRareteSpeciale() {
-  let r = Math.random();
-  for (const { rarete, chance } of CHANCES_CARTE_SPECIALE) {
-    r -= chance;
-    if (r < 0) return rarete;
-  }
-  return "rare";
-}
-
-function tirerBooster() {
-  const raretes = ["ordinaire", "ordinaire", "notable", "rare", tirerRareteSpeciale()];
-  const tirage = [];
-  for (const rarete of raretes) {
-    tirage.push(tirerCarte(rarete, tirage.map(c => c.id)));
-  }
-  // La meilleure carte est révélée en dernier.
-  return tirage.sort((a, b) => RARETES[a.rarete].ordre - RARETES[b.rarete].ordre);
+// « 5 h 12 min », « 12 min »…
+function formatAttente(ms) {
+  const min = Math.ceil(Math.max(ms, 0) / 60000);
+  if (min < 1) return "moins d'une minute";
+  const h = Math.floor(min / 60), m = min % 60;
+  return h ? `${h} h ${String(m).padStart(2, "0")} min` : `${m} min`;
 }
 
 // ---------- Rendu des cartes ----------
@@ -266,14 +225,14 @@ function notifier(message) {
 function majConsigne() {
   const b = etat.boosters;
   const vide = cartesRegion().length === 0;
-  $("#booster").disabled = b === 0 || !etatCartes.pret || localisationEnCours || vide;
+  $("#booster").disabled = b === 0 || !etatJeu.pret || localisationEnCours || vide;
   let texte;
-  if (etatCartes.erreur) texte = "Impossible de charger les cartes. Vérifiez votre connexion puis rechargez la page.";
-  else if (!etatCartes.pret) texte = "Chargement des cartes…";
+  if (etatJeu.erreur) texte = "Impossible de joindre le serveur. Vérifiez votre connexion puis rechargez la page.";
+  else if (!etatJeu.pret) texte = "Chargement…";
   else if (localisationEnCours) texte = "Localisation en cours…";
   else if (vide) texte = `Pas encore de cartes pour la région ${REGIONS[etat.region]}. Elles arrivent bientôt !`;
   else if (b > 0) texte = `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`;
-  else texte = "Plus de booster pour aujourd'hui. Revenez demain pour votre booster quotidien.";
+  else texte = `Plus de booster pour l'instant. Prochain booster quotidien dans ${formatAttente(etat.prochainQuotidien - Date.now())}.`;
   $("#consigne").textContent = texte;
 }
 
@@ -312,7 +271,7 @@ function choisirExtension(cle) {
   extensionActive = cle;
   cartesExtension = cartesDe(cle);
   etat.extension = cle;
-  sauvegarder();
+  sauvegarderPrefs();
   afficherCollection();
 }
 
@@ -327,32 +286,53 @@ function afficherVue(nom) {
 
 let enCours = false;
 let pileTirage = [];   // les 5 cartes, de la 1re révélée (dessus) à la plus rare (dessous)
+let pileNouvelles = []; // pour chaque carte de la pile : jamais obtenue avant ce booster ?
 let indexPile = 0;     // indice de la carte actuellement sur le dessus
 
-function ouvrirBooster() {
-  if (enCours || etat.boosters <= 0 || !etatCartes.pret || localisationEnCours || cartesRegion().length === 0) return;
-  enCours = true;
+const MESSAGES_SERVEUR = {
+  plus_de_booster: "Plus de booster disponible.",
+  region_vide: "Pas encore de cartes pour votre région.",
+  region_inconnue: "Région inconnue.",
+};
 
-  const tirage = tirerBooster();   // trié : ordinaire → … → la plus rare en dernier
-  etat.boosters -= 1;
-  tirage.forEach(c => { etat.collection[c.id] = (etat.collection[c.id] || 0) + 1; });
-  sauvegarder();
-  majCompteur();
+async function ouvrirBooster() {
+  if (enCours || etat.boosters <= 0 || !etatJeu.pret || localisationEnCours || cartesRegion().length === 0) return;
+  enCours = true;
 
   const booster = $("#booster");
   booster.classList.add("ouverture");
+  const animation = new Promise(r => setTimeout(r, 900));
 
-  setTimeout(() => {
-    $("#zone-booster").hidden = true;
+  // C'est le SERVEUR qui vérifie le stock, tire les cartes et les ajoute à la collection.
+  const { data, error } = await sb.rpc("ouvrir_booster", { p_region: etat.region });
+  if (error) {
     booster.classList.remove("ouverture");
-    afficherPile(tirage);
     enCours = false;
-  }, 900);
+    const code = Object.keys(MESSAGES_SERVEUR).find(c => error.message.includes(c));
+    if (code === "plus_de_booster") etat.boosters = 0;
+    notifier(MESSAGES_SERVEUR[code] || "Le serveur n'a pas pu ouvrir le booster. Réessayez.");
+    majConsigne();
+    return;
+  }
+
+  // Une carte ajoutée depuis l'administration après le chargement de la page ?
+  if (data.cartes.some(c => !CARTES.find(x => x.id === c.id))) await chargerCartes();
+  const tirage = data.cartes.map(c => CARTES.find(x => x.id === c.id));   // trié : la plus rare en dernier
+  etat.boosters = data.boosters;
+  tirage.forEach(c => { etat.collection[c.id] = (etat.collection[c.id] || 0) + 1; });
+  majCompteur();
+
+  await animation;
+  $("#zone-booster").hidden = true;
+  booster.classList.remove("ouverture");
+  afficherPile(tirage, data.cartes.map(c => c.nouvelle));
+  enCours = false;
 }
 
 // Empile les cartes : la 1re à révéler sur le dessus, la plus rare tout au fond.
-function afficherPile(tirage) {
+function afficherPile(tirage, nouvelles) {
   pileTirage = tirage;
+  pileNouvelles = nouvelles;
   indexPile = 0;
 
   const zone = $("#tirage");
@@ -429,7 +409,7 @@ function actionPile(emplacement) {
 function reveler(emplacement, carte) {
   emplacement.classList.add("revelee");
   emplacement.setAttribute("aria-label", `${carte.nom}, ${RARETES[carte.rarete].nom}`);
-  if (etat.collection[carte.id] === 1 && !emplacement.querySelector(".nouvelle")) {
+  if (pileNouvelles[Number(emplacement.dataset.index)] && !emplacement.querySelector(".nouvelle")) {
     emplacement.insertAdjacentHTML("beforeend", `<span class="nouvelle">Nouvelle</span>`);
   }
   if (carte.rarete === "mythique") notifier(`✦ Carte MYTHIQUE : ${carte.nom} ✦`);
@@ -455,7 +435,7 @@ function terminerPile() {
     el.className = `carte-etalee rarete-${carte.rarete}`;
     el.style.animationDelay = `${i * 70}ms`;
     el.innerHTML = htmlCarte(carte)
-      + (etat.collection[carte.id] === 1 ? `<span class="nouvelle">Nouvelle</span>` : "");
+      + (pileNouvelles[i] ? `<span class="nouvelle">Nouvelle</span>` : "");
     el.setAttribute("aria-label", `${carte.nom}, ${RARETES[carte.rarete].nom}, agrandir`);
     el.addEventListener("click", () => ouvrirModale(carte));
     zone.appendChild(el);
@@ -565,27 +545,37 @@ $("#nouveau-booster").addEventListener("click", revenirAuBooster);
 document.querySelectorAll(".onglet").forEach(o => o.addEventListener("click", () => afficherVue(o.dataset.vue)));
 $("#modale").addEventListener("click", e => { if (e.target.id === "modale" || e.target.id === "modale-fermer") fermerModale(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#modale").hidden) fermerModale(); });
-$("#reinitialiser").addEventListener("click", () => {
-  if (confirm("Effacer votre collection et repartir de zéro ?")) {
-    try { localStorage.removeItem(CLE_SAUVEGARDE); } catch (e) {}
-    location.reload();
+// Toutes les 30 s : met à jour le compte à rebours, et redemande au serveur
+// le cadeau quotidien quand il devrait être dû (c'est lui qui tranche).
+setInterval(async () => {
+  if (!etatJeu.pret) return;
+  if (etat.boosters === 0 && etat.prochainQuotidien && Date.now() >= etat.prochainQuotidien) {
+    try {
+      const q = await reclamerQuotidien();
+      if (q.accorde) notifier("Votre booster quotidien est arrivé.");
+    } catch (e) { /* on réessaiera au prochain passage */ }
   }
-});
+  majConsigne();
+}, 30000);
 
-majRegion();
-localiser();
-if (messagesAccueil.length) setTimeout(() => notifier(messagesAccueil.join(" ")), 400);
-
-chargerCartes()
-  .then(() => {
-    etatCartes.pret = true;
-    cartesExtension = cartesDe(extensionActive);
+async function demarrer() {
+  try {
+    await connecterJoueur();
+    await Promise.all([chargerCartes(), chargerCollection()]);
+    const q = await reclamerQuotidien();
+    etatJeu.pret = true;
     majCompteur();
     majConsigne();
     if (!$("#vue-collection").hidden) afficherCollection();
-  })
-  .catch(err => {
+    if (q.nouveau) notifier(`Bienvenue ! Voici ${q.boosters} boosters offerts.`);
+    else if (q.accorde) notifier("Votre booster quotidien est arrivé.");
+  } catch (err) {
     console.error(err);
-    etatCartes.erreur = true;
+    etatJeu.erreur = true;
     majConsigne();
-  });
+  }
+}
+
+majRegion();
+localiser();
+demarrer();

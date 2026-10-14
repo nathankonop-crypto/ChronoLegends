@@ -64,9 +64,8 @@
 </main>
 
 <footer class="pied">
-  <p>Prototype — progression enregistrée dans ce navigateur.</p>
-  <p class="pied-geo">Vos boosters dépendent de votre région. Pour la trouver, votre adresse IP et, si vous l'autorisez, votre position GPS sont envoyées au service BigDataCloud. Seule la région est gardée, jamais votre position.</p>
-  <button id="reinitialiser" class="lien">Réinitialiser la progression</button>
+  <p>Prototype — votre collection est enregistrée sur nos serveurs, liée à ce navigateur.</p>
+  <p class="pied-geo">Un compte anonyme (sans e-mail) est créé automatiquement pour garder votre collection. Vos boosters dépendent de votre région. Pour la trouver, votre adresse IP et, si vous l'autorisez, votre position GPS sont envoyées au service BigDataCloud. Seule la région est gardée, jamais votre position.</p>
 </footer>
 
 <!-- Agrandissement d'une carte -->
@@ -77,6 +76,9 @@
 
 <div id="notification" class="notification" role="status" aria-live="polite"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
+        integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
+        crossorigin="anonymous"></script>
 <script src="reglages.js"></script>
 <script src="carte.js"></script>
 <script src="app.js"></script>

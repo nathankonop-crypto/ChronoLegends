@@ -6,7 +6,10 @@
 //  des boutons ici ne sert qu'au confort.
 // =============================================================
 
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_CLE_PUBLIQUE);
+// Session séparée de celle du jeu : se connecter ici ne touche pas au compte joueur du navigateur.
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_CLE_PUBLIQUE, {
+  auth: { storageKey: "chronolegends-admin" },
+});
 const BUCKET = "illustrations";
 const LARGEUR_IMAGE = 800, HAUTEUR_IMAGE = 600, QUALITE_IMAGE = 0.82;
 
