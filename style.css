@@ -85,6 +85,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 .region-joueur { margin: -12px 0 0; font-family: var(--serif-titre); font-size: 12px; letter-spacing: .08em; color: var(--or); text-align: center; }
 .region-joueur:empty { display: none; }
+.verrou-region { margin: -14px 0 0; max-width: 34ch; text-align: center; font-size: 15px; font-style: italic; color: var(--texte-doux); }
 
 @media (max-width: 640px) {
   .entete { justify-content: center; text-align: center; }

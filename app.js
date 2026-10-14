@@ -102,6 +102,8 @@ function appliquerRegion(data) {
   const change = etat.region && etat.region !== data.region;
   etat.region = data.region;
   if (data.pays) etat.pays = data.pays;
+  // Verrou de région : changement en attente (null s'il n'y en a pas).
+  if ("verrou" in data) etat.verrou = data.verrou;
   majRegion();
   if (change) notifier(`Vous êtes en ${REGIONS[etat.region]} : vos boosters contiendront ses personnages.`);
 }
@@ -180,6 +182,16 @@ function majRegion() {
   $("#region-joueur").textContent = REGIONS[etat.region]
     ? `Région : ${REGIONS[etat.region]}${pays ? ` · connexion depuis : ${pays}` : ""}`
     : "";
+
+  // Changement de région en attente (verrou anti-VPN décidé par le serveur).
+  const v = etat.verrou;
+  $("#verrou-region").hidden = !v;
+  if (v) {
+    const quand = new Date(v.changement_le).toLocaleString("fr-FR",
+      { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+    $("#verrou-region").textContent = `Vous semblez être en ${REGIONS[v.region_detectee]}. `
+      + `Si vous y êtes toujours à partir du ${quand}, vos boosters passeront à cette région.`;
+  }
   majConsigne();
 }
 
@@ -258,7 +270,7 @@ async function ouvrirBooster() {
   if (data.cartes.some(c => !CARTES.find(x => x.id === c.id))) await chargerCartes();
   const tirage = data.cartes.map(c => CARTES.find(x => x.id === c.id));   // trié : la plus rare en dernier
   etat.boosters = data.boosters;
-  appliquerRegion({ region: data.region });
+  appliquerRegion(data);
   tirage.forEach(c => { etat.collection[c.id] = (etat.collection[c.id] || 0) + 1; });
   majCompteur();
 
