@@ -576,9 +576,12 @@ button.case-collection:hover { transform: translateY(-4px); }
 .bouton-partage { display: inline-flex; align-items: center; gap: 9px; }
 .icone-partage { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; margin-top: -2px; }
 
-/* Bouton Partager sous la carte agrandie */
-.modale-partager { position: absolute; bottom: max(18px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); white-space: nowrap; }
-.modale-partager:hover { transform: translateX(-50%) translateY(-2px); }
+/* Boutons sous la carte agrandie (Partager ; sur iPhone : Pencher avec le téléphone) */
+.modale-actions {
+  position: absolute; left: 0; right: 0; bottom: max(18px, env(safe-area-inset-bottom));
+  display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 0 12px;
+}
+.modale-actions .bouton { white-space: nowrap; padding: 10px 14px; font-size: 12px; letter-spacing: .04em; gap: 7px; }
 
 /* ---------- Divers ---------- */
 

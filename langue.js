@@ -101,6 +101,7 @@ const TEXTES = {
     ouvrirUnAutreN: p => `Ouvrir un autre booster (${p.n})`,
 
     partager: "Partager",
+    gyroActiver: "Activer le mouvement",
     partagerMeilleure: "Partager ma plus belle carte",
     partageObtenu: "Je viens d'obtenir",
     partageTexte: p => `J'ai obtenu ${p.nom} (${p.rarete}) dans ChronoLegends ! Viens collectionner l'histoire du monde :`,
@@ -170,6 +171,7 @@ const TEXTES = {
     ouvrirUnAutreN: p => `Open another booster (${p.n})`,
 
     partager: "Share",
+    gyroActiver: "Enable motion",
     partagerMeilleure: "Share my best card",
     partageObtenu: "I just got",
     partageTexte: p => `I got ${p.nom} (${p.rarete}) in ChronoLegends! Come and collect world history:`,

@@ -531,7 +531,7 @@ function ouvrirModale(carte) {
   setTimeout(() => preparerPartage(carte), 400);   // après l'animation d'ouverture
   contenu.style.transform = "";
   positionDeDepart = null; // le gyroscope repart de la façon dont on tient le téléphone
-  demanderGyroscope();
+  $("#activer-gyroscope").hidden = !gyroscopeAActiver();
   $("#modale").hidden = false;
   requestAnimationFrame(() => $("#modale").classList.add("ouverte"));
 }
@@ -543,46 +543,75 @@ function fermerModale() {
 }
 
 // Légère inclinaison 3D de la carte agrandie.
-// x et y vont de -0,5 à 0,5 (0 = carte bien de face).
-function incliner(x, y) {
+// x et y vont de -0,5 à 0,5 (0 = carte bien de face) : la carte penche
+// au maximum de la moitié de l'amplitude (14 → 7°, 22 → 11°).
+const INCLINAISON_SOURIS = 14;
+const INCLINAISON_DOIGT = 22;      // plus marquée au toucher
+const INCLINAISON_GYROSCOPE = 14;
+
+function incliner(x, y, amplitude) {
   const borne = v => Math.max(-0.5, Math.min(0.5, v));
-  $("#modale-contenu").style.transform = `rotateY(${borne(x) * 14}deg) rotateX(${-borne(y) * 14}deg)`;
+  $("#modale-contenu").style.transform = `rotateY(${borne(x) * amplitude}deg) rotateX(${-borne(y) * amplitude}deg)`;
 }
 
-// 1. En suivant la souris, ou le doigt qui glisse sur la carte
+// 1. En suivant la souris, ou le doigt posé sur la carte
 //    (touch-action: none dans style.css empêche la page de défiler à la place).
-$("#modale-contenu").addEventListener("pointermove", e => {
+//    Tant que le doigt est posé, c'est lui qui commande, pas le gyroscope.
+let doigtPose = false;
+function suivrePointeur(e) {
   const zone = e.currentTarget.getBoundingClientRect();
-  incliner((e.clientX - zone.left) / zone.width - 0.5, (e.clientY - zone.top) / zone.height - 0.5);
-});
-for (const fin of ["pointerleave", "pointercancel"]) {
-  $("#modale-contenu").addEventListener(fin, e => { e.currentTarget.style.transform = ""; });
+  const tactile = e.pointerType !== "mouse";
+  if (tactile) doigtPose = true;
+  incliner((e.clientX - zone.left) / zone.width - 0.5, (e.clientY - zone.top) / zone.height - 0.5,
+    tactile ? INCLINAISON_DOIGT : INCLINAISON_SOURIS);
+}
+$("#modale-contenu").addEventListener("pointerdown", suivrePointeur);
+$("#modale-contenu").addEventListener("pointermove", suivrePointeur);
+for (const fin of ["pointerup", "pointerleave", "pointercancel"]) {
+  $("#modale-contenu").addEventListener(fin, e => {
+    doigtPose = false;
+    positionDeDepart = null;   // le gyroscope repart de la position actuelle du téléphone
+    e.currentTarget.style.transform = "";
+  });
 }
 
 // 2. Sur téléphone : en penchant le téléphone (gyroscope).
+//    Android : automatique. iPhone : Apple impose une autorisation, et
+//    l'oublie à chaque visite ; on ne la demande donc jamais d'office,
+//    seulement si le joueur appuie sur « Pencher avec le téléphone ».
 let positionDeDepart = null;
-let gyroscopeDemande = false;
+let gyroscopeActif = false;
 const animationsReduites = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const autorisationIphone = typeof DeviceOrientationEvent !== "undefined"
+  && typeof DeviceOrientationEvent.requestPermission === "function";
 
 function surOrientation(e) {
-  if ($("#modale").hidden || e.beta === null || e.gamma === null) return;
+  if (e.beta === null || e.gamma === null) return;
+  gyroscopeActif = true;   // des mesures arrivent : le gyroscope marche (ou l'iPhone l'a déjà autorisé)
+  $("#activer-gyroscope").hidden = true;
+  if ($("#modale").hidden || doigtPose) return;
   if (!positionDeDepart) { positionDeDepart = { beta: e.beta, gamma: e.gamma }; return; }
   // 30° de penchement = inclinaison maximale de la carte.
-  incliner((e.gamma - positionDeDepart.gamma) / 30, (e.beta - positionDeDepart.beta) / 30);
+  incliner((e.gamma - positionDeDepart.gamma) / 30, (e.beta - positionDeDepart.beta) / 30, INCLINAISON_GYROSCOPE);
 }
 
-// L'iPhone demande l'autorisation (une seule fois) ; Android l'accorde directement.
-function demanderGyroscope() {
-  if (gyroscopeDemande || animationsReduites || !("DeviceOrientationEvent" in window)) return;
-  gyroscopeDemande = true;
-  if (typeof DeviceOrientationEvent.requestPermission === "function") {
-    DeviceOrientationEvent.requestPermission()
-      .then(r => { if (r === "granted") addEventListener("deviceorientation", surOrientation); })
-      .catch(() => { /* refusé : le doigt suffit */ });
-  } else {
-    addEventListener("deviceorientation", surOrientation);
-  }
+if (!animationsReduites && typeof DeviceOrientationEvent !== "undefined") {
+  addEventListener("deviceorientation", surOrientation);   // sur iPhone, ne reçoit rien tant que ce n'est pas autorisé
 }
+
+// Le bouton n'apparaît que sur un téléphone qui exige l'autorisation (iPhone),
+// tant que le gyroscope n'envoie rien. Sur Android, les mesures arrivent
+// d'elles-mêmes dès le chargement : le bouton reste caché.
+function gyroscopeAActiver() {
+  return autorisationIphone && ecranTactile.matches && !animationsReduites && !gyroscopeActif;
+}
+
+$("#activer-gyroscope").addEventListener("click", () => {
+  DeviceOrientationEvent.requestPermission()
+    .then(r => { if (r === "granted") { gyroscopeActif = true; positionDeDepart = null; } })
+    .catch(() => { /* refusé : le doigt suffit */ })
+    .finally(() => { $("#activer-gyroscope").hidden = true; });
+});
 
 // ---------- Démarrage ----------
 
