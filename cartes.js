@@ -47,15 +47,15 @@ const CARTES = [
     texte: "Demi-dieu et héros espiègle de la mythologie polynésienne. De nombreux récits lui attribuent la pêche des îles et la capture du soleil." },
 
   // ---------- Légendaires ----------
-  { id: "alexandre", nom: "Alexandre le Grand", dates: "356 – 323 av. J.-C.", lieu: "Macédoine", region: "europe", extension: "antiquite", rarete: "legendaire", image: null,
+  { id: "alexandre", nom: "Alexandre le Grand", dates: "356 – 323 av. J.-C.", lieu: "Macédoine", region: "europe", extension: "antiquite", rarete: "legendaire", image: "images/alexandre.webp",
     texte: "Roi de Macédoine à vingt ans. Ses campagnes renversent l'Empire perse achéménide et étendent son pouvoir de la Grèce à la vallée de l'Indus." },
-  { id: "cesar", nom: "Jules César", dates: "100 – 44 av. J.-C.", lieu: "Rome", region: "europe", extension: "antiquite", rarete: "legendaire", image: null,
+  { id: "cesar", nom: "Jules César", dates: "100 – 44 av. J.-C.", lieu: "Rome", region: "europe", extension: "antiquite", rarete: "legendaire", image: "images/cesar.webp",
     texte: "Général et homme politique romain. Il conquiert la Gaule, remporte la guerre civile et devient dictateur. Il est assassiné lors d'une séance du Sénat." },
   { id: "confucius", nom: "Confucius", dates: "551 – 479 av. J.-C.", lieu: "État de Lu, Chine", region: "asie", extension: "antiquite", rarete: "legendaire", image: null,
     texte: "Penseur et enseignant. Ses paroles, rassemblées par ses disciples dans les Entretiens, ont durablement influencé la morale et l'administration en Asie de l'Est." },
   { id: "qin-shi-huang", nom: "Qin Shi Huang", dates: "259 – 210 av. J.-C.", lieu: "Chine", region: "asie", extension: "antiquite", rarete: "legendaire", image: null,
     texte: "Premier empereur de la Chine unifiée en 221 av. J.-C. Il standardise l'écriture, la monnaie et les mesures. Son tombeau est gardé par l'armée de terre cuite." },
-  { id: "cleopatre", nom: "Cléopâtre VII", dates: "69 – 30 av. J.-C.", lieu: "Alexandrie, Égypte", region: "afrique", extension: "antiquite", rarete: "legendaire", image: null,
+  { id: "cleopatre", nom: "Cléopâtre VII", dates: "69 – 30 av. J.-C.", lieu: "Alexandrie, Égypte", region: "afrique", extension: "antiquite", rarete: "legendaire", image: "images/cleopatre.webp",
     texte: "Dernière souveraine de la dynastie lagide. Alliée à César puis à Marc Antoine, elle meurt après la défaite face à Octavien ; l'Égypte devient province romaine." },
   { id: "bouddha", nom: "Siddhartha Gautama", dates: "Ve s. av. J.-C. (dates débattues)", lieu: "Plaine du Gange", region: "asie", extension: "antiquite", rarete: "legendaire", image: null,
     texte: "Connu comme le Bouddha. Les enseignements qui lui sont attribués sont à l'origine du bouddhisme, qui s'est diffusé dans une grande partie de l'Asie." },
@@ -73,7 +73,7 @@ const CARTES = [
     texte: "Philosophe, élève de Platon et précepteur d'Alexandre. Ses travaux couvrent la logique, la physique, la biologie, l'éthique et la politique." },
   { id: "hammurabi", nom: "Hammurabi", dates: "règne v. 1792 – 1750 av. J.-C.", lieu: "Babylone", region: "moyen-orient", extension: "antiquite", rarete: "epique", image: null,
     texte: "Roi de Babylone, unificateur de la Mésopotamie. Son recueil de près de 300 lois, gravé sur une stèle de basalte, est conservé au musée du Louvre." },
-  { id: "archimede", nom: "Archimède", dates: "v. 287 – 212 av. J.-C.", lieu: "Syracuse, Sicile", region: "europe", extension: "antiquite", rarete: "epique", image: null,
+  { id: "archimede", nom: "Archimède", dates: "v. 287 – 212 av. J.-C.", lieu: "Syracuse, Sicile", region: "europe", extension: "antiquite", rarete: "epique", image: "images/archimede.webp",
     texte: "Mathématicien, physicien et ingénieur, connu pour son principe sur les corps plongés dans un fluide. Il meurt lors de la prise de Syracuse par Rome." },
 
   // ---------- Rares ----------
