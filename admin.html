@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Administration — ChronoLegends</title>
+<meta name="theme-color" content="#101320">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin">
+
+<!-- ---------- Connexion ---------- -->
+<section id="ecran-connexion" class="ecran-centre" hidden>
+  <form id="form-connexion" class="boite-connexion">
+    <h1>ChronoLegends</h1>
+    <p class="sous">Administration</p>
+    <label>E-mail
+      <input type="email" id="email" autocomplete="username" required>
+    </label>
+    <label>Mot de passe
+      <input type="password" id="mot-de-passe" autocomplete="current-password" required>
+    </label>
+    <button type="submit" class="bouton bouton-or" id="bouton-connexion">Se connecter</button>
+    <p class="erreur" id="erreur-connexion" role="alert"></p>
+  </form>
+</section>
+
+<!-- ---------- Compte sans droits ---------- -->
+<section id="ecran-refuse" class="ecran-centre" hidden>
+  <div class="boite-connexion">
+    <h1>Accès refusé</h1>
+    <p>Ce compte n'est pas administrateur.</p>
+    <button class="bouton" data-action="deconnexion">Se déconnecter</button>
+  </div>
+</section>
+
+<!-- ---------- Administration ---------- -->
+<div id="ecran-admin" hidden>
+  <header class="admin-entete">
+    <div class="marque">
+      <span class="marque-titre">ChronoLegends</span>
+      <span class="marque-sous">Administration des cartes</span>
+    </div>
+    <div class="admin-entete-actions">
+      <span class="qui" id="qui"></span>
+      <button class="bouton" data-action="deconnexion">Se déconnecter</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Liste des cartes -->
+    <section id="vue-liste">
+      <div class="barre-liste">
+        <h1>Les cartes <span id="nb-cartes"></span></h1>
+        <button class="bouton bouton-or" id="bouton-nouvelle">+ Nouvelle carte</button>
+      </div>
+
+      <div class="filtres">
+        <input type="search" id="recherche" placeholder="Rechercher un nom, un lieu…" aria-label="Rechercher">
+        <select id="filtre-rarete" aria-label="Filtrer par rareté"><option value="">Toutes les raretés</option></select>
+        <select id="filtre-gamme" aria-label="Filtrer par gamme"><option value="">Toutes les gammes</option></select>
+        <select id="filtre-region" aria-label="Filtrer par région"><option value="">Toutes les régions</option></select>
+        <select id="filtre-epoque" aria-label="Filtrer par époque"><option value="">Toutes les époques</option></select>
+      </div>
+
+      <div class="tableau-conteneur">
+        <table class="tableau">
+          <thead>
+            <tr><th></th><th>Nom</th><th>N°</th><th>Époque</th><th>Rareté</th><th>Gamme</th><th>Région</th><th></th></tr>
+          </thead>
+          <tbody id="lignes"></tbody>
+        </table>
+      </div>
+      <p class="vide" id="aucun-resultat" hidden>Aucune carte ne correspond à ces filtres.</p>
+    </section>
+
+    <!-- Formulaire de création / modification -->
+    <section id="vue-formulaire" hidden>
+      <div class="barre-liste">
+        <h1 id="titre-formulaire">Nouvelle carte</h1>
+        <button class="bouton" id="bouton-retour">← Retour à la liste</button>
+      </div>
+
+      <div class="edition">
+        <form id="form-carte" class="form-carte" novalidate>
+          <label><span>Nom <span class="requis">*</span></span>
+            <input type="text" name="nom" maxlength="60" required>
+          </label>
+          <label>Identifiant
+            <input type="text" name="id" pattern="[a-z0-9-]+" maxlength="60">
+            <small id="aide-id">Créé à partir du nom. Sert au nom du fichier image ; il ne change plus une fois la carte créée.</small>
+          </label>
+
+          <div class="ligne-champs">
+            <label><span>Gamme <span class="requis">*</span></span><select name="gamme" required></select></label>
+            <label><span>Rareté <span class="requis">*</span></span><select name="rarete" required></select></label>
+            <label>Finition<select name="finition"></select></label>
+          </div>
+          <div class="ligne-champs">
+            <label><span>Époque <span class="requis">*</span></span><select name="epoque" required></select></label>
+            <label><span>Région <span class="requis">*</span></span><select name="region" required></select></label>
+          </div>
+          <div class="ligne-champs">
+            <label>Dates<input type="text" name="dates" maxlength="60" placeholder="ex. v. 1412 – 1431"></label>
+            <label>Lieu<input type="text" name="lieu" maxlength="60" placeholder="ex. Royaume de France"></label>
+          </div>
+          <label>Description
+            <textarea name="description" rows="4" maxlength="260"></textarea>
+            <small><span id="compte-description">0</span>/260 caractères — ton neutre et factuel.</small>
+          </label>
+
+          <label>Illustration
+            <input type="file" id="fichier-image" accept="image/*">
+            <small id="info-image">Recadrée automatiquement au centre en paysage 4:3, puis compressée (WebP 800×600).</small>
+          </label>
+          <button type="button" class="lien" id="retirer-image" hidden>Retirer l'illustration</button>
+
+          <p class="erreur" id="erreur-carte" role="alert"></p>
+          <div class="actions-form">
+            <button type="submit" class="bouton bouton-or" id="bouton-enregistrer">Enregistrer</button>
+          </div>
+        </form>
+
+        <aside class="apercu">
+          <p class="apercu-titre">Aperçu en direct</p>
+          <div class="apercu-carte" id="apercu"></div>
+          <p class="apercu-note" id="apercu-note"></p>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Confirmation de suppression -->
+<div class="fond-dialogue" id="dialogue-suppression" hidden>
+  <div class="dialogue" role="alertdialog" aria-modal="true" aria-labelledby="titre-suppression">
+    <h2 id="titre-suppression">Supprimer cette carte ?</h2>
+    <p id="texte-suppression"></p>
+    <div class="actions-form">
+      <button class="bouton" id="annuler-suppression">Annuler</button>
+      <button class="bouton bouton-danger" id="confirmer-suppression">Supprimer définitivement</button>
+    </div>
+  </div>
+</div>
+
+<div id="notification" class="notification" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
+        integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
+        crossorigin="anonymous"></script>
+<script src="reglages.js"></script>
+<script src="carte.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

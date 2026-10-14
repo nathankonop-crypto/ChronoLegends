@@ -1,0 +1,110 @@
+/* =============================================================
+   CHRONOLEGENDS — Page d'administration
+   Reprend les couleurs du jeu (style.css) ; plus sobre et dense.
+   ============================================================= */
+
+body.admin { font-size: 16px; }
+.admin main { padding: clamp(16px, 3vw, 32px) clamp(16px, 4vw, 40px); max-width: 1280px; width: 100%; margin: 0 auto; box-sizing: border-box; }
+.admin h1 { font-family: var(--serif-titre); font-weight: 600; letter-spacing: .1em; color: var(--or-clair); font-size: clamp(20px, 3vw, 26px); margin: 0; }
+.admin h1 span { font-family: var(--serif); font-size: .7em; letter-spacing: 0; color: var(--texte-doux); }
+
+.admin input, .admin select, .admin textarea {
+  font: inherit;
+  font-family: system-ui, sans-serif;
+  font-size: 15px;
+  color: var(--texte);
+  background: var(--encre-2);
+  border: 1px solid rgba(212, 178, 106, .3);
+  border-radius: 8px;
+  padding: 9px 11px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.admin input:focus, .admin select:focus, .admin textarea:focus { outline: 2px solid var(--or); outline-offset: 1px; }
+.admin input[readonly] { opacity: .6; }
+.admin textarea { resize: vertical; line-height: 1.4; }
+.admin label { display: flex; flex-direction: column; gap: 5px; font-size: 15px; color: var(--texte-doux); }
+.admin small { font-size: 13px; font-style: italic; color: var(--texte-doux); opacity: .85; }
+.requis { color: var(--or); }
+
+.bouton.petit { padding: 6px 12px; font-size: 12px; }
+.bouton-danger { border-color: rgba(220, 90, 80, .6); color: #f1b3ab; }
+.bouton-danger:hover { background: #5a1f1c; }
+.bouton:disabled { opacity: .55; cursor: wait; transform: none; }
+.erreur { color: #f1a39a; font-size: 15px; margin: 0; min-height: 1em; }
+
+/* ---------- Connexion ---------- */
+.ecran-centre { flex: 1; display: grid; place-items: center; padding: 24px 16px; }
+.boite-connexion {
+  width: min(100%, 360px);
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 32px 28px;
+  background: var(--encre-2);
+  border: 1px solid rgba(212, 178, 106, .3);
+  border-radius: 16px;
+  text-align: center;
+}
+.boite-connexion h1 { font-size: 24px; }
+.boite-connexion .sous { margin: -10px 0 6px; font-style: italic; color: var(--texte-doux); }
+.boite-connexion label { text-align: left; }
+
+/* ---------- En-tête ---------- */
+.admin-entete {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  padding: 16px clamp(16px, 4vw, 40px);
+  border-bottom: 1px solid rgba(212, 178, 106, .18);
+}
+.admin-entete-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.qui { font-size: 14px; color: var(--texte-doux); font-style: italic; }
+
+/* ---------- Liste ---------- */
+.barre-liste { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.filtres { display: grid; grid-template-columns: 2fr repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+@media (max-width: 900px) { .filtres { grid-template-columns: 1fr 1fr; } .filtres input { grid-column: 1 / -1; } }
+
+.tableau-conteneur { overflow-x: auto; border: 1px solid rgba(212, 178, 106, .18); border-radius: 12px; }
+.tableau { width: 100%; border-collapse: collapse; font-family: system-ui, sans-serif; font-size: 14px; }
+.tableau th { text-align: left; font-weight: 600; color: var(--texte-doux); padding: 10px 12px; border-bottom: 1px solid rgba(212, 178, 106, .25); white-space: nowrap; }
+.tableau td { padding: 8px 12px; border-bottom: 1px solid rgba(212, 178, 106, .1); white-space: nowrap; }
+.tableau tbody tr:hover { background: rgba(255, 255, 255, .03); }
+.col-nom { font-family: var(--serif-titre); font-size: 14px; color: var(--texte); }
+.col-actions { text-align: right; }
+.col-actions .bouton + .bouton { margin-left: 6px; }
+.vignette { width: 64px; }
+.vignette img, .vignette span {
+  display: grid; place-items: center;
+  width: 56px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px;
+  background: var(--encre-3); color: var(--or); font-family: var(--serif-titre); font-size: 13px;
+}
+.pastille {
+  display: inline-block; padding: 2px 10px; border-radius: 999px;
+  background: var(--cadre); color: #fff; font-size: 12px; font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+}
+.vide { text-align: center; color: var(--texte-doux); font-style: italic; }
+
+/* ---------- Formulaire + aperçu ---------- */
+.edition { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: clamp(20px, 4vw, 48px); align-items: start; }
+@media (max-width: 820px) { .edition { grid-template-columns: 1fr; } .apercu { order: -1; } }
+
+.form-carte { display: flex; flex-direction: column; gap: 16px; }
+.ligne-champs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.actions-form { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+.form-carte .lien { align-self: flex-start; margin-top: -10px; }
+
+.apercu { position: sticky; top: 16px; text-align: center; }
+.apercu-titre { margin: 0 0 10px; font-family: var(--serif-titre); font-size: 13px; letter-spacing: .14em; color: var(--texte-doux); text-transform: uppercase; }
+.apercu-carte { width: min(100%, 320px); margin: 0 auto; }
+.apercu-note { font-size: 14px; font-style: italic; color: var(--texte-doux); }
+
+/* ---------- Dialogue de suppression ---------- */
+.fond-dialogue { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 16px; background: rgba(5, 6, 12, .75); }
+.dialogue {
+  width: min(100%, 440px);
+  padding: 26px 24px 20px;
+  background: var(--encre-2);
+  border: 1px solid rgba(220, 90, 80, .5);
+  border-radius: 14px;
+}
+.dialogue h2 { margin: 0 0 8px; font-family: var(--serif-titre); font-size: 20px; color: #f1b3ab; }
+.dialogue p { margin: 0 0 20px; line-height: 1.45; }
