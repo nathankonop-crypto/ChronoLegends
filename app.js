@@ -8,13 +8,34 @@ const CLE_SAUVEGARDE = "chronica.v1";
 const CARTES_PAR_BOOSTER = 5;
 const BOOSTERS_BIENVENUE = 3;
 
-// Rareté de la 5e carte (la « carte spéciale ») : rare, épique ou légendaire.
+// Un booster = 2 Ordinaires + 1 Notable + 1 Rare + 1 « carte spéciale ».
+// Rareté de la carte spéciale :
 const CHANCES_CARTE_SPECIALE = [
   { rarete: "mythique",   chance: 0.01 },  // palier ultime, extrêmement rare
   { rarete: "legendaire", chance: 0.08 },
   { rarete: "epique",     chance: 0.26 },
   { rarete: "rare",       chance: 0.65 },
 ];
+
+// ---------- Chargement des cartes depuis la base de données ----------
+
+let CARTES = [];   // rempli au démarrage par chargerCartes()
+const etatCartes = { pret: false, erreur: false };
+
+async function chargerCartes() {
+  const url = `${SUPABASE_URL}/rest/v1/cartes?select=*&order=epoque.asc,ordre.asc,nom.asc`;
+  const rep = await fetch(url, {
+    headers: { apikey: SUPABASE_CLE_PUBLIQUE, Authorization: `Bearer ${SUPABASE_CLE_PUBLIQUE}` },
+  });
+  if (!rep.ok) throw new Error(`Base de données : erreur ${rep.status}`);
+  const lignes = await rep.json();
+  // On garde les noms de champs utilisés partout dans le jeu.
+  CARTES = lignes.map(l => ({
+    id: l.id, nom: l.nom, gamme: l.gamme, dates: l.dates, lieu: l.lieu, region: l.region,
+    extension: l.epoque, rarete: l.rarete, finition: l.finition, texte: l.description,
+    image: l.image, ordre: l.ordre,
+  }));
+}
 
 // Les boosters mélangent toutes les époques ; les extensions servent
 // seulement à ranger la collection (un onglet par époque).
@@ -68,10 +89,7 @@ if (!etat) {
   etat.dernierQuotidien = aujourdhui();
   messagesAccueil.push("Votre booster quotidien est arrivé.");
 }
-if (EXTENSIONS[etat.extension]) {
-  extensionActive = etat.extension;
-  cartesExtension = cartesDe(extensionActive);
-}
+if (EXTENSIONS[etat.extension]) extensionActive = etat.extension;
 sauvegarder();
 
 // ---------- Géolocalisation ----------
@@ -195,7 +213,7 @@ function tirerRareteSpeciale() {
 }
 
 function tirerBooster() {
-  const raretes = ["ordinaire", "ordinaire", "ordinaire", "rare", tirerRareteSpeciale()];
+  const raretes = ["ordinaire", "ordinaire", "notable", "rare", tirerRareteSpeciale()];
   const tirage = [];
   for (const rarete of raretes) {
     tirage.push(tirerCarte(rarete, tirage.map(c => c.id)));
@@ -306,14 +324,15 @@ function notifier(message) {
 function majConsigne() {
   const b = etat.boosters;
   const vide = cartesRegion().length === 0;
-  $("#booster").disabled = b === 0 || localisationEnCours || vide;
-  $("#consigne").textContent = localisationEnCours
-    ? "Localisation en cours…"
-    : vide
-      ? `Pas encore de cartes pour la région ${REGIONS[etat.region]}. Elles arrivent bientôt !`
-      : b > 0
-        ? `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`
-        : "Plus de booster pour aujourd'hui. Revenez demain pour votre booster quotidien.";
+  $("#booster").disabled = b === 0 || !etatCartes.pret || localisationEnCours || vide;
+  let texte;
+  if (etatCartes.erreur) texte = "Impossible de charger les cartes. Vérifiez votre connexion puis rechargez la page.";
+  else if (!etatCartes.pret) texte = "Chargement des cartes…";
+  else if (localisationEnCours) texte = "Localisation en cours…";
+  else if (vide) texte = `Pas encore de cartes pour la région ${REGIONS[etat.region]}. Elles arrivent bientôt !`;
+  else if (b > 0) texte = `${b} booster${b > 1 ? "s" : ""} disponible${b > 1 ? "s" : ""} — touchez pour ouvrir`;
+  else texte = "Plus de booster pour aujourd'hui. Revenez demain pour votre booster quotidien.";
+  $("#consigne").textContent = texte;
 }
 
 // Région affichée sous le booster (non modifiable : elle vient de la géolocalisation).
@@ -369,7 +388,7 @@ let pileTirage = [];   // les 5 cartes, de la 1re révélée (dessus) à la plus
 let indexPile = 0;     // indice de la carte actuellement sur le dessus
 
 function ouvrirBooster() {
-  if (enCours || etat.boosters <= 0 || localisationEnCours || cartesRegion().length === 0) return;
+  if (enCours || etat.boosters <= 0 || !etatCartes.pret || localisationEnCours || cartesRegion().length === 0) return;
   enCours = true;
 
   const tirage = tirerBooster();   // trié : ordinaire → … → la plus rare en dernier
@@ -612,6 +631,19 @@ $("#reinitialiser").addEventListener("click", () => {
 });
 
 majRegion();
-majCompteur();
 localiser();
 if (messagesAccueil.length) setTimeout(() => notifier(messagesAccueil.join(" ")), 400);
+
+chargerCartes()
+  .then(() => {
+    etatCartes.pret = true;
+    cartesExtension = cartesDe(extensionActive);
+    majCompteur();
+    majConsigne();
+    if (!$("#vue-collection").hidden) afficherCollection();
+  })
+  .catch(err => {
+    console.error(err);
+    etatCartes.erreur = true;
+    majConsigne();
+  });

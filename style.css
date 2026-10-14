@@ -410,6 +410,10 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   --cadre: linear-gradient(150deg, #a59c8b, #6e6758 45%, #9a917f 70%, #5d574a);
   --filet: #9b8e72; --gemme: #8a8170; --encre-bandeau: #5a5240;
 }
+.rarete-notable {
+  --cadre: linear-gradient(150deg, #edc699, #8f5d2e 40%, #d9a26b 65%, #6a4120);
+  --filet: #a87443; --gemme: #c9793a; --encre-bandeau: #5e3a17;
+}
 .rarete-rare {
   --cadre: linear-gradient(150deg, #e3eaf2, #8798ad 40%, #cdd7e3 65%, #627389);
   --filet: #7d8ea4; --gemme: #4f7fbf; --encre-bandeau: #34506f;
