@@ -110,7 +110,7 @@ function rendreCarte(carte, numeroTexte) {
           <p class="carte-lieu">${echapper(carte.lieu)} · ${nomRegion(carte.region)}</p>
           <p class="carte-texte">${echapper(carte.texte)}</p>
         </div>
-        <footer class="carte-pied"><span>${nomEpoque(carte.extension)}</span><span>${t("numero")} ${numeroTexte}</span></footer>
+        <footer class="carte-pied"><span>${nomEpoque(carte.extension)}</span><span class="carte-gamme">${nomGamme(carte.gamme)}</span><span>${t("numero")} ${numeroTexte}</span></footer>
       </div>
     </div>
   </article>`;

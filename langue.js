@@ -38,6 +38,12 @@ const NOMS_EN = {
 const nomRarete = k => (LANGUE === "en" ? NOMS_EN.raretes[k] : RARETES[k]?.nom) ?? k;
 const nomRegion = k => (LANGUE === "en" ? NOMS_EN.regions[k] : REGIONS[k]) ?? k;
 const nomEpoque = k => (LANGUE === "en" ? NOMS_EN.epoques[k]?.nom : EXTENSIONS[k]?.nom) ?? k;
+// Gamme de la carte, en version courte (elle s'affiche en bas de la carte).
+const GAMMES_CARTE = {
+  fr: { personnage: "Personnage", archetype: "Archétype", evenement: "Événement", lieu: "Lieu", mythologie: "Mythologie" },
+  en: { personnage: "Figure", archetype: "Archetype", evenement: "Event", lieu: "Landmark", mythologie: "Mythology" },
+};
+const nomGamme = k => GAMMES_CARTE[LANGUE][k] ?? "";
 const sousTitreEpoque = k => (LANGUE === "en" ? NOMS_EN.epoques[k]?.sousTitre : EXTENSIONS[k]?.sousTitre) ?? "";
 
 // Nom d'un pays (code « IL ») dans la langue du jeu.
