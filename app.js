@@ -790,6 +790,40 @@ function afficherChances() {
   $("#fermer-chances").focus();
 }
 const fermerChances = () => { $("#dialogue-chances").hidden = true; };
+
+// Règles du jeu : raretés, types de cartes, familles, finitions.
+function afficherRegles() {
+  const R = REGLES[LANGUE] || REGLES.en;
+  const types = TYPES_LONGS[LANGUE] || TYPES_LONGS.en;
+  const familles = Object.values(FAMILLES).filter(f => cartesFamille(f.id).length);
+  const section = (titre, corps) => `<h3>${titre}</h3>${corps}`;
+  $("#contenu-regles").innerHTML = [
+    section(R.principeTitre, `<p>${R.principe}</p>`),
+    section(R.boostersTitre, `<p>${R.boosters}</p>`),
+    section(R.regionTitre, `<p>${R.region}</p>`),
+    section(R.raretesTitre, `<ul class="regles-liste">${Object.entries(R.raretes).map(([r, texte]) =>
+      `<li><span class="pastille-rarete rarete-${r}"></span><span><b>${nomRarete(r)}</b> — ${texte}</span></li>`).join("")}</ul>
+      <p class="chances-note">${R.raretesNote}</p>`),
+    section(R.typesTitre, `<p>${R.typesIntro}</p><ul class="regles-liste">${Object.entries(R.types).map(([g, texte]) =>
+      `<li><span class="regles-lettre">${nomGamme(g).charAt(0)}</span><span><b>${types[g]}</b> — ${texte}</span></li>`).join("")}</ul>`),
+    section(R.famillesTitre, `<p>${R.familles}</p>${familles.length ? `<ul class="regles-familles">${familles.map(f =>
+      `<li><span class="embleme-mini">${dessinEmbleme(f.embleme)}</span>${echapper(nomFamille(f))}</li>`).join("")}</ul>` : ""}`),
+    section(R.finitionsTitre, `<ul class="regles-liste">${Object.entries(R.finitions).map(([f, texte]) =>
+      `<li><span class="regles-icone">${{ normale: "◆", animee: "✨", diamant: "💎" }[f]}</span><span><b>${nomFinition(f)}</b> — ${texte}</span></li>`).join("")}</ul>
+      <p class="chances-note">${R.finitionsNote}</p>
+      <button class="lien-reglages" id="regles-vers-chances">${R.voirChances}</button>`),
+  ].join("");
+  $("#regles-vers-chances").addEventListener("click", () => { fermerRegles(); afficherChances(); });
+  basculerReglages(false);
+  $("#dialogue-regles").hidden = false;
+  $("#dialogue-regles .dialogue-regles").scrollTop = 0;
+  $("#fermer-regles").focus();
+}
+const fermerRegles = () => { $("#dialogue-regles").hidden = true; };
+$("#bouton-regles").addEventListener("click", afficherRegles);
+$("#fermer-regles").addEventListener("click", fermerRegles);
+$("#dialogue-regles").addEventListener("click", e => { if (e.target.id === "dialogue-regles") fermerRegles(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") fermerRegles(); });
 $("#bouton-chances").addEventListener("click", afficherChances);
 $("#fermer-chances").addEventListener("click", fermerChances);
 $("#dialogue-chances").addEventListener("click", e => { if (e.target.id === "dialogue-chances") fermerChances(); });

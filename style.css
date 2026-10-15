@@ -156,6 +156,7 @@ html[dir="rtl"] .interrupteur input:checked::after { transform: translateX(-17px
 .dialogue-chances h2 { margin: 0 40px 12px 0; font-family: var(--serif-titre); font-size: 18px; letter-spacing: .1em; color: var(--or-clair); }
 html[dir="rtl"] .dialogue-chances h2 { margin: 0 0 12px 40px; }
 html[dir="rtl"] .dialogue-chances .savoir-plus-fermer { right: auto; left: 14px; }
+html[dir="rtl"] .regles-familles li { padding: 4px 4px 4px 10px; }
 .dialogue-chances .savoir-plus-fermer { color: var(--or-clair); background: rgba(255, 255, 255, .06); border-color: rgba(212, 178, 106, .45); }
 .dialogue-chances p { margin: 10px 0 6px; color: var(--texte-doux); }
 .chances-ligne { color: var(--texte) !important; }
@@ -165,6 +166,26 @@ html[dir="rtl"] .dialogue-chances .savoir-plus-fermer { right: auto; left: 14px;
 .chances-liste small { font-weight: 400; color: var(--texte-doux); }
 .pastille-rarete { width: 12px; height: 12px; border-radius: 50%; background: var(--cadre); flex: none; }
 .chances-note { font-size: 14px; font-style: italic; }
+.lien-reglages-suite { margin-top: 2px; border-top: 0; padding-top: 4px; }
+
+/* Règles du jeu */
+.dialogue-regles { width: min(100%, 560px); }
+.dialogue-regles h3 { margin: 20px 0 6px; font-family: var(--serif-titre); font-size: 14px; letter-spacing: .12em; text-transform: uppercase; color: var(--or); }
+.dialogue-regles h3:first-of-type { margin-top: 4px; }
+.dialogue-regles p { color: var(--texte); line-height: 1.45; }
+.regles-liste { list-style: none; margin: 6px 0 0; padding: 0; }
+.regles-liste li { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(212, 178, 106, .1); color: var(--texte-doux); line-height: 1.4; }
+.regles-liste b { color: var(--texte); font-weight: 600; }
+.regles-liste .pastille-rarete { margin-top: 5px; }
+.regles-lettre {
+  flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  border: 1.5px solid var(--or); color: var(--or-clair); font-family: var(--serif-titre); font-size: 12px; font-weight: 700;
+}
+.regles-icone { flex: none; width: 22px; text-align: center; color: var(--or-clair); }
+.regles-familles { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.regles-familles li { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 4px; border-radius: 999px; background: rgba(255, 255, 255, .04); border: 1px solid rgba(212, 178, 106, .2); font-size: 14px; color: var(--texte); }
+.embleme-mini { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, #3a3020, #17130c 75%); box-shadow: 0 0 0 1.5px #c9a85a; }
+.embleme-mini svg { width: 64%; height: 64%; fill: none; stroke: #f0d590; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 
 @media (max-width: 640px) {
   /* Sur téléphone, l'engrenage se range dans le coin : il ne prend pas de ligne. */

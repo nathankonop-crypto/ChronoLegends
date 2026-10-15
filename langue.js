@@ -79,6 +79,133 @@ function nomPays(code) {
   try { return new Intl.DisplayNames([LANGUE], { type: "region" }).of(code); } catch (e) { return code; }
 }
 
+
+// ---------- Fiche « Règles du jeu » (Paramètres) ----------
+// Chaque langue : titres et paragraphes ; les noms (raretés, familles…) viennent du jeu.
+const REGLES = {
+  fr: {
+    principeTitre: "Le principe",
+    principe: "Collectionnez les grandes figures et les grands moments de l'histoire du monde, de toutes les époques et de tous les continents. Ouvrez des boosters, chassez les cartes rares et complétez votre collection.",
+    boostersTitre: "Les boosters",
+    boosters: "Vous recevez 3 boosters à votre arrivée, puis un booster gratuit chaque jour (à partir de minuit, heure d'Israël). Pour l'ouvrir, déchirez-le en faisant glisser le doigt de haut en bas. Chaque booster contient 5 cartes.",
+    regionTitre: "Votre région",
+    region: "Vos boosters contiennent les cartes de la région où vous vous trouvez (Europe, Afrique, Moyen-Orient, Asie, Amériques, Océanie), déterminée par votre connexion. Si vous changez de pays, vos boosters changent de région après un court délai.",
+    raretesTitre: "Les six niveaux de rareté",
+    raretes: {
+      ordinaire: "Le socle de la collection, facile à obtenir.",
+      notable: "Un cran au-dessus : déjà un petit plaisir.",
+      rare: "Des personnages connus : on est content de la tirer.",
+      epique: "Les grandes figures et les grands moments.",
+      legendaire: "Les figures qui ont façonné le monde.",
+      mythique: "Le palier ultime, chassé pendant des mois.",
+    },
+    raretesNote: "La rareté mesure l'importance historique, jamais un jugement moral.",
+    typesTitre: "Les types de cartes",
+    typesIntro: "La lettre dans le petit rond, en bas de chaque carte, indique son type.",
+    types: {
+      personnage: "Des femmes et des hommes réels, cœur de la collection. Bouton « En savoir plus » pour aller plus loin.",
+      archetype: "Les figures types d'une époque (légionnaire, moine copiste, samouraï…), et non des individus réels.",
+      evenement: "Les grands moments de l'histoire eux-mêmes : batailles, révolutions, découvertes.",
+      lieu: "Les grands sites et monuments de l'histoire.",
+      objet: "Les objets qui ont marqué l'histoire : inventions, trésors, symboles.",
+      mythologie: "Les dieux et héros des mythologies du monde, cachés dans les boosters et extrêmement rares.",
+    },
+    famillesTitre: "Les familles",
+    familles: "Chaque personnage historique appartient à une famille, signalée par l'emblème dans le coin de son illustration. Une collection dans la collection : retrouvez-les dans Collection › Familles.",
+    finitionsTitre: "Les finitions",
+    finitions: {
+      normale: "La version de base de chaque carte.",
+      animee: "L'illustration prend vie. Plus rare.",
+      diamant: "Sertie de diamants, avec reflets et étincelles. La plus rare de toutes.",
+    },
+    finitionsNote: "Une même carte peut exister dans plusieurs finitions : on ne chasse plus seulement la carte, on chasse la perfection.",
+    voirChances: "Voir les chances de tirage",
+  },
+  en: {
+    principeTitre: "How it works",
+    principe: "Collect the great figures and great moments of world history, from every era and every continent. Open boosters, hunt for rare cards and complete your collection.",
+    boostersTitre: "Boosters",
+    boosters: "You get 3 boosters when you arrive, then one free booster every day (from midnight, Israel time). To open it, tear it by sliding your finger from top to bottom. Each booster contains 5 cards.",
+    regionTitre: "Your region",
+    region: "Your boosters contain cards from the region you are in (Europe, Africa, Middle East, Asia, Americas, Oceania), based on your connection. If you change country, your boosters switch region after a short delay.",
+    raretesTitre: "The six rarity levels",
+    raretes: {
+      ordinaire: "The core of the collection, easy to get.",
+      notable: "One step up: already a small treat.",
+      rare: "Well-known figures: you're happy to pull one.",
+      epique: "Great figures and great moments.",
+      legendaire: "The figures who shaped the world.",
+      mythique: "The ultimate tier, hunted for months.",
+    },
+    raretesNote: "Rarity measures historical importance, never a moral judgement.",
+    typesTitre: "Card types",
+    typesIntro: "The letter in the small circle at the bottom of each card shows its type.",
+    types: {
+      personnage: "Real women and men, the heart of the collection. Tap “Learn more” to go further.",
+      archetype: "Typical figures of an era (legionary, monk copyist, samurai…), not real individuals.",
+      evenement: "The great moments of history themselves: battles, revolutions, discoveries.",
+      lieu: "The great historic sites and monuments.",
+      objet: "Objects that made history: inventions, treasures, symbols.",
+      mythologie: "Gods and heroes from the world's mythologies, hidden in boosters and extremely rare.",
+    },
+    famillesTitre: "Families",
+    familles: "Every historical figure belongs to a family, shown by the emblem in the corner of its illustration. A collection within the collection: find them in Collection › Families.",
+    finitionsTitre: "Finishes",
+    finitions: {
+      normale: "The base version of each card.",
+      animee: "The illustration comes alive. Rarer.",
+      diamant: "Set with diamonds, with shimmers and sparkles. The rarest of all.",
+    },
+    finitionsNote: "The same card can exist in several finishes: you're not just hunting the card, you're hunting perfection.",
+    voirChances: "See the drop rates",
+  },
+  he: {
+    principeTitre: "העיקרון",
+    principe: "אספו את הדמויות והרגעים הגדולים של ההיסטוריה העולמית, מכל התקופות ומכל היבשות. פתחו חבילות, צודו קלפים נדירים והשלימו את האוסף שלכם.",
+    boostersTitre: "החבילות",
+    boosters: "עם ההצטרפות תקבלו 3 חבילות, ואחר כך חבילה חינמית בכל יום (החל מחצות, שעון ישראל). כדי לפתוח אותה, קרעו אותה בהחלקת האצבע מלמעלה למטה. כל חבילה מכילה 5 קלפים.",
+    regionTitre: "האזור שלכם",
+    region: "החבילות שלכם מכילות קלפים מהאזור שבו אתם נמצאים (אירופה, אפריקה, המזרח התיכון, אסיה, אמריקה, אוקיאניה), לפי החיבור שלכם. אם תעברו למדינה אחרת, החבילות יעברו לאזור החדש לאחר זמן קצר.",
+    raretesTitre: "שש דרגות הנדירות",
+    raretes: {
+      ordinaire: "הבסיס של האוסף, קל להשגה.",
+      notable: "דרגה אחת מעל: כבר הנאה קטנה.",
+      rare: "דמויות מוכרות: שמחים לקבל אותן.",
+      epique: "הדמויות הגדולות והרגעים הגדולים.",
+      legendaire: "הדמויות שעיצבו את העולם.",
+      mythique: "הדרגה העליונה, שצדים אותה חודשים.",
+    },
+    raretesNote: "הנדירות משקפת חשיבות היסטורית, לעולם לא שיפוט מוסרי.",
+    typesTitre: "סוגי הקלפים",
+    typesIntro: "האות שבעיגול הקטן בתחתית כל קלף מציינת את הסוג שלו.",
+    types: {
+      personnage: "נשים וגברים אמיתיים, לב האוסף. הכפתור „לקריאה נוספת” מרחיב את הסיפור.",
+      archetype: "דמויות אופייניות לתקופה (לגיונר, נזיר מעתיק, סמוראי…), ולא אנשים מסוימים.",
+      evenement: "הרגעים הגדולים של ההיסטוריה עצמם: קרבות, מהפכות, תגליות.",
+      lieu: "האתרים והמונומנטים ההיסטוריים הגדולים.",
+      objet: "חפצים שהשאירו חותם בהיסטוריה: המצאות, אוצרות, סמלים.",
+      mythologie: "אלים וגיבורים מהמיתולוגיות של העולם, חבויים בחבילות ונדירים במיוחד.",
+    },
+    famillesTitre: "המשפחות",
+    familles: "כל דמות היסטורית שייכת למשפחה, המסומנת בסמל שבפינת האיור. אוסף בתוך האוסף: תמצאו אותן באוסף › משפחות.",
+    finitionsTitre: "הגימורים",
+    finitions: {
+      normale: "הגרסה הבסיסית של כל קלף.",
+      animee: "האיור מתעורר לחיים. נדיר יותר.",
+      diamant: "משובץ יהלומים, עם ברקים וניצוצות. הנדיר מכולם.",
+    },
+    finitionsNote: "אותו קלף יכול להופיע בכמה גימורים: לא צדים רק את הקלף, צדים את השלמות.",
+    voirChances: "לסיכויי ההגרלה",
+  },
+};
+
+// Nom complet des types de cartes (en bas de la carte, seule l'initiale apparaît).
+const TYPES_LONGS = {
+  fr: { personnage: "Personnage historique", archetype: "Archétype", evenement: "Événement", lieu: "Lieu et monument", objet: "Objet", mythologie: "Mythologie" },
+  en: { personnage: "Historical figure", archetype: "Archetype", evenement: "Event", lieu: "Place and monument", objet: "Object", mythologie: "Mythology" },
+  he: { personnage: "דמות היסטורית", archetype: "ארכיטיפ", evenement: "אירוע", lieu: "אתר ומונומנט", objet: "חפץ", mythologie: "מיתולוגיה" },
+};
+
 // ---------- Textes de l'interface ----------
 
 const pluriel = (n, un, plusieurs) => (n > 1 ? plusieurs : un);
@@ -104,6 +231,7 @@ const TEXTES = {
     reglageAnimations: "Animations réduites",
     reglageOuverture: "Ouverture rapide des boosters",
     chancesTirage: "Chances de tirage",
+    reglesDuJeu: "Règles du jeu",
     chancesIntro: "Chaque booster contient 5 cartes de votre région :",
     chancesCartes: p => `${p.ordinaire} × 2 · ${p.notable} × 1 · ${p.rare} × 1`,
     chancesSpeciale: "La 5ᵉ carte, la carte spéciale :",
@@ -193,6 +321,7 @@ const TEXTES = {
     reglageAnimations: "Reduced animations",
     reglageOuverture: "Quick booster opening",
     chancesTirage: "Drop rates",
+    reglesDuJeu: "Game rules",
     chancesIntro: "Each booster contains 5 cards from your region:",
     chancesCartes: p => `${p.ordinaire} × 2 · ${p.notable} × 1 · ${p.rare} × 1`,
     chancesSpeciale: "The 5th card, the special card:",
@@ -282,6 +411,7 @@ const TEXTES = {
     reglageAnimations: "הפחתת אנימציות",
     reglageOuverture: "פתיחה מהירה של חבילות",
     chancesTirage: "סיכויי הגרלה",
+    reglesDuJeu: "חוקי המשחק",
     chancesIntro: "כל חבילה מכילה 5 קלפים מהאזור שלכם:",
     chancesCartes: p => `${p.ordinaire} × 2 · ${p.notable} × 1 · ${p.rare} × 1`,
     chancesSpeciale: "הקלף החמישי, הקלף המיוחד:",
