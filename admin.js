@@ -61,7 +61,7 @@ const CHAMPS_PLUS = ["en_savoir_plus", "en_savoir_plus_en", "en_savoir_plus_he"]
 function versCarte(l, langue = "fr") {
   const champ = nom => (langue === "en" && l[`${nom}_en`]) || l[nom] || "";
   return { id: l.id, nom: champ("nom"), gamme: l.gamme, dates: champ("dates"), lieu: champ("lieu"),
-    region: l.region, extension: l.epoque, rarete: l.rarete, finition: l.finition,
+    region: l.region, extension: l.epoque, rarete: l.rarete,
     texte: champ("description"), image: l.image };
 }
 
@@ -201,9 +201,9 @@ function ouvrirFormulaire(ligne) {
   $("#fichier-image").value = "";
   $("#info-image").textContent = "Recadrée automatiquement au centre en paysage 4:3, puis compressée (WebP 800×600).";
 
-  const l = ligne || { nom: "", id: "", gamme: "personnage", rarete: "ordinaire", finition: "normale",
+  const l = ligne || { nom: "", id: "", gamme: "personnage", rarete: "ordinaire",
     epoque: "antiquite", region: "moyen-orient", dates: "", lieu: "", description: "" };
-  for (const champ of ["nom", "id", "gamme", "rarete", "finition", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN, ...CHAMPS_PLUS]) {
+  for (const champ of ["nom", "id", "gamme", "rarete", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN, ...CHAMPS_PLUS]) {
     form.elements[champ].value = l[champ] ?? "";
   }
   form.elements.id.readOnly = !!ligne;
@@ -305,7 +305,7 @@ function valeursFormulaire() {
   const f = form.elements;
   return {
     id: f.id.value.trim(), nom: f.nom.value.trim(), gamme: f.gamme.value, rarete: f.rarete.value,
-    finition: f.finition.value, epoque: f.epoque.value, region: f.region.value,
+    epoque: f.epoque.value, region: f.region.value,
     dates: f.dates.value.trim(), lieu: f.lieu.value.trim(), description: f.description.value.trim(),
     // Anglais : vide = null, le jeu affiche alors le français.
     ...Object.fromEntries(CHAMPS_EN.map(c => [c, f[c].value.trim() || null])),
@@ -335,8 +335,6 @@ function majApercu() {
   LANGUE = langueApercu;                      // le dessin de la carte suit la langue de l'aperçu
   $("#apercu").innerHTML = rendreCarte(carte, numero);
   LANGUE = "fr";
-  $("#apercu-note").textContent = v.finition !== "normale"
-    ? `Finition « ${FINITIONS[v.finition]} » enregistrée, mais pas encore dessinée dans le jeu.` : "";
 }
 
 // ---------- Image : recadrage 4:3 au centre + compression WebP ----------
@@ -504,7 +502,6 @@ remplirSelect($("#filtre-region"), REGIONS, true);
 remplirSelect($("#filtre-epoque"), nomsEpoque, true);
 remplirSelect(form.elements.gamme, GAMMES);
 remplirSelect(form.elements.rarete, nomsRarete);
-remplirSelect(form.elements.finition, FINITIONS);
 remplirSelect(form.elements.epoque, nomsEpoque);
 remplirSelect(form.elements.region, REGIONS);
 

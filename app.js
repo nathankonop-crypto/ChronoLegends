@@ -32,7 +32,8 @@ let CARTES = [];
 const etatJeu = { pret: false, erreur: false };
 const prefs = chargerPrefs();
 const etat = {
-  collection: {},          // { id_carte: nombre d'exemplaires } — copie de ce que dit le serveur
+  collection: {},          // { id_carte: nombre d'exemplaires, toutes finitions } — copie de ce que dit le serveur
+  finitions: {},           // { id_carte: { normale: 2, animee: 1, diamant: 0 } }
   boosters: 0,             // copie de ce que dit le serveur
   prochainQuotidien: null, // instant (local) où le serveur dira qu'un nouveau cadeau est dû
   region: null,            // décidée par le serveur (adresse IP)
@@ -58,7 +59,7 @@ async function chargerCartes() {
   // On garde les noms de champs utilisés partout dans le jeu.
   CARTES = data.map(l => ({
     // Contenu en anglais si le joueur joue en anglais (le français sert de secours).
-    id: l.id, gamme: l.gamme, region: l.region, extension: l.epoque, rarete: l.rarete, finition: l.finition,
+    id: l.id, gamme: l.gamme, region: l.region, extension: l.epoque, rarete: l.rarete,
     nom: champ(l, "nom"), dates: champ(l, "dates"), lieu: champ(l, "lieu"), texte: champ(l, "description"),
     image: l.image, ordre: l.ordre,
     // « En savoir plus » existe aussi en hébreu (le reste de la carte reste en anglais).
@@ -69,10 +70,29 @@ async function chargerCartes() {
 }
 
 async function chargerCollection() {
-  const { data, error } = await sb.from("collection").select("carte_id, exemplaires");
+  const { data, error } = await sb.from("collection").select("carte_id, finition, exemplaires");
   if (error) throw error;
-  etat.collection = Object.fromEntries(data.map(l => [l.carte_id, l.exemplaires]));
+  etat.collection = {};
+  etat.finitions = {};
+  for (const l of data) ajouterExemplaires(l.carte_id, l.finition, l.exemplaires);
 }
+
+// Finitions, de la plus courante à la plus rare (le Diamant est la plus rare).
+const FINITIONS_ORDRE = ["normale", "animee", "diamant"];
+
+function ajouterExemplaires(id, finition = "normale", nb = 1) {
+  etat.collection[id] = (etat.collection[id] || 0) + nb;
+  etat.finitions[id] ??= {};
+  etat.finitions[id][finition] = (etat.finitions[id][finition] || 0) + nb;
+}
+
+// Versions possédées d'une carte, de la plus rare à la plus courante.
+const versionsPossedees = id => FINITIONS_ORDRE.filter(f => etat.finitions[id]?.[f]).reverse();
+
+// La « plus belle » carte d'un booster, pour le partage : rareté, puis finition.
+const RANG_RARETE = ["ordinaire", "notable", "rare", "epique", "legendaire", "mythique"];
+const beaute = c => RANG_RARETE.indexOf(c.rarete) + { normale: 0, animee: 2, diamant: 4 }[c.finition || "normale"];
+const plusBelle = cartes => cartes.reduce((a, b) => (beaute(b) >= beaute(a) ? b : a));
 
 async function connecterJoueur() {
   const { data: { session } } = await sb.auth.getSession();
@@ -135,7 +155,7 @@ function formatAttente(ms) {
 
 function numero(carte) {
   const liste = cartesDe(carte.extension);
-  const n = liste.indexOf(carte) + 1;
+  const n = liste.findIndex(c => c.id === carte.id) + 1;   // par identifiant : les versions (finitions) sont des copies
   const total = String(liste.length);
   return `${String(n).padStart(total.length, "0")}/${total}`;
 }
@@ -277,10 +297,11 @@ async function ouvrirBooster() {
 
   // Une carte ajoutée depuis l'administration après le chargement de la page ?
   if (data.cartes.some(c => !CARTES.find(x => x.id === c.id))) await chargerCartes();
-  const tirage = data.cartes.map(c => CARTES.find(x => x.id === c.id));   // trié : la plus rare en dernier
+  // Chaque exemplaire tiré porte sa finition (normale, animée ou diamant), décidée par le serveur.
+  const tirage = data.cartes.map(c => ({ ...CARTES.find(x => x.id === c.id), finition: c.finition || "normale" }));   // trié : la plus rare en dernier
   etat.boosters = data.boosters;
   appliquerRegion(data);
-  tirage.forEach(c => { etat.collection[c.id] = (etat.collection[c.id] || 0) + 1; });
+  tirage.forEach(c => ajouterExemplaires(c.id, c.finition));
   majCompteur();
 
   await animation;
@@ -313,6 +334,7 @@ function afficherPile(tirage, nouvelles) {
     const emplacement = document.createElement("button");
     emplacement.className = `emplacement rarete-${carte.rarete}`;
     emplacement.dataset.index = i;
+    emplacement.dataset.finition = carte.finition || "normale";   // éclat spécial à la révélation
     emplacement.style.zIndex = tirage.length - i;   // la 1re carte est au-dessus
     emplacement.setAttribute("aria-label", t("revelerLaCarte"));
     emplacement.innerHTML = `
@@ -420,7 +442,9 @@ function reveler(emplacement, carte) {
   if (pileNouvelles[Number(emplacement.dataset.index)] && !emplacement.querySelector(".nouvelle")) {
     emplacement.insertAdjacentHTML("beforeend", `<span class="nouvelle">${t("nouvelle")}</span>`);
   }
-  if (carte.rarete === "mythique") notifier(t("notifMythique", { nom: carte.nom }));
+  if (carte.finition === "diamant") notifier(t("notifDiamant", { nom: carte.nom }));
+  else if (carte.finition === "animee") notifier(t("notifAnimee", { nom: carte.nom }));
+  else if (carte.rarete === "mythique") notifier(t("notifMythique", { nom: carte.nom }));
   else if (carte.rarete === "legendaire") notifier(t("notifLegendaire", { nom: carte.nom }));
   else if (carte.rarete === "epique") notifier(t("notifEpique", { nom: carte.nom }));
 }
@@ -452,9 +476,9 @@ function terminerPile() {
   $("#tout-reveler").hidden = true;
   $("#consigne-pile").hidden = true;
   $("#nouveau-booster").hidden = false;
-  // La plus rare (dernière de la pile) : son image de partage se prépare tout de suite.
+  // La plus belle (rareté, puis finition) : son image de partage se prépare tout de suite.
   $("#partager-tirage").hidden = false;
-  preparerPartage(pileTirage[pileTirage.length - 1]);
+  preparerPartage(plusBelle(pileTirage));
   $("#nouveau-booster").textContent = etat.boosters > 0
     ? t("ouvrirUnAutreN", { n: etat.boosters }) : t("retour");
 }
@@ -513,9 +537,11 @@ function afficherCollection() {
     const el = document.createElement(nb ? "button" : "div");
     el.className = "case-collection";
     if (nb) {
-      el.innerHTML = htmlCarte(carte) + (nb > 1 ? `<span class="exemplaires">×${nb}</span>` : "");
+      // On montre la plus belle version possédée.
+      const versionCarte = { ...carte, finition: versionsPossedees(carte.id)[0] || "normale" };
+      el.innerHTML = htmlCarte(versionCarte) + (nb > 1 ? `<span class="exemplaires">×${nb}</span>` : "");
       el.setAttribute("aria-label", `${carte.nom}, ${t("agrandir")}`);
-      el.addEventListener("click", () => ouvrirModale(carte));
+      el.addEventListener("click", () => ouvrirModale(versionCarte));
     } else {
       el.innerHTML = `<div class="manquante"><span>${t("numero")} ${numero(carte)}</span><span class="manquante-rarete">${nomRarete(carte.rarete)}</span></div>`;
     }
@@ -527,17 +553,30 @@ function afficherCollection() {
 
 let carteModale = null;
 
-function ouvrirModale(carte) {
-  const contenu = $("#modale-contenu");
-  contenu.innerHTML = htmlCarte(carte);
+function afficherVersion(carte) {
+  $("#modale-contenu").innerHTML = htmlCarte(carte);
   carteModale = carte;
   setTimeout(() => preparerPartage(carte), 400);   // après l'animation d'ouverture
+}
+
+function ouvrirModale(carte) {
+  afficherVersion(carte);
+  // Plusieurs versions possédées (normale, animée, diamant) : boutons pour passer de l'une à l'autre.
+  const versions = versionsPossedees(carte.id);
+  const choix = $("#modale-versions");
+  choix.hidden = versions.length < 2;
+  choix.innerHTML = versions.length < 2 ? "" : versions.slice().reverse().map(f =>
+    `<button class="version${f === carteModale.finition ? " actif" : ""}" data-finition="${f}">${nomFinition(f)} ×${etat.finitions[carte.id][f]}</button>`).join("");
+  choix.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    choix.querySelectorAll("button").forEach(x => x.classList.toggle("actif", x === b));
+    afficherVersion({ ...carte, finition: b.dataset.finition });
+  }));
   // « En savoir plus » : seulement pour les personnages historiques qui ont ce texte.
   $("#bouton-savoir-plus").hidden = !carte.enSavoirPlus;
   $("#savoir-plus").hidden = true;
   $("#savoir-plus-nom").textContent = carte.nom;
   $("#savoir-plus-texte").textContent = carte.enSavoirPlus || "";
-  contenu.style.transform = "";
+  $("#modale-contenu").style.transform = "";
   positionDeDepart = null; // le gyroscope repart de la façon dont on tient le téléphone
   $("#activer-gyroscope").hidden = !gyroscopeAActiver();
   $("#modale").hidden = false;
@@ -626,7 +665,7 @@ $("#activer-gyroscope").addEventListener("click", () => {
 $("#booster").addEventListener("click", ouvrirBooster);
 $("#tout-reveler").addEventListener("click", toutReveler);
 $("#nouveau-booster").addEventListener("click", revenirAuBooster);
-$("#partager-tirage").addEventListener("click", () => partagerCarte(pileTirage[pileTirage.length - 1]));
+$("#partager-tirage").addEventListener("click", () => partagerCarte(plusBelle(pileTirage)));
 $("#modale-partager").addEventListener("click", () => { if (carteModale) partagerCarte(carteModale); });
 $("#bouton-savoir-plus").addEventListener("click", () => {
   $("#savoir-plus").hidden = false;

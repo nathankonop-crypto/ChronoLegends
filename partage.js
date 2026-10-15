@@ -83,7 +83,7 @@ async function fabriquerImage(carte) {
     // Safari dessine parfois l'image vide la première fois : on lui fait faire un essai à blanc.
     if (/^((?!chrome|android).)*safari/i.test(navigator.userAgent)) await outil.toBlob(affiche, options);
     const blob = await outil.toBlob(affiche, options);
-    const nomFichier = `chronolegends-${carte.id}.png`;
+    const nomFichier = `chronolegends-${carte.id}${carte.finition && carte.finition !== "normale" ? `-${carte.finition}` : ""}.png`;
     return new File([blob], nomFichier, { type: "image/png" });
   } finally {
     coulisse.remove();
@@ -93,7 +93,7 @@ async function fabriquerImage(carte) {
 // Une seule préparation par carte (gardée en mémoire tant que la page est ouverte).
 const preparations = new Map();
 function preparerPartage(carte) {
-  const cle = `${LANGUE}:${carte.id}`;   // l'image contient du texte : une par langue
+  const cle = `${LANGUE}:${carte.id}:${carte.finition || "normale"}`;   // une image par langue et par version
   if (!preparations.has(cle)) {
     const p = fabriquerImage(carte);
     p.catch(e => { console.warn("Partage : image impossible", e); preparations.delete(cle); });
@@ -103,7 +103,8 @@ function preparerPartage(carte) {
 }
 
 async function partagerCarte(carte) {
-  const texte = `${t("partageTexte", { nom: carte.nom, rarete: nomRarete(carte.rarete) })} ${ADRESSE_SITE}`;
+  const finition = carte.finition && carte.finition !== "normale" ? `, ${nomFinition(carte.finition)}` : "";
+  const texte = `${t("partageTexte", { nom: carte.nom, rarete: nomRarete(carte.rarete) + finition })} ${ADRESSE_SITE}`;
 
   // L'image n'est pas encore prête : on prévient (l'attente peut empêcher le partage sur iPhone).
   let pret = false;

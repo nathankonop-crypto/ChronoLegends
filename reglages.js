@@ -35,11 +35,6 @@ const GAMMES = {
   objet:      "Objet",
 };
 
-const FINITIONS = {
-  normale: "Normale",
-  doree:   "Dorée",
-  animee:  "Animée",
-};
 
 const REGIONS = {
   "europe":       "Europe",

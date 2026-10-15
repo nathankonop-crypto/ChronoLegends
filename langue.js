@@ -65,6 +65,13 @@ const GAMMES_CARTE = {
   en: { personnage: "Figure", archetype: "Archetype", evenement: "Event", lieu: "Landmark", mythologie: "Mythology", objet: "Object" },
 };
 const nomGamme = (k, langue = langueCartes()) => GAMMES_CARTE[langue]?.[k] ?? GAMMES_CARTE.en[k] ?? "";
+// Finitions (versions plus rares d'une carte, tirées au sort à l'ouverture).
+const NOMS_FINITIONS = {
+  fr: { normale: "Normale", animee: "Animée", diamant: "Diamant" },
+  en: { normale: "Standard", animee: "Animated", diamant: "Diamond" },
+  he: { normale: "רגיל", animee: "מונפש", diamant: "יהלום" },
+};
+const nomFinition = (k, langue = LANGUE) => NOMS_FINITIONS[langue]?.[k] ?? k;
 const sousTitreEpoque = k => (LANGUE === "fr" ? EXTENSIONS[k]?.sousTitre : NOMS[LANGUE].epoques[k]?.sousTitre) ?? "";
 
 // Nom d'un pays (code « IL ») dans la langue du jeu.
@@ -121,6 +128,8 @@ const TEXTES = {
     touchezReveler: p => `Touchez la carte pour la révéler  ·  ${p.n} ${pluriel(p.n, "restante", "restantes")}`,
     nouvelle: "Nouvelle",
     notifMythique: p => `✦ Carte MYTHIQUE : ${p.nom} ✦`,
+    notifDiamant: p => `💎 Carte DIAMANT : ${p.nom} ! 💎`,
+    notifAnimee: p => `✨ Carte animée : ${p.nom} !`,
     notifLegendaire: p => `Carte légendaire : ${p.nom} !`,
     notifEpique: p => `Carte épique : ${p.nom}`,
     agrandir: "agrandir",
@@ -192,6 +201,8 @@ const TEXTES = {
     touchezReveler: p => `Tap the card to reveal it  ·  ${p.n} left`,
     nouvelle: "New",
     notifMythique: p => `✦ MYTHIC card: ${p.nom} ✦`,
+    notifDiamant: p => `💎 DIAMOND card: ${p.nom}! 💎`,
+    notifAnimee: p => `✨ Animated card: ${p.nom}!`,
     notifLegendaire: p => `Legendary card: ${p.nom}!`,
     notifEpique: p => `Epic card: ${p.nom}`,
     agrandir: "enlarge",
@@ -263,6 +274,8 @@ const TEXTES = {
     touchezReveler: p => `הקישו על הקלף כדי לחשוף אותו  ·  ${p.n > 1 ? `נותרו ${p.n}` : "נותר אחד"}`,
     nouvelle: "חדש",
     notifMythique: p => `✦ קלף מיתי: ${p.nom} ✦`,
+    notifDiamant: p => `💎 קלף יהלום: ${p.nom}! 💎`,
+    notifAnimee: p => `✨ קלף מונפש: ${p.nom}!`,
     notifLegendaire: p => `קלף אגדי: ${p.nom}!`,
     notifEpique: p => `קלף אפי: ${p.nom}`,
     agrandir: "הגדלה",

@@ -226,6 +226,16 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .emplacement.revelee.rarete-mythique .face-avant { animation: halo-mythique 2.2s .4s ease-out; }
 @keyframes halo-epique { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 26px #b07de0); } }
 @keyframes halo-legendaire { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 40px #ffd772) brightness(1.15); } }
+/* Finitions : l'éclat de la révélation prend le pas sur celui de la rareté. */
+.emplacement.revelee[data-finition="animee"] .face-avant { animation: halo-animee 2s .4s ease-out; }
+.emplacement.revelee[data-finition="diamant"] .face-avant { animation: halo-diamant 2.6s .4s ease-out; }
+@keyframes halo-animee { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 46px #ffc25a) brightness(1.15); } }
+@keyframes halo-diamant {
+  0% { filter: drop-shadow(0 0 0 transparent); }
+  20% { filter: drop-shadow(0 0 60px #d8f1ff) brightness(1.45); }
+  40% { filter: drop-shadow(0 0 40px #9fd3ff) brightness(1.1); }
+  55% { filter: drop-shadow(0 0 56px #ffffff) brightness(1.3); }
+}
 @keyframes halo-mythique { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 52px #ff5fb0) brightness(1.2); } }
 
 .nouvelle {
@@ -510,6 +520,159 @@ html[lang="he"] .carte { font-family: var(--serif); }   /* sinon la carte hérit
   animation-duration: 3.2s;
 }
 
+/* ---------- Finitions : Diamant et Animée (par-dessus la rareté, voir carte.js) ---------- */
+
+/* Sceau commun : petite pastille dans le coin haut droit, à cheval sur le cadre. */
+.finition-sceau {
+  position: absolute; top: -1.6cqw; right: -1.6cqw; z-index: 3;
+  width: 10cqw; height: 10cqw; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.finition-sceau svg { width: 62%; height: 62%; overflow: visible; }
+
+/* Diamant : la carte de rareté reste intacte, le diamant s'ajoute par-dessus. */
+
+/* Halo glacé qui respire derrière la carte. */
+.diamant-halo {
+  position: absolute; inset: -5cqw; z-index: -1; border-radius: 8cqw;
+  background: radial-gradient(closest-side, rgba(215, 240, 255, .95), rgba(150, 210, 255, .55) 62%, transparent);
+  animation: respirer 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes respirer { 0%, 100% { opacity: .45; transform: scale(.97); } 50% { opacity: 1; transform: scale(1.03); } }
+
+/* Sertissage : une rangée de petits diamants ronds tout autour du parchemin. */
+.diamant-anneau {
+  position: absolute; inset: 1.75cqw; z-index: 1;
+  padding: 2cqw; border-radius: 3.3cqw; overflow: hidden;
+  background:
+    radial-gradient(circle at 36% 32%, #ffffff 0 12%, #e6f4ff 22%, #9cc9f2 42%, #3d6ea8 60%, #dff0ff 68%, transparent 71%) 0 0 / 2cqw 2cqw,
+    linear-gradient(135deg, #f4f8fc, #a9b6c6 40%, #eef3f8 60%, #8e9cad);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  box-shadow: inset 0 0 0 .25cqw rgba(255, 255, 255, .9);
+  pointer-events: none;
+}
+/* Feu du diamant : un éclat arc-en-ciel qui court tout autour de l'anneau. */
+.diamant-feu {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 300%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 110, 200, .6) 44%, rgba(255, 240, 140, .65) 46%, rgba(255, 255, 255, .9) 48%, rgba(120, 255, 210, .65) 50%, rgba(110, 180, 255, .65) 52%, transparent 56%);
+  animation: reflet 2.6s ease-in-out infinite;
+}
+
+/* Reflet holographique arc-en-ciel sur toute la carte (remplace celui des légendaires / mythiques). */
+.finition-diamant .carte-cadre::after {
+  content: "";
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 2;
+  width: 300%;
+  background: linear-gradient(115deg, transparent 37%, rgba(255, 120, 200, .2) 41%, rgba(255, 235, 140, .24) 43.5%, rgba(140, 255, 200, .24) 46%, rgba(255, 255, 255, .55) 48%, rgba(120, 190, 255, .26) 50%, rgba(190, 140, 255, .22) 52.5%, transparent 57%);
+  animation: reflet 3.4s ease-in-out infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* Paillettes qui scintillent sur l'illustration. */
+.diamant-paillettes {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, .95) 0 .25cqw, transparent .55cqw) 1.3cqw 2.1cqw / 13.7cqw 11.3cqw,
+    radial-gradient(circle, rgba(205, 238, 255, .9) 0 .2cqw, transparent .5cqw) 7.9cqw 6.4cqw / 17.3cqw 13.9cqw,
+    radial-gradient(circle, rgba(255, 220, 245, .85) 0 .18cqw, transparent .45cqw) 4.6cqw 9.8cqw / 11.1cqw 15.7cqw;
+  animation: paillettes 1.9s ease-in-out infinite alternate;
+}
+@keyframes paillettes { from { opacity: .15; } to { opacity: .75; } }
+
+/* Étincelles : étoiles à quatre branches qui s'allument un peu partout. */
+.eclat {
+  position: absolute; z-index: 3; width: 7cqw; height: 7cqw; margin: -3.5cqw 0 0 -3.5cqw;
+  background: radial-gradient(circle, #fff 0 16%, rgba(215, 240, 255, .95) 28%, rgba(160, 215, 255, 0) 68%);
+  clip-path: polygon(50% 0, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0 50%, 43% 43%);
+  transform: scale(0);
+  animation: scintiller 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+.eclat:nth-of-type(1)  { top: 2.5%;  left: 4%;    animation-delay: 0s; }
+.eclat:nth-of-type(2)  { top: 36%;   left: 97%;   animation-delay: .7s;  width: 5cqw;   height: 5cqw;   margin: -2.5cqw 0 0 -2.5cqw; }
+.eclat:nth-of-type(3)  { top: 97.5%; left: 28%;   animation-delay: 1.4s; }
+.eclat:nth-of-type(4)  { top: 68%;   left: 3%;    animation-delay: 2s;   width: 5cqw;   height: 5cqw;   margin: -2.5cqw 0 0 -2.5cqw; }
+.eclat:nth-of-type(5)  { top: 2%;    left: 70%;   animation-delay: 1s;   width: 6cqw;   height: 6cqw;   margin: -3cqw 0 0 -3cqw; }
+.eclat:nth-of-type(6)  { top: 22%;   left: 24%;   animation-delay: .4s;  width: 5.5cqw; height: 5.5cqw; margin: -2.75cqw 0 0 -2.75cqw; }
+.eclat:nth-of-type(7)  { top: 31%;   left: 78%;   animation-delay: 1.8s; width: 4.5cqw; height: 4.5cqw; margin: -2.25cqw 0 0 -2.25cqw; }
+.eclat:nth-of-type(8)  { top: 97%;   left: 82%;   animation-delay: .2s;  width: 6cqw;   height: 6cqw;   margin: -3cqw 0 0 -3cqw; }
+.eclat:nth-of-type(9)  { top: 14%;   left: 55%;   animation-delay: 2.3s; width: 4cqw;   height: 4cqw;   margin: -2cqw 0 0 -2cqw; }
+.eclat:nth-of-type(10) { top: 52%;   left: 96.5%; animation-delay: 1.2s; width: 4cqw;   height: 4cqw;   margin: -2cqw 0 0 -2cqw; }
+@keyframes scintiller { 0%, 50%, 100% { transform: scale(0) rotate(0deg); } 66% { transform: scale(1) rotate(45deg); } 82% { transform: scale(.35) rotate(80deg); } }
+
+/* Nom gravé façon cristal, illustration sertie de glace. */
+.finition-diamant .carte-nom {
+  background: linear-gradient(180deg, #0f2140 0%, #2f5f95 45%, #0f2140 55%, #3b6ea6 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.finition-diamant .carte-illus { box-shadow: 0 0 0 .5cqw #e8f6ff, 0 0 0 1.1cqw rgba(120, 180, 240, .55), 0 0 3cqw rgba(170, 225, 255, .7); }
+
+.finition-diamant .finition-sceau {
+  width: 12cqw; height: 12cqw; top: -2.4cqw; right: -2.4cqw;
+  background: radial-gradient(circle at 35% 30%, #ffffff, #d9efff 45%, #7fb0de);
+  box-shadow: 0 0 0 .5cqw rgba(255, 255, 255, .9), 0 0 4cqw rgba(170, 225, 255, 1), 0 1cqw 2cqw rgba(0, 0, 0, .45);
+  animation: pulser 2.4s ease-in-out infinite;
+}
+.finition-diamant .sceau-fond { fill: #e9f6ff; stroke: #2f5f95; stroke-width: 1.2; stroke-linejoin: round; }
+.finition-diamant .sceau-trait { fill: none; stroke: #2f5f95; stroke-width: 1; stroke-linejoin: round; }
+
+/* Animée : l'illustration prend vie. */
+.finition-animee .carte-illus img,
+.finition-animee .carte-illus > svg {
+  transform-origin: 50% 40%;
+  animation: camera 14s ease-in-out infinite alternate;
+}
+@keyframes camera { from { transform: scale(1.03) translate(0, 0); } to { transform: scale(1.16) translate(-2.5%, -2%); } }
+/* Rai de lumière qui traverse lentement l'image. */
+.finition-animee .carte-illus::after {
+  content: "";
+  position: absolute; top: -20%; bottom: -20%; left: 0; width: 60%;
+  background: linear-gradient(100deg, transparent, rgba(255, 236, 190, .28), transparent);
+  animation: rai 7s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes rai { from { transform: translateX(-120%) rotate(8deg); } to { transform: translateX(260%) rotate(8deg); } }
+/* Poussière de lumière qui monte doucement. */
+.poussiere { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.poussiere span {
+  position: absolute; bottom: -3cqw;
+  width: 1.3cqw; height: 1.3cqw; border-radius: 50%;
+  background: radial-gradient(circle, #fff6d8 0 30%, rgba(255, 210, 120, .7) 55%, rgba(255, 190, 90, 0) 75%);
+  opacity: 0;
+  animation: monter-poussiere 7s linear infinite;
+}
+.poussiere span:nth-child(1)  { left: 8%;  animation-delay: 0s;   animation-duration: 7s; }
+.poussiere span:nth-child(2)  { left: 17%; animation-delay: 2.4s; animation-duration: 8.5s; width: .9cqw; height: .9cqw; }
+.poussiere span:nth-child(3)  { left: 26%; animation-delay: 4.1s; animation-duration: 6.5s; }
+.poussiere span:nth-child(4)  { left: 34%; animation-delay: 1.2s; animation-duration: 9s;   width: 1.7cqw; height: 1.7cqw; }
+.poussiere span:nth-child(5)  { left: 43%; animation-delay: 5.3s; animation-duration: 7.5s; width: .9cqw; height: .9cqw; }
+.poussiere span:nth-child(6)  { left: 51%; animation-delay: 3.1s; animation-duration: 8s; }
+.poussiere span:nth-child(7)  { left: 59%; animation-delay: .6s;  animation-duration: 6.8s; width: 1.6cqw; height: 1.6cqw; }
+.poussiere span:nth-child(8)  { left: 67%; animation-delay: 4.7s; animation-duration: 9.5s; }
+.poussiere span:nth-child(9)  { left: 75%; animation-delay: 2s;   animation-duration: 7.2s; width: .9cqw; height: .9cqw; }
+.poussiere span:nth-child(10) { left: 83%; animation-delay: 6s;   animation-duration: 8.2s; }
+.poussiere span:nth-child(11) { left: 90%; animation-delay: 3.6s; animation-duration: 6.6s; width: 1.5cqw; height: 1.5cqw; }
+.poussiere span:nth-child(12) { left: 96%; animation-delay: 1.7s; animation-duration: 9.2s; width: .9cqw; height: .9cqw; }
+@keyframes monter-poussiere {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: .95; }
+  50% { transform: translate(2cqw, -30cqw); }
+  85% { opacity: .7; }
+  100% { transform: translate(-1.5cqw, -62cqw); opacity: 0; }
+}
+.finition-animee .finition-sceau {
+  background: radial-gradient(circle at 35% 30%, #fff3d0, #f2b84b 55%, #a3641c);
+  box-shadow: 0 0 0 .5cqw rgba(255, 238, 200, .85), 0 0 3cqw rgba(255, 190, 90, .85), 0 1cqw 2cqw rgba(0, 0, 0, .45);
+  animation: pulser 2.4s ease-in-out infinite;
+}
+.finition-animee .sceau-fond { fill: #fffaf0; stroke: #8a4f12; stroke-width: 1.1; stroke-linejoin: round; }
+@keyframes pulser { 50% { transform: scale(1.12); } }
+
 /* ---------- Collection ---------- */
 
 .collection-entete { text-align: center; max-width: 520px; margin: 0 auto 34px; }
@@ -603,6 +766,20 @@ button.case-collection:hover { transform: translateY(-4px); }
 .icone-partage { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; margin-top: -2px; }
 
 /* Boutons sous la carte agrandie (Partager ; sur iPhone : Pencher avec le téléphone) */
+/* Versions possédées (Normale / Animée / Diamant), juste au-dessus des boutons du bas. */
+.modale-versions {
+  position: absolute; left: 0; right: 0; bottom: calc(max(18px, env(safe-area-inset-bottom)) + 52px);
+  display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0 12px;
+}
+.modale-versions .version {
+  padding: 7px 12px; border-radius: 999px; cursor: pointer;
+  font-family: var(--serif-titre); font-size: 12px; letter-spacing: .06em;
+  color: var(--texte-doux); background: rgba(255, 255, 255, .06); border: 1px solid rgba(212, 178, 106, .35);
+}
+.modale-versions .version.actif { color: var(--encre); background: var(--or-clair); border-color: var(--or-clair); }
+.modale-versions .version[data-finition="diamant"]:not(.actif) { color: #cfe9ff; border-color: rgba(170, 220, 255, .6); }
+.modale-versions .version[data-finition="diamant"].actif { background: linear-gradient(135deg, #ffffff, #cfe9ff 50%, #9cc9f2); border-color: #e8f6ff; color: #12294a; }
+
 .modale-actions {
   position: absolute; left: 0; right: 0; bottom: max(18px, env(safe-area-inset-bottom));
   display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; padding: 0 12px;

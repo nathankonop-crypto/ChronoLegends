@@ -90,6 +90,35 @@ new MutationObserver(mutations => {
 // Les polices arrivent parfois après la carte : on revérifie toutes les cartes.
 document.fonts?.ready.then(() => document.querySelectorAll(".carte-corps").forEach(ajusterTexte));
 
+// ---------- Finitions (par-dessus la rareté) ----------
+// Diamant : la carte de rareté reste intacte ; on y sertit un anneau de diamant taillé,
+// avec reflet holographique, paillettes, étincelles, halo glacé et sceau diamant.
+// Animée : l'illustration prend vie (lent mouvement de caméra, poussière de lumière).
+const SCEAU_FINITION = {
+  diamant: `<svg viewBox="0 0 24 24" aria-hidden="true"><path class="sceau-fond" d="M6.5 3.5h11l4.5 6L12 21.5 2 9.5z"/><path class="sceau-trait" d="M2 9.5h20M9 3.5l3 6 3-6M6.5 3.5 9 9.5l3 12 3-12 2.5-6"/></svg>`,
+  animee: `<svg viewBox="0 0 24 24" aria-hidden="true"><path class="sceau-fond" d="M12 2c.8 5.2 4.8 9.2 10 10-5.2.8-9.2 4.8-10 10-.8-5.2-4.8-9.2-10-10 5.2-.8 9.2-4.8 10-10z"/></svg>`,
+};
+
+function decorFinition(finition) {
+  if (finition === "diamant") {
+    return {
+      halo: `<span class="diamant-halo"></span>`,
+      cadre: `<span class="diamant-anneau"><span class="diamant-feu"></span></span>${'<span class="eclat"></span>'.repeat(10)}`,
+      illus: `<span class="diamant-paillettes"></span>`,
+      sceau: `<span class="finition-sceau">${SCEAU_FINITION.diamant}</span>`,
+    };
+  }
+  if (finition === "animee") {
+    return {
+      halo: "",
+      cadre: "",
+      illus: `<span class="poussiere">${"<span></span>".repeat(12)}</span>`,
+      sceau: `<span class="finition-sceau">${SCEAU_FINITION.animee}</span>`,
+    };
+  }
+  return { halo: "", cadre: "", illus: "", sceau: "" };
+}
+
 // carte : objet carte du jeu ; numeroTexte : ex. "08/41"
 // Tout ce qui est écrit sur la carte suit la langue des cartes (anglais quand le site est en hébreu).
 function rendreCarte(carte, numeroTexte) {
@@ -100,12 +129,15 @@ function rendreCarte(carte, numeroTexte) {
     : illustrationProvisoire(carte);
   // Taille du nom adaptée à sa longueur pour tenir sur une ligne.
   const tailleNom = Math.min(6.6, 84 / (Math.max(carte.nom.length, 1) * 0.78));
+  const finition = carte.finition && carte.finition !== "normale" ? carte.finition : "";
+  const decor = decorFinition(finition);
   return `
-  <article class="carte rarete-${carte.rarete}" lang="${L}" dir="ltr">
+  <article class="carte rarete-${carte.rarete}${finition ? ` finition-${finition}` : ""}" lang="${L}" dir="ltr">
+    ${decor.halo}
     <div class="carte-cadre">
       <div class="carte-interieur">
         <header class="carte-tete"><h2 class="carte-nom" style="font-size:${tailleNom.toFixed(2)}cqw">${nom}</h2></header>
-        <div class="carte-illus">${illus}</div>
+        <div class="carte-illus">${illus}${decor.illus}</div>
         <div class="carte-bandeau"><span class="gemme"></span>${nomRarete(carte.rarete, L)}<span class="gemme"></span></div>
         <div class="carte-corps">
           <p class="carte-dates">${echapper(carte.dates)}</p>
@@ -114,6 +146,8 @@ function rendreCarte(carte, numeroTexte) {
         </div>
         <footer class="carte-pied"><span>${nomEpoque(carte.extension, L)}</span><span class="carte-gamme" title="${nomGamme(carte.gamme)}">${nomGamme(carte.gamme).charAt(0)}</span><span>${t("numero", {}, L)} ${numeroTexte}</span></footer>
       </div>
+      ${decor.cadre}
     </div>
+    ${decor.sceau}
   </article>`;
 }
