@@ -551,6 +551,11 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   margin: 8px auto 0;
   perspective: 1400px;
   flex-wrap: nowrap;
+  /* La pile se penche (souris ou téléphone, app.js : pencherPile) : les cartes étant
+     les unes derrière les autres en profondeur, on aperçoit le bord des suivantes. */
+  transform-style: preserve-3d;
+  transform: perspective(900px) rotateX(calc(var(--pile-y, 0) * 1deg)) rotateY(calc(var(--pile-x, 0) * 1deg));
+  transition: transform .2s ease-out;
 }
 
 /* Chaque carte occupe toute la pile ; les cartes du dessous sont décalées. */
@@ -560,10 +565,26 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   width: 100%;
   animation: none;
   transform:
-    translate(calc(var(--profondeur, 0) * 5px), calc(var(--profondeur, 0) * 9px))
-    scale(calc(1 - var(--profondeur, 0) * 0.035));
+    /* en retrait (profondeur), un peu plus bas pour montrer l'épaisseur de la pile,
+       et agrandie juste ce qu'il faut pour compenser l'éloignement */
+    translate3d(0, calc(var(--profondeur, 0) * 4px), calc(var(--profondeur, 0) * -28px))
+    scale(calc(1 + var(--profondeur, 0) * 0.031));
   transition: transform .45s cubic-bezier(.3, .7, .2, 1);
 }
+
+/* Bord lumineux des cartes encore cachées sous la pile : sa couleur trahit
+   une carte intéressante (Épique, Légendaire, Mythique, Animée, Diamant). */
+.tirage.pile .emplacement.dessous.rarete-epique { --tranche: #a25ee0; }
+.tirage.pile .emplacement.dessous.rarete-legendaire { --tranche: #f0b43a; }
+.tirage.pile .emplacement.dessous.rarete-mythique { --tranche: #ff5fb0; }
+.tirage.pile .emplacement.dessous[data-finition="animee"] { --tranche: #ffe08a; }
+.tirage.pile .emplacement.dessous[data-finition="diamant"] { --tranche: #bdf0ff; }
+.tirage.pile .emplacement.dessous:is(.rarete-epique, .rarete-legendaire, .rarete-mythique, [data-finition="animee"], [data-finition="diamant"]) .face-dos .dos {
+  box-shadow: 0 14px 30px -10px rgba(0, 0, 0, .8), 0 0 0 1px rgba(212, 178, 106, .5) inset,
+    0 0 0 2px var(--tranche), 0 0 22px 5px var(--tranche);
+  animation: tranche 1.6s ease-in-out infinite alternate;
+}
+@keyframes tranche { from { filter: brightness(.9); } to { filter: brightness(1.25); } }
 
 /* Sur smartphone, la pile laisse défiler la page verticalement, mais le
    glissement horizontal sert à écarter la carte (voir activerGlissement dans app.js). */
@@ -582,7 +603,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 /* La carte révélée que l'on écarte : elle s'envole sur le côté (droite par
    défaut, ou du côté où on l'a fait glisser : --sens = -1 ou 1) et disparaît. */
 .tirage.pile .emplacement.ecartee {
-  transform: translateX(calc(var(--sens, 1) * 120%)) rotate(calc(var(--sens, 1) * 13deg)) scale(.92);
+  transform: translate3d(calc(var(--sens, 1) * 120%), 0, 40px) rotate(calc(var(--sens, 1) * 13deg)) scale(.92);
   opacity: 0;
   transition: transform .55s cubic-bezier(.4, 0, .5, 1), opacity .55s ease;
 }

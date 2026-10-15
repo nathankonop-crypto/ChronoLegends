@@ -444,7 +444,9 @@ function afficherPile(tirage, nouvelles) {
 function majPositions() {
   pileTirage.forEach((carte, i) => {
     const el = $(`.emplacement[data-index="${i}"]`);
-    if (el) el.style.setProperty("--profondeur", Math.max(i - indexPile, 0));
+    if (!el) return;
+    el.style.setProperty("--profondeur", Math.max(i - indexPile, 0));
+    el.classList.toggle("dessous", i > indexPile);   // cachée sous la carte du dessus
   });
 }
 
@@ -1050,6 +1052,33 @@ addEventListener("deviceorientation", e => {
   reposBooster.beta += (e.beta - reposBooster.beta) * 0.02;
   reposBooster.gamma += (e.gamma - reposBooster.gamma) * 0.02;
   pencherBooster((e.gamma - reposBooster.gamma) / 30, (e.beta - reposBooster.beta) / 30);
+});
+
+// ---------- La pile de cartes se penche, pour apercevoir le bord des suivantes ----------
+
+const INCLINAISON_PILE = 20;   // degrés, au maximum
+function pencherPile(x, y) {   // x, y : de -0,5 à 0,5
+  const borne = v => Math.max(-0.5, Math.min(0.5, v));
+  const s = $("#tirage").style;
+  s.setProperty("--pile-x", (borne(x) * 2 * INCLINAISON_PILE).toFixed(2));
+  s.setProperty("--pile-y", (-borne(y) * 2 * INCLINAISON_PILE).toFixed(2));
+}
+const pileVisible = () => !$("#tirage").hidden && $("#tirage").classList.contains("pile") && !$("#vue-booster").hidden;
+// Ordinateur : la pile suit la souris.
+$("#tirage").addEventListener("pointermove", e => {
+  if (e.pointerType !== "mouse" || !pileVisible() || animationsReduites()) return;
+  const z = $("#tirage").getBoundingClientRect();
+  pencherPile((e.clientX - z.left) / z.width - 0.5, (e.clientY - z.top) / z.height - 0.5);
+});
+$("#tirage").addEventListener("pointerleave", () => pencherPile(0, 0));
+// Téléphone : en inclinant le téléphone (même principe que le paquet).
+let reposPile = null;
+addEventListener("deviceorientation", e => {
+  if (e.beta === null || e.gamma === null || !pileVisible() || animationsReduites()) return;
+  reposPile ??= { beta: e.beta, gamma: e.gamma };
+  reposPile.beta += (e.beta - reposPile.beta) * 0.02;
+  reposPile.gamma += (e.gamma - reposPile.gamma) * 0.02;
+  pencherPile((e.gamma - reposPile.gamma) / 30, (e.beta - reposPile.beta) / 30);
 });
 
 $("#tout-reveler").addEventListener("click", toutReveler);
