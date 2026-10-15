@@ -916,6 +916,67 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#dialo
 majBoutonInstaller();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => { /* le jeu marche aussi sans */ });
 
+// ---------- Notifications : « Votre booster gratuit est arrivé ! » ----------
+// Le navigateur fournit une adresse d'envoi, enregistrée par le serveur (supabase/16_notifications.sql) ;
+// l'Edge Function envoyer-notifications écrit à minuit (heure d'Israël) à tous les abonnés.
+// iPhone : seulement avec l'application installée sur l'écran d'accueil (règle d'Apple).
+const notifsPossibles = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+const caseNotifs = $("#reglage-notifications");
+$("#bloc-notifications").hidden = !(notifsPossibles || estIOS);
+const base64VersOctets = b => Uint8Array.from(atob((b + "===".slice((b.length + 3) % 4)).replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+
+async function abonnementActuel() {
+  return (await navigator.serviceWorker.ready).pushManager.getSubscription();
+}
+async function enregistrerAbonnement(abo) {
+  const { endpoint, keys } = abo.toJSON();
+  const { error } = await sb.rpc("enregistrer_abonnement", { p_endpoint: endpoint, p_p256dh: keys.p256dh, p_auth: keys.auth, p_langue: LANGUE });
+  if (error) throw error;
+}
+async function activerNotifications() {
+  if (!notifsPossibles) {   // iPhone dans Safari : il faut d'abord installer l'application
+    notifier(t("notifIphoneInstaller"));
+    $("#bouton-installer").click();
+    return false;
+  }
+  if (await Notification.requestPermission() !== "granted") {
+    notifier(t("notifRefusees"));
+    return false;
+  }
+  const reg = await navigator.serviceWorker.ready;
+  const abo = await reg.pushManager.getSubscription()
+    || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64VersOctets(VAPID_PUBLIQUE) });
+  await enregistrerAbonnement(abo);
+  notifier(t("notifActivees"));
+  return true;
+}
+async function desactiverNotifications() {
+  const abo = await abonnementActuel();
+  if (!abo) return;
+  await sb.rpc("supprimer_abonnement", { p_endpoint: abo.endpoint });
+  await abo.unsubscribe();
+}
+caseNotifs.addEventListener("change", async () => {
+  const activer = caseNotifs.checked;
+  caseNotifs.disabled = true;
+  try {
+    caseNotifs.checked = activer ? await activerNotifications() : (await desactiverNotifications(), false);
+  } catch (err) {
+    console.error(err);
+    caseNotifs.checked = !activer;
+    notifier(t("notifErreur"));
+  } finally {
+    caseNotifs.disabled = false;
+  }
+});
+// Au démarrage : position de l'interrupteur, et abonnement rafraîchi (langue, compte du joueur).
+async function majNotifications() {
+  if (!notifsPossibles || Notification.permission !== "granted") return;
+  const abo = await abonnementActuel().catch(() => null);
+  caseNotifs.checked = !!abo;
+  if (abo) enregistrerAbonnement(abo).catch(() => { /* réessayé au prochain lancement */ });
+}
+
 // Historique : les derniers boosters ouverts, lus dans le journal du serveur
 // (table ouvertures : le joueur ne peut lire que les siens).
 const NB_HISTORIQUE = 30;
@@ -1237,6 +1298,7 @@ async function demarrer() {
     await Promise.all([chargerCartes(), chargerCollection()]);
     const q = await reclamerQuotidien();
     etatJeu.pret = true;
+    majNotifications();
     majCompteur();
     majConsigne();
     if (!$("#vue-collection").hidden) afficherCollection();

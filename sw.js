@@ -17,6 +17,28 @@ button{margin-top:16px;padding:10px 22px;border-radius:999px;border:1px solid #d
 <body><div><h1>ChronoLegends</h1><p>Pas de connexion internet.<br>No internet connection.<br>אין חיבור לאינטרנט.</p>
 <button onclick="location.reload()">↻</button></div></body></html>`;
 
+// Notification reçue du serveur (« Votre booster gratuit est arrivé ! »).
+self.addEventListener("push", e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { texte: e.data?.text() }; }
+  e.waitUntil(self.registration.showNotification(d.titre || "ChronoLegends", {
+    body: d.texte || "",
+    icon: "images/app/icone-192.png",
+    badge: "images/app/favicon.png",
+    tag: "booster-quotidien",          // une seule à la fois : la nouvelle remplace l'ancienne
+    data: { url: d.url || "./" },
+  }));
+});
+
+// Appui sur la notification : on rouvre le jeu (ou on le ramène au premier plan).
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(fenetres => {
+    const ouverte = fenetres.find(f => "focus" in f);
+    return ouverte ? ouverte.focus() : self.clients.openWindow(e.notification.data?.url || "./");
+  }));
+});
+
 // Pages du site uniquement : si le réseau ne répond pas, page « hors ligne ».
 self.addEventListener("fetch", e => {
   if (e.request.mode !== "navigate") return;

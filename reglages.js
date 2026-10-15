@@ -10,6 +10,8 @@
 // Adresse de la base et clé PUBLIQUE (lecture seule pour les visiteurs :
 // les règles de sécurité de la base refusent toute écriture sans connexion admin).
 const SUPABASE_URL = "https://qhyvdodkzdhmobkvahwa.supabase.co";
+// Clé PUBLIQUE des notifications (la clé privée est un secret Supabase, jamais ici).
+const VAPID_PUBLIQUE = "BHTDzyCq5dnrBukJRNUrXa-yaZKtLblMc74y3RcZfKTwla6smb6rTgMlqFyCdKgw1ACtzZu1NyLMiZAg1zT9C3s";
 const SUPABASE_CLE_PUBLIQUE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoeXZkb2RremRobW9ia3ZhaHdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE5ODU3OTAsImV4cCI6MjEwNzU2MTc5MH0.Hhq92tBVTB2tiIn24_QfD8mNaMnjQU3tsz_DKjng2EI";
 
 // Anti-robot Cloudflare Turnstile : clé de SITE (publique). La clé SECRÈTE
