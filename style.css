@@ -321,7 +321,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
     var(--fond-booster);
   box-shadow: 0 0 0 1px rgba(212, 178, 106, .4) inset;
 }
-/* Petites encoches sur les deux bords, là où commence la découpe (à 8 % du haut, comme COUPE dans app.js) */
+/* Petites encoches sur les deux bords, en haut : là où on commence la découpe */
 .booster-sachet::before, .booster-sachet::after {
   content: ""; position: absolute; top: 8%; width: 8px; height: 10px; margin-top: -5px; background: var(--encre);
 }
@@ -402,18 +402,20 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 @keyframes guider { 0% { opacity: 0; transform: translateX(-12%); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateX(12%); } }
 .booster:disabled .guide-dechirure, .booster.en-dechirure .guide-dechirure, .booster.dechire .guide-dechirure { display: none; }
 
-/* Ligne de déchirure qui suit le doigt. */
-/* La ligne est dévoilée depuis le bord où le doigt a commencé (--dechirure : 0 → 1). */
+/* Trait de découpe : il suit exactement le chemin du doigt (app.js, dessinerCoupe). */
 .ligne-dechirure {
   position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none;
-  clip-path: inset(-10px calc((1 - var(--dechirure)) * 100%) -10px -10px);
-  filter: drop-shadow(0 0 4px #ffd772) drop-shadow(0 0 10px rgba(255, 215, 114, .8));
-  transition: clip-path .25s ease-out;
+  filter: drop-shadow(0 0 3px #ffe7a8) drop-shadow(0 0 8px rgba(255, 215, 114, .7));
 }
-.ligne-dechirure polyline { fill: none; stroke: #fff4d6; stroke-width: 3; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-.booster.en-dechirure { animation: none; transform: scale(calc(1 + var(--dechirure) * .04)); transition: none; }
-.booster.en-dechirure .ligne-dechirure { transition: none; }
-.booster.vers-gauche .ligne-dechirure { clip-path: inset(-10px -10px -10px calc((1 - var(--dechirure)) * 100%)); }
+.ligne-dechirure polyline { fill: none; stroke: #fffaf0; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+/* Petite lumière au bout du doigt, comme la pointe d'une lame */
+.pointe-coupe {
+  position: absolute; left: var(--px, 0); top: var(--py, 8%); width: 16px; height: 16px; margin: -8px 0 0 -8px;
+  border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity .15s;
+  background: radial-gradient(circle, #fff 0 22%, rgba(255, 226, 150, .75) 45%, transparent 70%);
+}
+.booster.en-dechirure .pointe-coupe { opacity: 1; }
+.booster.en-dechirure { animation: none; transform: scale(calc(1 + var(--dechirure) * .03)); transition: none; }
 
 /* Simple appui : le paquet invite à glisser vers le bas. */
 .booster.indice { animation: indiquer .7s ease-in-out; }
@@ -423,40 +425,15 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 /* Découpé : la bande du haut s'envole, la lumière jaillit par l'ouverture, puis le paquet descend. */
 .booster.dechire { animation: none; background: transparent; box-shadow: none; }
 .booster.dechire > :not(.moitie) { visibility: hidden; }
+/* Lumière douce qui s'échappe par l'ouverture, le long de la coupe */
 .booster.dechire::before {
-  content: ""; position: absolute; left: 0; right: 0; top: 8%; height: 24%; margin-top: -12%; z-index: 3;
-  border-radius: 50%; background: radial-gradient(closest-side, #fff, rgba(255, 220, 140, .75) 40%, transparent);
-  animation: jaillir 1s ease-out forwards; pointer-events: none;
+  content: ""; position: absolute; left: -15%; right: -15%; top: calc(var(--coupe-y, 8%) - 14%); height: 28%; z-index: 3;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(255, 252, 240, .95), rgba(255, 224, 160, .5) 45%, transparent);
+  animation: lueur-ouverture .95s ease-out forwards;
 }
-@keyframes jaillir { from { transform: scale(.4, .15); opacity: 1; } 35% { opacity: 1; } to { transform: scale(1.5, 2.6); opacity: 0; } }
-
-/* ---------- Éclat d'ouverture : rayons, lumière et étincelles (app.js, lancerEclat) ---------- */
-.eclat-ouverture { position: fixed; width: 0; height: 0; z-index: 50; pointer-events: none; --lueur: 255, 222, 150; }
-.eclat-ouverture.dore { --lueur: 255, 196, 80; }
-.eclat-rayons, .eclat-coeur { position: absolute; left: 0; top: 0; border-radius: 50%; }
-.eclat-rayons {
-  width: 560px; height: 560px; margin: -280px 0 0 -280px;
-  background: repeating-conic-gradient(rgba(var(--lueur), .5) 0 3deg, transparent 3deg 15deg);
-  -webkit-mask: radial-gradient(closest-side, #000 10%, transparent); mask: radial-gradient(closest-side, #000 10%, transparent);
-  animation: rayons 1.2s ease-out forwards;
-}
-.eclat-ouverture.dore .eclat-rayons { width: 760px; height: 760px; margin: -380px 0 0 -380px; animation-duration: 1.6s; }
-.eclat-coeur {
-  width: 170px; height: 170px; margin: -85px 0 0 -85px;
-  background: radial-gradient(circle, #fff 0%, rgba(var(--lueur), .85) 30%, transparent 70%);
-  animation: coeur .8s ease-out forwards;
-}
-.eclat-ouverture i {
-  position: absolute; left: 0; top: 0; width: calc(var(--r) * 2); height: calc(var(--r) * 2); margin: calc(var(--r) * -1);
-  border-radius: 50%; background: #fff8e0; box-shadow: 0 0 6px 2px rgba(var(--lueur), .9);
-  animation: etincelle var(--t) cubic-bezier(.15, .7, .3, 1) forwards;
-}
-@keyframes rayons { from { transform: scale(.2) rotate(0); opacity: 0; } 18% { opacity: 1; } to { transform: scale(1.3) rotate(35deg); opacity: 0; } }
-@keyframes coeur { from { transform: scale(.3); opacity: 1; } to { transform: scale(2.8); opacity: 0; } }
-@keyframes etincelle { 70% { opacity: 1; } to { transform: translate(var(--dx), var(--dy)); opacity: 0; } }
-/* Petite secousse de l'écran au moment où le paquet s'ouvre */
-#vue-booster.secousse { animation: secousse .35s ease-out; }
-@keyframes secousse { 20% { translate: -5px 2px; } 40% { translate: 4px -2px; } 60% { translate: -2px 1px; } 80% { translate: 1px 0; } }
+.booster.dore.dechire::before { background: radial-gradient(closest-side, rgba(255, 246, 215, 1), rgba(255, 200, 90, .65) 45%, transparent); }
+@keyframes lueur-ouverture { from { transform: scale(.3, .08); opacity: 0; } 25% { opacity: 1; } to { transform: scale(1, 1.6); opacity: 0; } }
 
 /* Les cartes sortent du paquet une à une, de la dernière à la première, puis s'empilent */
 .tirage.pile.sortie .emplacement { animation: sortir-du-paquet .65s cubic-bezier(.2, .9, .3, 1.15) both; animation-delay: calc(var(--rang, 0) * 80ms); }
@@ -471,10 +448,8 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   pointer-events: none;
 }
 /* La bande découpée saute, tourne et s'envole sur le côté */
-.moitie.haut { transform-origin: 50% 8%; animation: envol-bande .75s cubic-bezier(.25, .6, .5, 1) forwards; }
-.booster.vers-gauche .moitie.haut { animation-name: envol-bande-gauche; }
+.moitie.haut { transform-origin: 50% var(--coupe-y, 8%); animation: envol-bande .75s cubic-bezier(.25, .6, .5, 1) forwards; }
 @keyframes envol-bande { 25% { transform: translate(3%, -9%) rotate(5deg); } to { transform: translate(55%, -40%) rotate(38deg); opacity: 0; } }
-@keyframes envol-bande-gauche { 25% { transform: translate(-3%, -9%) rotate(-5deg); } to { transform: translate(-55%, -40%) rotate(-38deg); opacity: 0; } }
 /* Le paquet tressaille, puis descend et s'efface : les cartes en sortent */
 .moitie.bas { animation: descendre-paquet .6s .35s cubic-bezier(.55, 0, .8, .4) forwards; }
 @keyframes descendre-paquet {

@@ -360,7 +360,7 @@ async function ouvrirBooster(dechire = false) {
   enCours = true;
 
   const booster = $("#booster");
-  if (!dechire) { booster.classList.add("ouverture"); setTimeout(lancerEclat, 550); }
+  if (!dechire) booster.classList.add("ouverture");
   const animation = new Promise(r => setTimeout(r, dechire ? 950 : 900));
 
   // C'est le SERVEUR qui vérifie le stock, tire les cartes et les ajoute à la collection.
@@ -869,12 +869,28 @@ document.addEventListener("keydown", e => {
 const boosterEl = $("#booster");
 queueMicrotask(appliquerReglages);   // réglages enregistrés : animations, ouverture rapide
 queueMicrotask(() => choisirMonument());
-let dechirure = null;      // geste en cours : { x0, y0, l, p, bouge, sens }
+let dechirure = null;      // geste en cours : { sens, trace, depart, ... }
 
-// Ligne de découpe en zigzag, à travers le haut du paquet (x de 0 à 100, à COUPE % de la hauteur).
-const COUPE = 8;
-const ZIGZAG = Array.from({ length: 17 }, (_, i) => [i * 6.25, COUPE + (i % 2 ? .9 : -.9) * (i && i < 16 ? 1 : 0)]);
-boosterEl.querySelector(".ligne-dechirure polyline").setAttribute("points", ZIGZAG.map(([x, y]) => `${x},${y}`).join(" "));
+// La découpe suit le doigt, comme une lame : on garde le tracé (en % du paquet),
+// limité au haut du paquet (entre HAUT_MIN et HAUT_MAX % de la hauteur).
+const HAUT_MIN = 3, HAUT_MAX = 30;
+const ligneCoupe = boosterEl.querySelector(".ligne-dechirure polyline");
+
+function pointDansPaquet(e) {
+  const z = boosterEl.getBoundingClientRect();
+  return [
+    Math.max(0, Math.min(100, (e.clientX - z.left) / z.width * 100)),
+    Math.max(HAUT_MIN, Math.min(HAUT_MAX, (e.clientY - z.top) / z.height * 100)),
+  ];
+}
+
+// Dessine le tracé et place la petite lumière au bout du doigt.
+function dessinerCoupe(trace) {
+  ligneCoupe.setAttribute("points", trace.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" "));
+  const [x, y] = trace[trace.length - 1] || [0, 0];
+  boosterEl.style.setProperty("--px", x + "%");
+  boosterEl.style.setProperty("--py", y + "%");
+}
 
 function majDechirure(p) {
   const palier = Math.floor(p * 8);
@@ -888,6 +904,7 @@ function reinitialiserBooster() {
   boosterEl.querySelectorAll(".moitie").forEach(m => m.remove());
   boosterEl.style.setProperty("--dechirure", 0);
   boosterEl.dataset.glisse = "";
+  ligneCoupe.setAttribute("points", "");
   pencherBooster(0, 0);
   appliquerBoosterDore();
   choisirMonument();
@@ -901,42 +918,20 @@ function choisirMonument() {
   boosterEl.querySelector(".booster-filigrane").innerHTML = dessinMonument(monumentActuel);
 }
 
-// Éclat d'ouverture : rayons de lumière et étincelles qui jaillissent du paquet
-// (plus nombreuses et plus dorées pour un booster doré).
-// hauteur : où naît l'éclat, en fraction de la hauteur du paquet (0 = tout en haut).
-function lancerEclat(hauteur = .5) {
-  if (animationsReduites()) return;
-  const z = boosterEl.getBoundingClientRect();
-  const enHaut = hauteur < .3;   // ouverture par le haut : tout jaillit vers le haut
-  const dore = boosterEl.classList.contains("dore");
-  const eclat = document.createElement("div");
-  eclat.className = "eclat-ouverture" + (dore ? " dore" : "");
-  eclat.style.left = z.left + z.width / 2 + "px";
-  eclat.style.top = z.top + z.height * hauteur + "px";
-  let html = '<span class="eclat-rayons"></span><span class="eclat-coeur"></span>';
-  for (let i = 0; i < (dore ? 48 : 28); i++) {
-    const a = enHaut ? -Math.PI * (.08 + Math.random() * .84) : Math.random() * Math.PI * 2;
-    const d = 80 + Math.random() * (dore ? 200 : 140);
-    html += `<i style="--dx:${(Math.cos(a) * d).toFixed(0)}px;--dy:${(Math.sin(a) * d - 30).toFixed(0)}px;` +
-      `--t:${(.6 + Math.random() * .6).toFixed(2)}s;--r:${(1.2 + Math.random() * 2.6).toFixed(1)}px"></i>`;
-  }
-  eclat.innerHTML = html;
-  document.body.appendChild(eclat);
-  const vue = $("#vue-booster");
-  vue.classList.add("secousse");
-  setTimeout(() => vue.classList.remove("secousse"), 400);
-  setTimeout(() => eclat.remove(), 1700);
-}
-
-// Le haut du paquet est découpé : la bande s'envole, la lumière jaillit,
-// le paquet descend et les cartes en sortent (comme sur Pokémon TCG Pocket).
-function dechirerBooster() {
+// Le haut du paquet est découpé le long du tracé : la bande s'envole, une lumière
+// douce s'échappe de l'ouverture, le paquet descend et les cartes en sortent.
+function dechirerBooster(trace) {
   dechirure = null;
   boosterEl.dataset.glisse = "1";   // le « clic » qui suit le geste ne doit pas afficher l'aide
   vibrer([25, 40, 45]);
+  // Tracé de gauche à droite, prolongé jusqu'aux deux bords du paquet.
+  const t = trace[0][0] > trace[trace.length - 1][0] ? [...trace].reverse() : [...trace];
+  t.unshift([0, t[0][1]]);
+  t.push([100, t[t.length - 1][1]]);
+  const points = l => l.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(", ");
+  boosterEl.style.setProperty("--coupe-y", (t.reduce((s, [, y]) => s + y, 0) / t.length).toFixed(1) + "%");
   const contenu = [...boosterEl.querySelectorAll(".booster-sachet, .booster-bord, .booster-titre, .booster-logo, .booster-info")];
-  const points = l => l.map(([x, y]) => `${x}% ${y}%`).join(", ");
-  for (const [cote, forme] of [["haut", `0% 0%, 100% 0%, ${points([...ZIGZAG].reverse())}`], ["bas", `${points(ZIGZAG)}, 100% 100%, 0% 100%`]]) {
+  for (const [cote, forme] of [["haut", `0% 0%, 100% 0%, ${points([...t].reverse())}`], ["bas", `${points(t)}, 100% 100%, 0% 100%`]]) {
     const moitie = document.createElement("span");
     moitie.className = `moitie ${cote}`;
     moitie.style.clipPath = `polygon(${forme})`;
@@ -945,30 +940,34 @@ function dechirerBooster() {
   }
   boosterEl.classList.remove("en-dechirure");
   boosterEl.classList.add("dechire");
-  lancerEclat(COUPE / 100);
   ouvrirBooster(true);
 }
 
-// Clavier ou « Ouverture rapide » : le paquet se découpe tout seul.
+// Clavier ou « Ouverture rapide » : le paquet se découpe tout seul, d'un trait légèrement ondulé.
 function decouperAuto() {
   if (boosterEl.disabled || enCours || boosterEl.classList.contains("dechire")) return;
   if (etat.boosters <= 0 || !etatJeu.pret || !etat.region) return ouvrirBooster();   // affiche le bon message
-  if (animationsReduites()) return dechirerBooster();
+  const y0 = 7 + Math.random() * 3, onde = Math.random() * Math.PI;
+  const point = p => [p * 100, y0 + Math.sin(onde + p * 4) * .8 + p * 1.5];
+  if (animationsReduites()) return dechirerBooster([point(0), point(1)]);
   const debut = performance.now(), duree = prefs.ouvertureRapide ? 260 : 420;
-  boosterEl.classList.remove("vers-gauche");
   boosterEl.classList.add("en-dechirure");
+  const trace = [];
   const avancer = maintenant => {
     const p = Math.min(1, (maintenant - debut) / duree);
+    trace.push(point(p));
+    dessinerCoupe(trace);
     majDechirure(p);
     if (p < 1) requestAnimationFrame(avancer);
-    else dechirerBooster();
+    else dechirerBooster(trace);
   };
   requestAnimationFrame(avancer);
 }
 
 boosterEl.addEventListener("pointerdown", e => {
   if (boosterEl.disabled || enCours || boosterEl.classList.contains("dechire") || prefs.ouvertureRapide) return;
-  dechirure = { x0: e.clientX, y0: e.clientY, l: boosterEl.offsetWidth, p: 0, bouge: false, sens: 1 };
+  pencherBooster(0, 0);
+  dechirure = { x0: e.clientX, y0: e.clientY, p: 0, bouge: false, sens: 1, trace: [] };
   try { boosterEl.setPointerCapture(e.pointerId); } catch { /* pointeur déjà relâché */ }
 });
 boosterEl.addEventListener("pointermove", e => {
@@ -979,19 +978,33 @@ boosterEl.addEventListener("pointermove", e => {
     if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return;
     dechirure.bouge = true;
     dechirure.sens = Math.sign(dx);
-    boosterEl.classList.toggle("vers-gauche", dechirure.sens < 0);
     boosterEl.classList.add("en-dechirure");
   }
-  const p = Math.max(0, Math.min(1, dx * dechirure.sens / (dechirure.l * 0.75)));   // ~75 % de la largeur suffit
+  const [x, y] = pointDansPaquet(e);
+  const trace = dechirure.trace;
+  const dernier = trace[trace.length - 1];
+  // La lame n'avance que dans un sens : un retour en arrière ne recoupe pas.
+  if (!dernier) {
+    trace.push([dechirure.sens > 0 ? 0 : 100, y], [x, y]);   // la coupe part du bord
+    dechirure.depart = x;
+  } else if ((x - dernier[0]) * dechirure.sens > .8) {
+    trace.push([x, y]);
+  } else {
+    return;
+  }
+  dessinerCoupe(trace);
+  const p = dechirure.sens > 0 ? x / 100 : 1 - x / 100;
   majDechirure(p);
-  if (p >= 1) dechirerBooster();
+  // Coupé jusqu'au bout (et pas seulement un petit geste près du bord) : le paquet s'ouvre.
+  if (p >= .97 && Math.abs(x - dechirure.depart) > 35) dechirerBooster(trace);
 });
 const relacher = () => {
   if (!dechirure) return;
   boosterEl.dataset.glisse = dechirure.bouge ? "1" : "";
   dechirure = null;
   boosterEl.classList.remove("en-dechirure");
-  majDechirure(0);   // lâché trop tôt : la déchirure se referme
+  ligneCoupe.setAttribute("points", "");   // lâché trop tôt : la coupe se referme
+  majDechirure(0);
 };
 boosterEl.addEventListener("pointerup", relacher);
 boosterEl.addEventListener("pointercancel", relacher);
