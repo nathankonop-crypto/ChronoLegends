@@ -1239,3 +1239,66 @@ html[dir="rtl"] .savoir-plus-sur { font-size: 13px; }
 html.animations-reduites *, html.animations-reduites *::before, html.animations-reduites *::after {
   animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important;
 }
+
+/* ---------- Écran d'ouverture animé (environ 2 s) ----------
+   Il prend le relais de l'écran fixe du téléphone (même fond bleu nuit) :
+   la rose des vents arrive en tournant, une onde de lumière, le nom apparaît,
+   un reflet passe, puis tout s'efface. */
+.intro {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px;
+  background: radial-gradient(ellipse at 50% 42%, #232a4d 0%, #101320 68%);
+  animation: intro-sortie .55s 2.15s ease-in forwards;
+  cursor: pointer;
+}
+.sans-intro .intro { display: none; }
+.intro.fini { animation: intro-sortie .3s ease-in forwards; }
+.intro-etoile { position: relative; width: min(40vw, 170px); aspect-ratio: 1; }
+.intro-etoile img {
+  position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain;
+  animation: intro-etoile 1.35s cubic-bezier(.2, .8, .2, 1) both;
+}
+/* Lueur dorée derrière l'étoile */
+.intro-etoile::before {
+  content: ""; position: absolute; inset: -40%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 214, 130, .55), rgba(255, 190, 90, .12) 60%, transparent);
+  animation: intro-halo 1.7s .45s ease-out both;
+}
+/* Onde de lumière qui part de l'étoile */
+.intro-etoile::after {
+  content: ""; position: absolute; inset: 2%; border-radius: 50%;
+  border: 2px solid rgba(241, 220, 159, .85);
+  animation: intro-onde 1.1s .95s ease-out both;
+}
+.intro-titre { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.intro-titre span {
+  font-family: "Cinzel", "Times New Roman", serif; line-height: 1.05; white-space: nowrap;
+  background:
+    linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, .95) 50%, transparent 60%) -150% 0 / 250% 100% no-repeat,
+    linear-gradient(180deg, #fff6d0 0%, #f3d688 30%, #c79434 52%, #f6dd94 70%, #a8762a 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 2px 0 #4a330e) drop-shadow(0 6px 10px rgba(0, 0, 0, .55));
+}
+.intro-chrono {
+  font-weight: 700; font-size: 15px; letter-spacing: .55em; margin-inline-start: .55em;
+  animation: intro-texte .6s .9s ease-out both;
+}
+.intro-legends {
+  font-weight: 900; font-size: clamp(34px, 11vw, 52px); letter-spacing: .06em;
+  animation: intro-texte .7s 1.05s cubic-bezier(.2, .8, .2, 1) both, intro-reflet .9s 1.55s ease-in-out both;
+}
+@keyframes intro-etoile {
+  from { opacity: 0; transform: scale(.35) rotate(-140deg); filter: brightness(2.2) blur(3px); }
+  65% { opacity: 1; transform: scale(1.07) rotate(8deg); filter: brightness(1.35) blur(0); }
+  to { opacity: 1; transform: none; filter: brightness(1); }
+}
+@keyframes intro-halo { from { opacity: 0; transform: scale(.3); } 40% { opacity: 1; } to { opacity: .45; transform: scale(1); } }
+@keyframes intro-onde { from { opacity: .9; transform: scale(.7); } to { opacity: 0; transform: scale(2.3); } }
+@keyframes intro-texte { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes intro-reflet { from { background-position: 150% 0, 0 0; } to { background-position: -50% 0, 0 0; } }
+@keyframes intro-sortie { to { opacity: 0; visibility: hidden; } }
+/* Mouvements réduits (réglage du téléphone) : simple fondu, plus court. */
+@media (prefers-reduced-motion: reduce) {
+  .intro { animation: intro-sortie .4s .9s ease-in forwards; }
+  .intro *, .intro-etoile::before, .intro-etoile::after { animation: none !important; }
+}

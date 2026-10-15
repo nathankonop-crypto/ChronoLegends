@@ -777,7 +777,7 @@ $("#gyro-jamais").addEventListener("click", () => { prefs.gyroJamais = true; sau
 $("#dialogue-gyro").addEventListener("click", e => { if (e.target.id === "dialogue-gyro") fermerGyro(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#dialogue-gyro").hidden) fermerGyro(); });
 // Petit délai : si le mouvement est déjà autorisé, les mesures arrivent entre-temps et la fenêtre ne s'ouvre pas.
-setTimeout(proposerGyroscope, 1500);
+setTimeout(proposerGyroscope, 2900);   // après l'écran d'ouverture
 
 // ---------- Démarrage ----------
 
@@ -1218,6 +1218,14 @@ setInterval(async () => {
   }
   majConsigne();
 }, 30000);
+
+// Écran d'ouverture : un appui le passe ; il est retiré une fois effacé.
+const intro = $("#intro");
+if (intro) {
+  intro.addEventListener("click", () => intro.classList.add("fini"));
+  intro.addEventListener("animationend", e => { if (e.animationName === "intro-sortie") intro.remove(); });
+  setTimeout(() => intro.remove(), 3500);   // sécurité
+}
 
 async function demarrer() {
   traduirePage();
