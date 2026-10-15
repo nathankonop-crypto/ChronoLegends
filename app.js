@@ -754,6 +754,27 @@ $("#activer-gyroscope").addEventListener("click", () => {
     .finally(() => { $("#activer-gyroscope").hidden = true; });
 });
 
+// iPhone : à l'arrivée sur le site, une fenêtre propose d'autoriser le mouvement
+// (Apple n'accepte la demande qu'après un appui du joueur, et l'oublie à chaque visite).
+function proposerGyroscope() {
+  if (!gyroscopeAActiver() || prefs.gyroJamais) return;
+  $("#dialogue-gyro").hidden = false;
+  $("#gyro-autoriser").focus();
+}
+const fermerGyro = () => { $("#dialogue-gyro").hidden = true; };
+$("#gyro-autoriser").addEventListener("click", () => {
+  DeviceOrientationEvent.requestPermission()
+    .then(r => { if (r === "granted") { gyroscopeActif = true; positionDeDepart = null; $("#activer-gyroscope").hidden = true; } })
+    .catch(() => { /* refusé : le jeu marche aussi sans */ })
+    .finally(fermerGyro);
+});
+$("#gyro-plus-tard").addEventListener("click", fermerGyro);
+$("#gyro-jamais").addEventListener("click", () => { prefs.gyroJamais = true; sauvegarderPrefs(); fermerGyro(); });
+$("#dialogue-gyro").addEventListener("click", e => { if (e.target.id === "dialogue-gyro") fermerGyro(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#dialogue-gyro").hidden) fermerGyro(); });
+// Petit délai : si le mouvement est déjà autorisé, les mesures arrivent entre-temps et la fenêtre ne s'ouvre pas.
+setTimeout(proposerGyroscope, 1500);
+
 // ---------- Démarrage ----------
 
 // ---------- Paramètres (engrenage) : langue, confort, chances de tirage ----------

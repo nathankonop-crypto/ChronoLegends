@@ -157,6 +157,14 @@ html[dir="rtl"] .interrupteur input:checked::after { transform: translateX(-17px
 html[dir="rtl"] .dialogue-chances h2 { margin: 0 0 12px 40px; }
 html[dir="rtl"] .dialogue-chances .savoir-plus-fermer { right: auto; left: 14px; }
 html[dir="rtl"] .regles-familles li { padding: 4px 4px 4px 10px; }
+/* Fenêtre « Effets 3D » (iPhone) */
+.dialogue-gyro { text-align: center; width: min(100%, 360px); }
+.dialogue-gyro h2 { margin: 4px 0 8px; }
+html[dir="rtl"] .dialogue-gyro h2 { margin: 4px 0 8px; }
+.gyro-icone { width: 64px; height: 64px; fill: none; stroke: var(--or-clair); stroke-width: 2; stroke-linecap: round; animation: incliner-icone 2.4s ease-in-out infinite; }
+@keyframes incliner-icone { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
+.gyro-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.gyro-jamais { margin-top: 12px; background: none; border: 0; padding: 6px; font: inherit; font-size: 15px; color: var(--texte-doux); text-decoration: underline; cursor: pointer; }
 .dialogue-chances .savoir-plus-fermer { color: var(--or-clair); background: rgba(255, 255, 255, .06); border-color: rgba(212, 178, 106, .45); }
 .dialogue-chances p { margin: 10px 0 6px; color: var(--texte-doux); }
 .chances-ligne { color: var(--texte) !important; }
