@@ -579,7 +579,9 @@ button.case-collection:hover { transform: translateY(-4px); }
 .affiche-titre { font-family: var(--serif-titre); font-weight: 700; font-size: 30px; letter-spacing: .16em; color: var(--or-clair); }
 .affiche-sous { font-family: var(--serif); font-style: italic; font-size: 19px; color: var(--texte-doux); margin-bottom: 6px !important; }
 .affiche-carte { width: 360px; }
-.affiche-carte .carte-cadre::after { animation: none; transform: translateX(-30%); }  /* reflet figé au milieu */
+/* Sur l'image, pas de lueur colorée ni de reflet : figés, ils bavent sur les côtés et tachent la carte. */
+.affiche-carte .carte-cadre { box-shadow: 0 16px 28px -12px rgba(0, 0, 0, .75), inset 0 0 0 .6cqw rgba(255, 255, 255, .25), inset 0 0 0 1.2cqw rgba(0, 0, 0, .15); }
+.affiche-carte .carte-cadre::after { display: none; }
 .affiche-pied { margin-top: 10px !important; font-family: var(--serif-titre); font-size: 17px; letter-spacing: .12em; color: var(--or); }
 
 /* Boutons Partager : icône (flèche qui sort d'une boîte) + texte */
