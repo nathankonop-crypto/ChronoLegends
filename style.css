@@ -431,7 +431,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 }
 
 .carte-pied > span { white-space: nowrap; }
-/* Gamme : son initiale (P, A, É, L, M) dans un petit rond, entre l'époque et le numéro. */
+/* Gamme : son initiale (P, A, É, L, M, O) dans un petit rond, entre l'époque et le numéro. */
 .carte-pied > .carte-gamme {
   flex: none; width: 4.2cqw; height: 4.2cqw; box-sizing: border-box;
   display: inline-flex; align-items: center; justify-content: center;

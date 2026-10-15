@@ -32,6 +32,7 @@ const GAMMES = {
   evenement:  "Événement",
   lieu:       "Lieu et monument",
   mythologie: "Mythologie",
+  objet:      "Objet",
 };
 
 const FINITIONS = {

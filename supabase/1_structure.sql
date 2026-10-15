@@ -11,7 +11,7 @@ create table if not exists public.cartes (
   id          text primary key check (id ~ '^[a-z0-9-]+$'),   -- ex. "jeanne-d-arc"
   nom         text not null,
   gamme       text not null default 'personnage'
-              check (gamme in ('personnage', 'archetype', 'evenement', 'lieu', 'mythologie')),
+              check (gamme in ('personnage', 'archetype', 'evenement', 'lieu', 'mythologie', 'objet')),
   dates       text not null default '',
   lieu        text not null default '',
   region      text not null

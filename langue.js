@@ -38,11 +38,11 @@ const NOMS_EN = {
 const nomRarete = k => (LANGUE === "en" ? NOMS_EN.raretes[k] : RARETES[k]?.nom) ?? k;
 const nomRegion = k => (LANGUE === "en" ? NOMS_EN.regions[k] : REGIONS[k]) ?? k;
 const nomEpoque = k => (LANGUE === "en" ? NOMS_EN.epoques[k]?.nom : EXTENSIONS[k]?.nom) ?? k;
-// Gamme de la carte, en version courte : son initiale s'affiche en bas de la carte
+// Gamme de la carte, en version courte : son initiale (P, A, É, L, M, O) s'affiche en bas de la carte
 // (le nom entier apparaît au survol).
 const GAMMES_CARTE = {
-  fr: { personnage: "Personnage", archetype: "Archétype", evenement: "Événement", lieu: "Lieu", mythologie: "Mythologie" },
-  en: { personnage: "Figure", archetype: "Archetype", evenement: "Event", lieu: "Landmark", mythologie: "Mythology" },
+  fr: { personnage: "Personnage", archetype: "Archétype", evenement: "Événement", lieu: "Lieu", mythologie: "Mythologie", objet: "Objet" },
+  en: { personnage: "Figure", archetype: "Archetype", evenement: "Event", lieu: "Landmark", mythologie: "Mythology", objet: "Object" },
 };
 const nomGamme = k => GAMMES_CARTE[LANGUE][k] ?? "";
 const sousTitreEpoque = k => (LANGUE === "en" ? NOMS_EN.epoques[k]?.sousTitre : EXTENSIONS[k]?.sousTitre) ?? "";
