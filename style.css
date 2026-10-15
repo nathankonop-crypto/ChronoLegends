@@ -421,8 +421,8 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .carte-texte { margin: 0; font-size: calc(4.35cqw * var(--reduction)); line-height: 1.22; font-weight: 500; text-align: left; hyphens: auto; color: #2f2819; }
 
 .carte-pied {
-  display: flex; flex-wrap: wrap; justify-content: space-between; row-gap: .4cqw;
-  padding: 1cqw 5cqw 2.4cqw;
+  display: flex; justify-content: space-between; align-items: center; gap: 2cqw;
+  padding: 1.4cqw 5cqw 2.4cqw;
   font-family: var(--serif-titre);
   font-size: 2.8cqw;
   letter-spacing: .14em;
@@ -431,8 +431,13 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 }
 
 .carte-pied > span { white-space: nowrap; }
-/* Gamme (Personnage, Archétype…) : petite ligne centrée au-dessus de l'époque et du numéro. */
-.carte-pied > .carte-gamme { order: -1; flex-basis: 100%; text-align: center; font-size: .9em; letter-spacing: .22em; opacity: .9; }
+/* Gamme : son initiale (P, A, É, L, M) dans un petit rond, entre l'époque et le numéro. */
+.carte-pied > .carte-gamme {
+  flex: none; width: 4.2cqw; height: 4.2cqw; box-sizing: border-box;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: .25cqw solid currentColor; border-radius: 50%;
+  font-size: 2.6cqw; font-weight: 700; letter-spacing: 0; line-height: 1;
+}
 .carte-pied > .carte-gamme:empty { display: none; }
 
 /* Raretés : couleurs de cadre, filet, gemme */
