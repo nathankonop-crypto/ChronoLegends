@@ -170,10 +170,12 @@ function afficherListe() {
   const filtres = { rarete: $("#filtre-rarete").value, gamme: $("#filtre-gamme").value,
     region: $("#filtre-region").value, epoque: $("#filtre-epoque").value };
   const famille = $("#filtre-famille").value;   // "" = toutes, "-" = sans famille
+  const statut = $("#filtre-statut").value;
 
   const visibles = cartes.filter(c =>
     Object.entries(filtres).every(([champ, v]) => !v || c[champ] === v) &&
     (!famille || (famille === "-" ? !c.famille : c.famille === famille)) &&
+    (!statut || (c.statut ?? "validee") === statut) &&
     (!texte || [c.nom, c.nom_en, c.lieu, c.dates, c.id].join(" ").toLowerCase().includes(texte)));
 
   $("#nb-cartes").textContent = visibles.length === cartes.length
@@ -186,7 +188,7 @@ function afficherListe() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="vignette">${c.image ? `<img src="${echapper(c.image)}" alt="" loading="lazy">` : `<span>${echapper(initiales(c.nom))}</span>`}</td>
-      <td class="col-nom">${echapper(c.nom)}</td>
+      <td class="col-nom">${echapper(c.nom)}${c.statut === "brouillon" ? ' <span class="badge-brouillon">Brouillon</span>' : ""}</td>
       <td>${numeroDe(c)}</td>
       <td>${EXTENSIONS[c.epoque].nom}</td>
       <td><span class="pastille rarete-${c.rarete}">${RARETES[c.rarete].nom}</span></td>
@@ -208,7 +210,7 @@ $("#lignes").addEventListener("click", e => {
   if (sup) demanderSuppression(cartes.find(c => c.id === sup.dataset.supprimer));
 });
 
-for (const id of ["#recherche", "#filtre-rarete", "#filtre-gamme", "#filtre-region", "#filtre-epoque", "#filtre-famille"]) {
+for (const id of ["#recherche", "#filtre-rarete", "#filtre-gamme", "#filtre-region", "#filtre-epoque", "#filtre-famille", "#filtre-statut"]) {
   $(id).addEventListener("input", afficherListe);
 }
 
@@ -230,6 +232,8 @@ function ouvrirFormulaire(ligne) {
   for (const champ of ["nom", "id", "gamme", "rarete", "famille", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN, ...CHAMPS_PLUS]) {
     form.elements[champ].value = l[champ] ?? "";
   }
+  // Carte existante : son statut (« validee » si la colonne n'existe pas encore) ; nouvelle carte : brouillon.
+  form.elements.statut.value = ligne ? (ligne.statut || "validee") : "brouillon";
   form.elements.id.readOnly = !!ligne;
   avantIA = null;
   noteIA("");
@@ -337,7 +341,7 @@ function valeursFormulaire() {
   const f = form.elements;
   return {
     id: f.id.value.trim(), nom: f.nom.value.trim(), gamme: f.gamme.value, rarete: f.rarete.value,
-    epoque: f.epoque.value, region: f.region.value,
+    epoque: f.epoque.value, region: f.region.value, statut: f.statut.value,
     // Famille : seulement pour les personnages historiques.
     famille: (f.gamme.value === "personnage" && f.famille.value) || null,
     dates: f.dates.value.trim(), lieu: f.lieu.value.trim(), description: f.description.value.trim(),

@@ -9,8 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261016-0056">
-<link rel="stylesheet" href="admin.css?v=20261016-0056">
+<link rel="stylesheet" href="style.css?v=20261016-0124">
+<link rel="stylesheet" href="admin.css?v=20261016-0124">
 </head>
 <body class="admin">
 
@@ -71,6 +71,7 @@
         <select id="filtre-region" aria-label="Filtrer par région"><option value="">Toutes les régions</option></select>
         <select id="filtre-epoque" aria-label="Filtrer par époque"><option value="">Toutes les époques</option></select>
         <select id="filtre-famille" aria-label="Filtrer par famille"><option value="">Toutes les familles</option><option value="-">Sans famille</option></select>
+        <select id="filtre-statut" aria-label="Filtrer par statut"><option value="">Tous les statuts</option><option value="validee">Validées</option><option value="brouillon">Brouillons</option></select>
       </div>
 
       <div class="tableau-conteneur">
@@ -132,6 +133,13 @@
             <label><span>Gamme <span class="requis">*</span></span><select name="gamme" required></select></label>
             <label><span>Rareté <span class="requis">*</span></span><select name="rarete" required></select></label>
           </div>
+          <label>Statut
+            <select name="statut">
+              <option value="brouillon">Brouillon : invisible pour les joueurs</option>
+              <option value="validee">Validée : dans le jeu et les boosters</option>
+            </select>
+            <small>Une nouvelle carte reste en brouillon tant que vous ne la validez pas.</small>
+          </label>
           <label id="bloc-famille">Famille
             <select name="famille"></select>
             <small>Personnages historiques : une « collection dans la collection » (emblème dans le coin de l'illustration). Les familles se gèrent avec le bouton « Familles » de la liste.</small>
@@ -227,10 +235,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261016-0056"></script>
-<script src="langue.js?v=20261016-0056"></script>
-<script src="anti-robot.js?v=20261016-0056"></script>
-<script src="carte.js?v=20261016-0056"></script>
-<script src="admin.js?v=20261016-0056"></script>
+<script src="reglages.js?v=20261016-0124"></script>
+<script src="langue.js?v=20261016-0124"></script>
+<script src="anti-robot.js?v=20261016-0124"></script>
+<script src="carte.js?v=20261016-0124"></script>
+<script src="admin.js?v=20261016-0124"></script>
 </body>
 </html>

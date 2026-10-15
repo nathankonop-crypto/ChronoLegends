@@ -62,8 +62,9 @@ async function chargerCartes() {
   if (error) throw error;
   // Familles (Conquérants, Sages…) : sans elles, le jeu marche quand même.
   FAMILLES = Object.fromEntries((familles.data || []).map(f => [f.id, f]));
+  // Seules les cartes validées existent pour les joueurs (les brouillons restent dans l'admin).
   // On garde les noms de champs utilisés partout dans le jeu.
-  CARTES = data.map(l => ({
+  CARTES = data.filter(l => (l.statut ?? "validee") === "validee").map(l => ({
     // Contenu en anglais si le joueur joue en anglais (le français sert de secours).
     id: l.id, gamme: l.gamme, region: l.region, extension: l.epoque, rarete: l.rarete, famille: l.famille || null,
     nom: champ(l, "nom"), dates: champ(l, "dates"), lieu: champ(l, "lieu"), texte: champ(l, "description"),
@@ -384,6 +385,7 @@ async function ouvrirBooster(dechire = false) {
   etat.boosters = data.boosters;
   // Le paquet suivant change d'aspect seulement une fois celui-ci ouvert (reinitialiserBooster).
   if ("booster_dore" in data) etat.boosterDore = data.booster_dore;
+  if (data.pitie) notifier(t("notifPitie"));   // la pitié a forcé une Légendaire
   appliquerRegion(data);
   tirage.forEach(c => ajouterExemplaires(c.id, c.finition));
   majCompteur();
@@ -805,31 +807,42 @@ for (const [id, [cle, defaut]] of Object.entries(INTERRUPTEURS)) {
   });
 }
 
-// Chances de tirage : les mêmes chiffres que le serveur (supabase/5_verrou_region.sql, 10_finitions.sql).
-const CHANCES_SPECIALE = [["rare", 65], ["epique", 26], ["legendaire", 8], ["mythique", 1]];
-const CHANCES_FINITIONS = [["animee", 25], ["diamant", 150]];
-// Booster doré (supabase/12_booster_dore.sql) : 1 booster sur 10.
-const CHANCES_DORE = { surX: 10, speciale: [["rare", 30], ["epique", 46], ["legendaire", 20], ["mythique", 4]], animee: 10, diamant: 50 };
+// Chances de tirage : lues dans la base (tables taux_tirage et reglages_tirage,
+// supabase/13_taux_tirage.sql), les mêmes que celles qu'utilise le serveur.
 const pourcent = x => new Intl.NumberFormat(LANGUE, { maximumFractionDigits: 2 }).format(x) + " %";
 
-function afficherChances() {
-  $("#contenu-chances").innerHTML = `
-    <p>${t("chancesIntro")}</p>
-    <p class="chances-ligne">${t("chancesCartes", { ordinaire: nomRarete("ordinaire"), notable: nomRarete("notable"), rare: nomRarete("rare") })}</p>
-    <p>${t("chancesSpeciale")}</p>
-    <ul class="chances-liste">${CHANCES_SPECIALE.map(([r, p]) =>
-      `<li><span class="pastille-rarete rarete-${r}"></span>${nomRarete(r)}<b>${pourcent(p)}</b></li>`).join("")}</ul>
-    <p>${t("chancesFinitions")}</p>
-    <ul class="chances-liste">${CHANCES_FINITIONS.map(([f, n]) =>
-      `<li>${f === "diamant" ? "💎" : "✨"} ${nomFinition(f)}<b>${pourcent(100 / n)} <small>(${t("surX", { n })})</small></b></li>`).join("")}</ul>
-    <p class="chances-dore">${t("chancesDore", { n: CHANCES_DORE.surX })}</p>
-    <ul class="chances-liste">${CHANCES_DORE.speciale.map(([r, p]) =>
-      `<li><span class="pastille-rarete rarete-${r}"></span>${nomRarete(r)}<b>${pourcent(p)}</b></li>`).join("")}</ul>
-    <p>${t("chancesDoreFinitions", { animee: CHANCES_DORE.animee, diamant: CHANCES_DORE.diamant })}</p>
-    <p class="chances-note">${t("chancesNote")}</p>`;
+async function afficherChances() {
   basculerReglages(false);
+  $("#contenu-chances").innerHTML = `<p>${t("chargement")}</p>`;
   $("#dialogue-chances").hidden = false;
   $("#fermer-chances").focus();
+  const [taux, reglages] = await Promise.all([
+    sb.from("taux_tirage").select("*").order("ordre"),
+    sb.from("reglages_tirage").select("cle, valeur"),
+  ]);
+  if (taux.error || reglages.error || !taux.data?.length) {
+    $("#contenu-chances").innerHTML = `<p>${t("chancesIndispo")}</p>`;
+    return;
+  }
+  const R = Object.fromEntries(reglages.data.map(r => [r.cle, Number(r.valeur)]));
+  // Une colonne de poids → liste des raretés possibles avec leur pourcentage.
+  const liste = colonne => {
+    const total = taux.data.reduce((s, l) => s + Number(l[colonne]), 0);
+    return `<ul class="chances-liste">${taux.data.filter(l => Number(l[colonne]) > 0).map(l =>
+      `<li><span class="pastille-rarete rarete-${l.rarete}"></span>${nomRarete(l.rarete)}<b>${pourcent(Number(l[colonne]) / total * 100)}</b></li>`).join("")}</ul>`;
+  };
+  const finitions = (animee, diamant) => `<ul class="chances-liste">${[["animee", animee], ["diamant", diamant]].map(([f, n]) =>
+    `<li>${f === "diamant" ? "💎" : "✨"} ${nomFinition(f)}<b>${pourcent(100 / n)} <small>(${t("surX", { n })})</small></b></li>`).join("")}</ul>`;
+  $("#contenu-chances").innerHTML = `
+    <p>${t("chancesIntro")}</p>
+    <p>${t("chances13")}</p>${liste("cartes_1_a_3")}
+    <p>${t("chances4")}</p>${liste("carte_4")}
+    <p>${t("chances5")}</p>${liste("carte_5")}
+    <p>${t("chancesFinitions")}</p>${finitions(R.animee_sur ?? 25, R.diamant_sur ?? 150)}
+    <p class="chances-dore">${t("chancesDore", { n: Math.round(1 / (R.chance_booster_dore ?? .1)) })}</p>${liste("carte_5_dore")}
+    <p>${t("chancesDoreFinitions", { animee: R.animee_sur_dore ?? 10, diamant: R.diamant_sur_dore ?? 50 })}</p>
+    <p class="chances-note">${t("chancesPitie", { n: R.pitie_seuil ?? 50 })}</p>
+    <p class="chances-note">${t("chancesNote")}</p>`;
 }
 const fermerChances = () => { $("#dialogue-chances").hidden = true; };
 
