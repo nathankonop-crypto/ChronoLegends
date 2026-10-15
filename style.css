@@ -302,7 +302,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .titre-legends { font-weight: 900; font-size: 13.2cqw; letter-spacing: .06em; }
 /* Rose des vents : même proportion que sur le dos des cartes */
 .booster-logo { top: 50%; width: 30%; height: auto; transform: translateY(-50%); filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .6)); }
-.booster-info { top: 64%; text-align: center; font-family: var(--serif-titre); font-size: 11px; letter-spacing: .3em; color: var(--texte-doux); text-transform: uppercase; }
+.booster-info { top: 61.2%; text-align: center; font-family: var(--serif-titre); font-size: 11px; letter-spacing: .3em; color: var(--texte-doux); text-transform: uppercase; }
 
 .booster.ouverture { animation: secouer .55s ease-in-out, eclater .35s .55s ease-in forwards; }
 
@@ -327,7 +327,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   background: var(--encre); clip-path: polygon(0 0, 100% 0, 50% 100%);
 }
 /* Monument en filigrane, à peine visible : un différent à chaque paquet */
-.booster-filigrane { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--or); opacity: .16; }
+.booster-filigrane { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--or); opacity: .3; }
 .booster-bord { inset: 8.5% 10px; }
 
 /* Une couleur par région */
@@ -357,7 +357,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
     radial-gradient(ellipse at 50% 45%, #3d3119 0%, #18130a 60%, #070604 100%);
 }
 .booster.dore .booster-sachet { box-shadow: 0 0 0 1.5px rgba(241, 220, 159, .9) inset, 0 0 30px rgba(212, 178, 106, .25) inset; }
-.booster.dore .booster-filigrane { opacity: .24; }
+.booster.dore .booster-filigrane { opacity: .38; }
 .booster.dore .booster-info { color: var(--or-clair); }
 .booster.dore .booster-reflet { animation-duration: 3.5s; animation-delay: .5s; }
 /* Halo doré qui respire derrière le paquet */
