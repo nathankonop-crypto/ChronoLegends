@@ -98,6 +98,7 @@ const TEXTES = {
     epoque: "Époque",
     fermer: "Fermer",
     langue: "Langue",
+    parametres: "Paramètres",
     piedPrototype: "Prototype — votre collection est enregistrée sur nos serveurs, liée à ce navigateur.",
     piedGeo: "Un compte anonyme (sans e-mail) est créé automatiquement pour garder votre collection. Vos boosters dépendent de votre région, déterminée par notre serveur à partir du pays de votre adresse IP. Seuls le pays et la région sont enregistrés, jamais votre adresse IP ni votre position.",
 
@@ -174,6 +175,7 @@ const TEXTES = {
     epoque: "Era",
     fermer: "Close",
     langue: "Language",
+    parametres: "Settings",
     piedPrototype: "Prototype — your collection is saved on our servers, linked to this browser.",
     piedGeo: "An anonymous account (no email) is created automatically to keep your collection. Your boosters depend on your region, determined by our server from the country of your IP address. Only the country and region are saved, never your IP address or your location.",
 
@@ -250,6 +252,7 @@ const TEXTES = {
     epoque: "תקופה",
     fermer: "סגירה",
     langue: "שפה",
+    parametres: "הגדרות",
     piedPrototype: "אב־טיפוס — האוסף שלכם נשמר בשרתים שלנו, ומקושר לדפדפן הזה.",
     piedGeo: "חשבון אנונימי (ללא דוא״ל) נוצר אוטומטית כדי לשמור את האוסף שלכם. החבילות שלכם תלויות באזור שלכם, שהשרת שלנו קובע לפי המדינה של כתובת ה־IP. נשמרים רק המדינה והאזור, לעולם לא כתובת ה־IP או המיקום שלכם.",
 

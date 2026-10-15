@@ -739,6 +739,24 @@ $("#activer-gyroscope").addEventListener("click", () => {
 
 // ---------- Démarrage ----------
 
+// ---------- Paramètres (engrenage) : choix de la langue ----------
+
+function basculerReglages(ouvrir) {
+  const panneau = $("#panneau-reglages");
+  ouvrir ??= panneau.hidden;
+  panneau.hidden = !ouvrir;
+  $("#bouton-reglages").setAttribute("aria-expanded", String(ouvrir));
+  if (ouvrir) panneau.querySelector(".actif, button")?.focus();
+}
+$("#bouton-reglages").addEventListener("click", () => basculerReglages());
+// Un appui ailleurs ou la touche Échap referment le panneau.
+document.addEventListener("click", e => {
+  if (!$("#panneau-reglages").hidden && !e.target.closest(".reglages")) basculerReglages(false);
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && !$("#panneau-reglages").hidden) { basculerReglages(false); $("#bouton-reglages").focus(); }
+});
+
 // ---------- Déchirer le booster : glisser le doigt de haut en bas ----------
 
 const boosterEl = $("#booster");
