@@ -15,8 +15,8 @@
   --texte-carte: #2a2418;
   --texte: #e9e3d3;
   --texte-doux: #a9a391;
-  --serif-titre: "Cinzel", "Frank Ruhl Libre", "Times New Roman", serif;   /* Frank Ruhl Libre : lettres hébraïques */
-  --serif: "Cormorant Garamond", "Frank Ruhl Libre", Georgia, serif;
+  --serif-titre: "Cinzel", "Rubik", "Times New Roman", serif;   /* Rubik : lettres hébraïques */
+  --serif: "Cormorant Garamond", "Rubik", Georgia, serif;
 }
 
 * { box-sizing: border-box; }
@@ -349,6 +349,13 @@ html[lang="he"] *:not(.carte, .carte *, .marque-titre, .booster-titre, .affiche-
   font-style: normal;
   letter-spacing: normal;
 }
+/* Hébreu : Rubik pour toute l'interface (chiffres compris) ; cartes et nom du jeu gardent leurs polices. */
+html[lang="he"] { --serif-titre: "Rubik", sans-serif; --serif: "Rubik", sans-serif; }
+html[lang="he"] :is(.carte, .marque-titre, .booster-titre, .booster-sceau, .affiche-titre, .affiche-pied) {
+  --serif-titre: "Cinzel", "Rubik", "Times New Roman", serif;
+  --serif: "Cormorant Garamond", "Rubik", Georgia, serif;
+}
+html[lang="he"] .carte { font-family: var(--serif); }   /* sinon la carte hériterait de Rubik */
 
 /* ---------- Carte ---------- */
 
