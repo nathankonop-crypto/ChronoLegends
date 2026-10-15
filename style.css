@@ -275,18 +275,15 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 
 .booster-bord { position: absolute; inset: 10px; border: 1px solid rgba(212, 178, 106, .55); border-radius: 8px; pointer-events: none; }
 .booster-bord::after { content: ""; position: absolute; inset: 4px; border: 1px solid rgba(212, 178, 106, .25); border-radius: 5px; }
-.booster-titre { font-family: var(--serif-titre); font-weight: 700; font-size: 16px; letter-spacing: .12em; color: var(--or-clair); text-align: center; }
-.booster-sceau {
-  margin: 14px 0;
-  width: 68px; height: 68px;
-  border-radius: 50%;
-  display: grid; place-items: center;
-  font-family: var(--serif-titre); font-weight: 700; font-size: 30px;
-  color: #f3c7b5;
-  background: radial-gradient(circle at 35% 30%, #c0463a, #7d1d1a 70%);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, .5), inset 0 -3px 6px rgba(0, 0, 0, .35), inset 0 2px 3px rgba(255, 255, 255, .2);
-}
-.booster-info { font-family: var(--serif-titre); font-size: 11px; letter-spacing: .3em; color: var(--texte-doux); text-transform: uppercase; }
+/* Placement fixe (et non en colonne) : les deux moitiés du paquet déchiré
+   reprennent exactement la même disposition. */
+.booster-titre, .booster-logo, .booster-info { position: absolute; left: 0; right: 0; margin-inline: auto; pointer-events: none; user-select: none; }
+/* « ChronoLegends » en lettres dorées en haut, et à l'envers en bas, comme sur une carte à jouer */
+.booster-titre { top: 11%; width: 74%; height: auto; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .6)); }
+.booster-titre.envers { top: auto; bottom: 11%; transform: rotate(180deg); }
+/* Rose des vents : même proportion que sur le dos des cartes */
+.booster-logo { top: 50%; width: 30%; height: auto; transform: translateY(-50%); filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .6)); }
+.booster-info { top: 64%; text-align: center; font-family: var(--serif-titre); font-size: 11px; letter-spacing: .3em; color: var(--texte-doux); text-transform: uppercase; }
 
 .booster.ouverture { animation: secouer .55s ease-in-out, eclater .35s .55s ease-in forwards; }
 
@@ -341,7 +338,6 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   position: absolute; inset: 0; border-radius: 14px;
   background: var(--fond-booster);
   box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .8), 0 0 0 1px rgba(212, 178, 106, .4) inset;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
   pointer-events: none;
 }
 .moitie.gauche { transform-origin: 30% 100%; animation: envol-gauche .65s cubic-bezier(.3, .1, .6, 1) forwards; }
@@ -547,7 +543,7 @@ html[lang="he"] *:not(.carte, .carte *, .marque-titre, .booster-titre, .affiche-
 }
 /* Hébreu : Rubik pour toute l'interface (chiffres compris) ; cartes et nom du jeu gardent leurs polices. */
 html[lang="he"] { --serif-titre: "Rubik", sans-serif; --serif: "Rubik", sans-serif; }
-html[lang="he"] :is(.carte, .marque-titre, .booster-titre, .booster-sceau, .affiche-titre, .affiche-pied) {
+html[lang="he"] :is(.carte, .marque-titre, .booster-titre, .affiche-titre, .affiche-pied) {
   --serif-titre: "Cinzel", "Rubik", "Times New Roman", serif;
   --serif: "Cormorant Garamond", "Rubik", Georgia, serif;
 }

@@ -862,7 +862,7 @@ function reinitialiserBooster() {
 function dechirerBooster() {
   dechirure = null;
   vibrer(35);
-  const contenu = [...boosterEl.querySelectorAll(".booster-bord, .booster-titre, .booster-sceau, .booster-info")];
+  const contenu = [...boosterEl.querySelectorAll(".booster-bord, .booster-titre, .booster-logo, .booster-info")];
   const bord = ZIGZAG.map(([x, y]) => `${x}% ${y}%`).join(", ");
   for (const [cote, forme] of [["gauche", `0% 0%, ${bord}, 0% 100%`], ["droite", `${bord}, 100% 100%, 100% 0%`]]) {
     const moitie = document.createElement("span");
