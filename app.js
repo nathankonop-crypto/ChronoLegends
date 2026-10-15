@@ -34,7 +34,7 @@ const etatJeu = { pret: false, erreur: false };
 const prefs = chargerPrefs();
 const etat = {
   collection: {},          // { id_carte: nombre d'exemplaires, toutes finitions } — copie de ce que dit le serveur
-  finitions: {},           // { id_carte: { normale: 2, animee: 1, diamant: 0 } }
+  finitions: {},           // { id_carte: { normale: 2, emeraude: 1, diamant: 0 } }
   boosters: 0,             // copie de ce que dit le serveur
   prochainQuotidien: null, // instant (local) où le serveur dira qu'un nouveau cadeau est dû
   region: null,            // décidée par le serveur (adresse IP)
@@ -81,11 +81,13 @@ async function chargerCollection() {
   if (error) throw error;
   etat.collection = {};
   etat.finitions = {};
-  for (const l of data) ajouterExemplaires(l.carte_id, l.finition, l.exemplaires);
+  for (const l of data) ajouterExemplaires(l.carte_id, finitionValide(l.finition), l.exemplaires);
 }
 
 // Finitions, de la plus courante à la plus rare (le Diamant est la plus rare).
-const FINITIONS_ORDRE = ["normale", "animee", "diamant"];
+const FINITIONS_ORDRE = ["normale", "emeraude", "diamant"];
+// Ancien nom de l'Émeraude (« animee ») : accepté le temps que le serveur soit mis à jour.
+const finitionValide = f => (f === "animee" ? "emeraude" : f || "normale");
 
 function ajouterExemplaires(id, finition = "normale", nb = 1) {
   etat.collection[id] = (etat.collection[id] || 0) + nb;
@@ -98,7 +100,7 @@ const versionsPossedees = id => FINITIONS_ORDRE.filter(f => etat.finitions[id]?.
 
 // La « plus belle » carte d'un booster, pour le partage : rareté, puis finition.
 const RANG_RARETE = ["ordinaire", "notable", "rare", "epique", "legendaire", "mythique"];
-const beaute = c => RANG_RARETE.indexOf(c.rarete) + { normale: 0, animee: 2, diamant: 4 }[c.finition || "normale"];
+const beaute = c => RANG_RARETE.indexOf(c.rarete) + { normale: 0, emeraude: 2, diamant: 4 }[finitionValide(c.finition)];
 const plusBelle = cartes => cartes.reduce((a, b) => (beaute(b) >= beaute(a) ? b : a));
 
 async function connecterJoueur() {
@@ -381,7 +383,7 @@ async function ouvrirBooster(dechire = false) {
   // Une carte ajoutée depuis l'administration après le chargement de la page ?
   if (data.cartes.some(c => !CARTES.find(x => x.id === c.id))) await chargerCartes();
   // Chaque exemplaire tiré porte sa finition (normale, animée ou diamant), décidée par le serveur.
-  const tirage = data.cartes.map(c => ({ ...CARTES.find(x => x.id === c.id), finition: c.finition || "normale" }));   // trié : la plus rare en dernier
+  const tirage = data.cartes.map(c => ({ ...CARTES.find(x => x.id === c.id), finition: finitionValide(c.finition) }));   // trié : la plus rare en dernier
   etat.boosters = data.boosters;
   // Le paquet suivant change d'aspect seulement une fois celui-ci ouvert (reinitialiserBooster).
   if ("booster_dore" in data) etat.boosterDore = data.booster_dore;
@@ -536,7 +538,7 @@ function reveler(emplacement, carte) {
     emplacement.insertAdjacentHTML("beforeend", `<span class="nouvelle">${t("nouvelle")}</span>`);
   }
   if (carte.finition === "diamant") notifier(t("notifDiamant", { nom: carte.nom }));
-  else if (carte.finition === "animee") notifier(t("notifAnimee", { nom: carte.nom }));
+  else if (carte.finition === "emeraude") notifier(t("notifEmeraude", { nom: carte.nom }));
   else if (carte.rarete === "mythique") notifier(t("notifMythique", { nom: carte.nom }));
   else if (carte.rarete === "legendaire") notifier(t("notifLegendaire", { nom: carte.nom }));
   else if (carte.rarete === "epique") notifier(t("notifEpique", { nom: carte.nom }));
@@ -831,16 +833,16 @@ async function afficherChances() {
     return `<ul class="chances-liste">${taux.data.filter(l => Number(l[colonne]) > 0).map(l =>
       `<li><span class="pastille-rarete rarete-${l.rarete}"></span>${nomRarete(l.rarete)}<b>${pourcent(Number(l[colonne]) / total * 100)}</b></li>`).join("")}</ul>`;
   };
-  const finitions = (animee, diamant) => `<ul class="chances-liste">${[["animee", animee], ["diamant", diamant]].map(([f, n]) =>
-    `<li>${f === "diamant" ? "💎" : "✨"} ${nomFinition(f)}<b>${pourcent(100 / n)} <small>(${t("surX", { n })})</small></b></li>`).join("")}</ul>`;
+  const finitions = (emeraude, diamant) => `<ul class="chances-liste">${[["emeraude", emeraude], ["diamant", diamant]].map(([f, n]) =>
+    `<li>${f === "diamant" ? "💎" : "💚"} ${nomFinition(f)}<b>${pourcent(100 / n)} <small>(${t("surX", { n })})</small></b></li>`).join("")}</ul>`;
   $("#contenu-chances").innerHTML = `
     <p>${t("chancesIntro")}</p>
     <p>${t("chances13")}</p>${liste("cartes_1_a_3")}
     <p>${t("chances4")}</p>${liste("carte_4")}
     <p>${t("chances5")}</p>${liste("carte_5")}
-    <p>${t("chancesFinitions")}</p>${finitions(R.animee_sur ?? 25, R.diamant_sur ?? 150)}
+    <p>${t("chancesFinitions")}</p>${finitions(R.emeraude_sur ?? R.animee_sur ?? 25, R.diamant_sur ?? 150)}
     <p class="chances-dore">${t("chancesDore", { n: Math.round(1 / (R.chance_booster_dore ?? .1)) })}</p>${liste("carte_5_dore")}
-    <p>${t("chancesDoreFinitions", { animee: R.animee_sur_dore ?? 10, diamant: R.diamant_sur_dore ?? 50 })}</p>
+    <p>${t("chancesDoreFinitions", { emeraude: R.emeraude_sur_dore ?? R.animee_sur_dore ?? 10, diamant: R.diamant_sur_dore ?? 50 })}</p>
     <p class="chances-note">${t("chancesPitie", { n: R.pitie_seuil ?? 50 })}</p>
     <p class="chances-note">${t("chancesNote")}</p>`;
 }
@@ -864,7 +866,7 @@ function afficherRegles() {
     section(R.famillesTitre, `<p>${R.familles}</p>${familles.length ? `<ul class="regles-familles">${familles.map(f =>
       `<li><span class="embleme-mini">${dessinEmbleme(f.embleme)}</span>${echapper(nomFamille(f))}</li>`).join("")}</ul>` : ""}`),
     section(R.finitionsTitre, `<ul class="regles-liste">${Object.entries(R.finitions).map(([f, texte]) =>
-      `<li><span class="regles-icone">${{ normale: "◆", animee: "✨", diamant: "💎" }[f]}</span><span><b>${nomFinition(f)}</b> — ${texte}</span></li>`).join("")}</ul>
+      `<li><span class="regles-icone">${{ normale: "◆", emeraude: "💚", diamant: "💎" }[f]}</span><span><b>${nomFinition(f)}</b> — ${texte}</span></li>`).join("")}</ul>
       <p class="chances-note">${R.finitionsNote}</p>
       <button class="lien-reglages" id="regles-vers-chances">${R.voirChances}</button>`),
   ].join("");
@@ -897,12 +899,12 @@ async function afficherHistorique() {
   const date = new Intl.DateTimeFormat(LANGUE, { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
   zone.innerHTML = `<p class="chances-note">${t("historiqueIntro", { n: NB_HISTORIQUE })}</p>` + data.map(o => {
     // Les 5 cartes, de la plus courante à la plus rare (comme à l'ouverture).
-    const cartes = o.cartes.map((id, i) => ({ id, carte: CARTES.find(x => x.id === id), finition: o.finitions?.[i] || "normale" }))
+    const cartes = o.cartes.map((id, i) => ({ id, carte: CARTES.find(x => x.id === id), finition: finitionValide(o.finitions?.[i]) }))
       .sort((a, b) => RANG_RARETE.indexOf(a.carte?.rarete) - RANG_RARETE.indexOf(b.carte?.rarete));
     return `<article class="historique-booster">
       <h3><time datetime="${o.ouvert_le}">${date.format(new Date(o.ouvert_le))}</time><span>${nomRegion(o.region)}</span></h3>
       <ul>${cartes.map(({ id, carte, finition }) => `<li><button class="historique-carte" data-id="${echapper(id)}" data-finition="${finition}"${carte ? "" : " disabled"}>
-        <span class="pastille-rarete rarete-${carte?.rarete || "ordinaire"}"></span>${echapper(carte?.nom || id)}${finition === "diamant" ? " 💎" : finition === "animee" ? " ✨" : ""}</button></li>`).join("")}</ul>
+        <span class="pastille-rarete rarete-${carte?.rarete || "ordinaire"}"></span>${echapper(carte?.nom || id)}${finition === "diamant" ? " 💎" : finition === "emeraude" ? " 💚" : ""}</button></li>`).join("")}</ul>
     </article>`;
   }).join("");
 }

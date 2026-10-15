@@ -547,9 +547,9 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 @keyframes halo-epique { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 26px #b07de0); } }
 @keyframes halo-legendaire { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 40px #ffd772) brightness(1.15); } }
 /* Finitions : l'éclat de la révélation prend le pas sur celui de la rareté. */
-.emplacement.revelee[data-finition="animee"] .face-avant { animation: halo-animee 2s .4s ease-out; }
+.emplacement.revelee[data-finition="emeraude"] .face-avant { animation: halo-emeraude 2.2s .4s ease-out; }
 .emplacement.revelee[data-finition="diamant"] .face-avant { animation: halo-diamant 2.6s .4s ease-out; }
-@keyframes halo-animee { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 46px #ffc25a) brightness(1.15); } }
+@keyframes halo-emeraude { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 48px #3fe39a) brightness(1.2); } }
 @keyframes halo-diamant {
   0% { filter: drop-shadow(0 0 0 transparent); }
   20% { filter: drop-shadow(0 0 60px #d8f1ff) brightness(1.45); }
@@ -603,9 +603,9 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .tirage.pile .emplacement.dessous.rarete-epique { --tranche: #a25ee0; }
 .tirage.pile .emplacement.dessous.rarete-legendaire { --tranche: #f0b43a; }
 .tirage.pile .emplacement.dessous.rarete-mythique { --tranche: #ff5fb0; }
-.tirage.pile .emplacement.dessous[data-finition="animee"] { --tranche: #ffe08a; }
+.tirage.pile .emplacement.dessous[data-finition="emeraude"] { --tranche: #3fe39a; }
 .tirage.pile .emplacement.dessous[data-finition="diamant"] { --tranche: #bdf0ff; }
-.tirage.pile .emplacement.dessous:is(.rarete-epique, .rarete-legendaire, .rarete-mythique, [data-finition="animee"], [data-finition="diamant"]) .face-dos .dos {
+.tirage.pile .emplacement.dessous:is(.rarete-epique, .rarete-legendaire, .rarete-mythique, [data-finition="emeraude"], [data-finition="diamant"]) .face-dos .dos {
   box-shadow: 0 14px 30px -10px rgba(0, 0, 0, .8), 0 0 0 1px rgba(212, 178, 106, .5) inset,
     0 0 0 2px var(--tranche), 0 0 22px 5px var(--tranche);
   animation: tranche 1.6s ease-in-out infinite alternate;
@@ -973,56 +973,64 @@ html[lang="he"] .carte { font-family: var(--serif); }   /* sinon la carte hérit
 .finition-diamant .sceau-fond { fill: #e9f6ff; stroke: #2f5f95; stroke-width: 1.2; stroke-linejoin: round; }
 .finition-diamant .sceau-trait { fill: none; stroke: #2f5f95; stroke-width: 1; stroke-linejoin: round; }
 
-/* Animée : l'illustration prend vie. */
-.finition-animee .carte-illus img,
-.finition-animee .carte-illus > svg {
-  transform-origin: 50% 40%;
-  animation: camera 14s ease-in-out infinite alternate;
-}
-@keyframes camera { from { transform: scale(1.03) translate(0, 0); } to { transform: scale(1.16) translate(-2.5%, -2%); } }
-/* Rai de lumière qui traverse lentement l'image. */
-.finition-animee .carte-illus::after {
-  content: "";
-  position: absolute; top: -20%; bottom: -20%; left: 0; width: 60%;
-  background: linear-gradient(100deg, transparent, rgba(255, 236, 190, .28), transparent);
-  animation: rai 7s ease-in-out infinite;
+/* Émeraude : petites émeraudes serties dans une monture d'or, reflet vert, sceau taillé. */
+/* Halo vert profond qui respire derrière la carte. */
+.emeraude-halo {
+  position: absolute; inset: -4cqw; z-index: -1; border-radius: 8cqw;
+  background: radial-gradient(closest-side, rgba(90, 230, 160, .75), rgba(20, 150, 95, .4) 62%, transparent);
+  animation: respirer 3.6s ease-in-out infinite;
   pointer-events: none;
 }
-@keyframes rai { from { transform: translateX(-120%) rotate(8deg); } to { transform: translateX(260%) rotate(8deg); } }
-/* Poussière de lumière qui monte doucement. */
-.poussiere { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.poussiere span {
-  position: absolute; bottom: -3cqw;
-  width: 1.3cqw; height: 1.3cqw; border-radius: 50%;
-  background: radial-gradient(circle, #fff6d8 0 30%, rgba(255, 210, 120, .7) 55%, rgba(255, 190, 90, 0) 75%);
-  opacity: 0;
-  animation: monter-poussiere 7s linear infinite;
+/* Sertissage : une rangée d'émeraudes rondes sur un fil d'or, tout autour du parchemin. */
+.emeraude-anneau {
+  position: absolute; inset: 1.75cqw; z-index: 1;
+  padding: 2cqw; border-radius: 3.3cqw; overflow: hidden;
+  background:
+    radial-gradient(circle at 36% 32%, #f2fff8 0 10%, #8ff2c0 22%, #19b071 42%, #075a36 62%, #b9f7d7 68%, transparent 71%) 0 0 / 2cqw 2cqw,
+    linear-gradient(135deg, #f7e3a4, #a57a2c 40%, #f2d78c 60%, #7c5a22);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  box-shadow: inset 0 0 0 .25cqw rgba(255, 240, 200, .85);
+  pointer-events: none;
 }
-.poussiere span:nth-child(1)  { left: 8%;  animation-delay: 0s;   animation-duration: 7s; }
-.poussiere span:nth-child(2)  { left: 17%; animation-delay: 2.4s; animation-duration: 8.5s; width: .9cqw; height: .9cqw; }
-.poussiere span:nth-child(3)  { left: 26%; animation-delay: 4.1s; animation-duration: 6.5s; }
-.poussiere span:nth-child(4)  { left: 34%; animation-delay: 1.2s; animation-duration: 9s;   width: 1.7cqw; height: 1.7cqw; }
-.poussiere span:nth-child(5)  { left: 43%; animation-delay: 5.3s; animation-duration: 7.5s; width: .9cqw; height: .9cqw; }
-.poussiere span:nth-child(6)  { left: 51%; animation-delay: 3.1s; animation-duration: 8s; }
-.poussiere span:nth-child(7)  { left: 59%; animation-delay: .6s;  animation-duration: 6.8s; width: 1.6cqw; height: 1.6cqw; }
-.poussiere span:nth-child(8)  { left: 67%; animation-delay: 4.7s; animation-duration: 9.5s; }
-.poussiere span:nth-child(9)  { left: 75%; animation-delay: 2s;   animation-duration: 7.2s; width: .9cqw; height: .9cqw; }
-.poussiere span:nth-child(10) { left: 83%; animation-delay: 6s;   animation-duration: 8.2s; }
-.poussiere span:nth-child(11) { left: 90%; animation-delay: 3.6s; animation-duration: 6.6s; width: 1.5cqw; height: 1.5cqw; }
-.poussiere span:nth-child(12) { left: 96%; animation-delay: 1.7s; animation-duration: 9.2s; width: .9cqw; height: .9cqw; }
-@keyframes monter-poussiere {
-  0% { transform: translate(0, 0); opacity: 0; }
-  15% { opacity: .95; }
-  50% { transform: translate(2cqw, -30cqw); }
-  85% { opacity: .7; }
-  100% { transform: translate(-1.5cqw, -62cqw); opacity: 0; }
+/* Éclat vert qui court tout autour de l'anneau. */
+.emeraude-reflet {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 300%;
+  background: linear-gradient(115deg, transparent 42%, rgba(160, 255, 205, .6) 46%, rgba(255, 255, 255, .85) 48%, rgba(80, 230, 150, .6) 50%, transparent 54%);
+  animation: reflet 3.2s ease-in-out infinite;
 }
-.finition-animee .finition-sceau {
-  background: radial-gradient(circle at 35% 30%, #fff3d0, #f2b84b 55%, #a3641c);
-  box-shadow: 0 0 0 .5cqw rgba(255, 238, 200, .85), 0 0 3cqw rgba(255, 190, 90, .85), 0 1cqw 2cqw rgba(0, 0, 0, .45);
+/* Reflet vert sur toute la carte (remplace celui des légendaires / mythiques). */
+.finition-emeraude .carte-cadre::after {
+  content: "";
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 2;
+  width: 300%;
+  background: linear-gradient(115deg, transparent 38%, rgba(90, 230, 160, .18) 43%, rgba(230, 255, 240, .45) 48%, rgba(40, 190, 120, .2) 53%, transparent 58%);
+  animation: reflet 4s ease-in-out infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+/* Lueurs vertes qui scintillent doucement sur l'illustration. */
+.emeraude-lueurs {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(220, 255, 235, .9) 0 .22cqw, transparent .5cqw) 2.1cqw 3.3cqw / 15.1cqw 12.7cqw,
+    radial-gradient(circle, rgba(120, 240, 180, .85) 0 .2cqw, transparent .48cqw) 9.4cqw 7.2cqw / 19.3cqw 14.9cqw;
+  animation: paillettes 2.4s ease-in-out infinite alternate;
+}
+.finition-emeraude .carte-nom {
+  background: linear-gradient(180deg, #06331f 0%, #137a4c 45%, #06331f 55%, #1c8f5b 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.finition-emeraude .carte-illus { box-shadow: 0 0 0 .5cqw #e9d08a, 0 0 0 1.1cqw rgba(30, 170, 105, .6), 0 0 3cqw rgba(80, 230, 160, .55); }
+.finition-emeraude .finition-sceau {
+  width: 11cqw; height: 11cqw; top: -2cqw; right: -2cqw;
+  background: radial-gradient(circle at 35% 30%, #fff6d6, #e2b85a 50%, #8a6420);
+  box-shadow: 0 0 0 .5cqw rgba(255, 238, 200, .9), 0 0 3.5cqw rgba(70, 220, 150, .9), 0 1cqw 2cqw rgba(0, 0, 0, .45);
   animation: pulser 2.4s ease-in-out infinite;
 }
-.finition-animee .sceau-fond { fill: #fffaf0; stroke: #8a4f12; stroke-width: 1.1; stroke-linejoin: round; }
+.finition-emeraude .sceau-fond { fill: #1fae6c; stroke: #064a2c; stroke-width: 1.1; stroke-linejoin: round; }
+.finition-emeraude .sceau-trait { fill: none; stroke: #c9ffe2; stroke-width: .7; stroke-linejoin: round; opacity: .85; }
 @keyframes pulser { 50% { transform: scale(1.12); } }
 
 /* ---------- Collection ---------- */
@@ -1139,6 +1147,8 @@ button.case-collection:hover { transform: translateY(-4px); }
   color: var(--texte-doux); background: rgba(255, 255, 255, .06); border: 1px solid rgba(212, 178, 106, .35);
 }
 .modale-versions .version.actif { color: var(--encre); background: var(--or-clair); border-color: var(--or-clair); }
+.modale-versions .version[data-finition="emeraude"]:not(.actif) { color: #a9f5cf; border-color: rgba(70, 220, 150, .6); }
+.modale-versions .version[data-finition="emeraude"].actif { background: linear-gradient(135deg, #c9ffe2, #3fd08c 50%, #138a55); border-color: #c9ffe2; color: #05301d; }
 .modale-versions .version[data-finition="diamant"]:not(.actif) { color: #cfe9ff; border-color: rgba(170, 220, 255, .6); }
 .modale-versions .version[data-finition="diamant"].actif { background: linear-gradient(135deg, #ffffff, #cfe9ff 50%, #9cc9f2); border-color: #e8f6ff; color: #12294a; }
 

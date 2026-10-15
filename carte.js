@@ -127,10 +127,11 @@ function medaillonFamille(carte, langue) {
 // ---------- Finitions (par-dessus la rareté) ----------
 // Diamant : la carte de rareté reste intacte ; on y sertit un anneau de diamant taillé,
 // avec reflet holographique, paillettes, étincelles, halo glacé et sceau diamant.
-// Animée : l'illustration prend vie (lent mouvement de caméra, poussière de lumière).
+// Émeraude : sertissage de petites émeraudes sur monture d'or, reflet vert et sceau en émeraude taillée.
 const SCEAU_FINITION = {
   diamant: `<svg viewBox="0 0 24 24" aria-hidden="true"><path class="sceau-fond" d="M6.5 3.5h11l4.5 6L12 21.5 2 9.5z"/><path class="sceau-trait" d="M2 9.5h20M9 3.5l3 6 3-6M6.5 3.5 9 9.5l3 12 3-12 2.5-6"/></svg>`,
-  animee: `<svg viewBox="0 0 24 24" aria-hidden="true"><path class="sceau-fond" d="M12 2c.8 5.2 4.8 9.2 10 10-5.2.8-9.2 4.8-10 10-.8-5.2-4.8-9.2-10-10 5.2-.8 9.2-4.8 10-10z"/></svg>`,
+  // Émeraude taillée « à degrés » : octogone allongé et sa table au centre.
+  emeraude: `<svg viewBox="0 0 24 24" aria-hidden="true"><path class="sceau-fond" d="M8 2h8l4 4v12l-4 4H8l-4-4V6z"/><path class="sceau-trait" d="M9.6 5.5h4.8l2.1 2.1v8.8l-2.1 2.1H9.6l-2.1-2.1V7.6zM8 2l1.6 3.5M16 2l-1.6 3.5M20 6l-3.5 1.6M20 18l-3.5-1.6M16 22l-1.6-3.5M8 22l1.6-3.5M4 18l3.5-1.6M4 6l3.5 1.6"/></svg>`,
 };
 
 function decorFinition(finition) {
@@ -142,12 +143,12 @@ function decorFinition(finition) {
       sceau: `<span class="finition-sceau">${SCEAU_FINITION.diamant}</span>`,
     };
   }
-  if (finition === "animee") {
+  if (finition === "emeraude") {
     return {
-      halo: "",
-      cadre: "",
-      illus: `<span class="poussiere">${"<span></span>".repeat(12)}</span>`,
-      sceau: `<span class="finition-sceau">${SCEAU_FINITION.animee}</span>`,
+      halo: `<span class="emeraude-halo"></span>`,
+      cadre: `<span class="emeraude-anneau"><span class="emeraude-reflet"></span></span>`,
+      illus: `<span class="emeraude-lueurs"></span>`,
+      sceau: `<span class="finition-sceau">${SCEAU_FINITION.emeraude}</span>`,
     };
   }
   return { halo: "", cadre: "", illus: "", sceau: "" };

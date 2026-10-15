@@ -67,9 +67,9 @@ const GAMMES_CARTE = {
 const nomGamme = (k, langue = langueCartes()) => GAMMES_CARTE[langue]?.[k] ?? GAMMES_CARTE.en[k] ?? "";
 // Finitions (versions plus rares d'une carte, tirées au sort à l'ouverture).
 const NOMS_FINITIONS = {
-  fr: { normale: "Normale", animee: "Animée", diamant: "Diamant" },
-  en: { normale: "Standard", animee: "Animated", diamant: "Diamond" },
-  he: { normale: "רגיל", animee: "מונפש", diamant: "יהלום" },
+  fr: { normale: "Normale", emeraude: "Émeraude", diamant: "Diamant" },
+  en: { normale: "Standard", emeraude: "Emerald", diamant: "Diamond" },
+  he: { normale: "רגיל", emeraude: "אזמרגד", diamant: "יהלום" },
 };
 const nomFinition = (k, langue = LANGUE) => NOMS_FINITIONS[langue]?.[k] ?? k;
 const sousTitreEpoque = k => (LANGUE === "fr" ? EXTENSIONS[k]?.sousTitre : NOMS[LANGUE].epoques[k]?.sousTitre) ?? "";
@@ -115,7 +115,7 @@ const REGLES = {
     finitionsTitre: "Les finitions",
     finitions: {
       normale: "La version de base de chaque carte.",
-      animee: "L'illustration prend vie. Plus rare.",
+      emeraude: "Sertie d'émeraudes sur une monture d'or. Plus rare.",
       diamant: "Sertie de diamants, avec reflets et étincelles. La plus rare de toutes.",
     },
     finitionsNote: "Une même carte peut exister dans plusieurs finitions : on ne chasse plus seulement la carte, on chasse la perfection.",
@@ -153,7 +153,7 @@ const REGLES = {
     finitionsTitre: "Finishes",
     finitions: {
       normale: "The base version of each card.",
-      animee: "The illustration comes alive. Rarer.",
+      emeraude: "Set with emeralds in a gold mount. Rarer.",
       diamant: "Set with diamonds, with shimmers and sparkles. The rarest of all.",
     },
     finitionsNote: "The same card can exist in several finishes: you're not just hunting the card, you're hunting perfection.",
@@ -191,7 +191,7 @@ const REGLES = {
     finitionsTitre: "הגימורים",
     finitions: {
       normale: "הגרסה הבסיסית של כל קלף.",
-      animee: "האיור מתעורר לחיים. נדיר יותר.",
+      emeraude: "משובץ באזמרגדים במסגרת זהב. נדיר יותר.",
       diamant: "משובץ יהלומים, עם ברקים וניצוצות. הנדיר מכולם.",
     },
     finitionsNote: "אותו קלף יכול להופיע בכמה גימורים: לא צדים רק את הקלף, צדים את השלמות.",
@@ -222,7 +222,7 @@ const TEXTES = {
     boosterDore: "Booster doré · 5 cartes",
     boosterDoreArrive: "Votre prochain booster est doré ! Plus de chances d'avoir une carte rare.",
     chancesDore: p => `Booster doré (environ 1 booster sur ${p.n}, on le voit avant de l'ouvrir) : la 5ᵉ carte a de bien meilleures chances :`,
-    chancesDoreFinitions: p => `Dans un booster doré, les finitions sont aussi plus fréquentes : Animée 1 carte sur ${p.animee}, Diamant 1 carte sur ${p.diamant}.`,
+    chancesDoreFinitions: p => `Dans un booster doré, les finitions sont aussi plus fréquentes : Émeraude 1 carte sur ${p.emeraude}, Diamant 1 carte sur ${p.diamant}.`,
     slogan: "« La chasse ne s'arrête jamais »",
     toutReveler: "Tout révéler",
     ouvrirUnAutre: "Ouvrir un autre booster",
@@ -282,7 +282,7 @@ const TEXTES = {
     nouvelle: "Nouvelle",
     notifMythique: p => `✦ Carte MYTHIQUE : ${p.nom} ✦`,
     notifDiamant: p => `💎 Carte DIAMANT : ${p.nom} ! 💎`,
-    notifAnimee: p => `✨ Carte animée : ${p.nom} !`,
+    notifEmeraude: p => `💚 Carte Émeraude : ${p.nom} !`,
     notifLegendaire: p => `Carte légendaire : ${p.nom} !`,
     notifEpique: p => `Carte épique : ${p.nom}`,
     agrandir: "agrandir",
@@ -329,7 +329,7 @@ const TEXTES = {
     boosterDore: "Golden booster · 5 cards",
     boosterDoreArrive: "Your next booster is golden! Better odds of a rare card.",
     chancesDore: p => `Golden booster (about 1 booster in ${p.n}, you can see it before opening): the 5th card has much better odds:`,
-    chancesDoreFinitions: p => `In a golden booster, finishes are also more frequent: Animated 1 card in ${p.animee}, Diamond 1 card in ${p.diamant}.`,
+    chancesDoreFinitions: p => `In a golden booster, finishes are also more frequent: Emerald 1 card in ${p.emeraude}, Diamond 1 card in ${p.diamant}.`,
     slogan: "“The hunt never ends”",
     toutReveler: "Reveal all",
     ouvrirUnAutre: "Open another booster",
@@ -389,7 +389,7 @@ const TEXTES = {
     nouvelle: "New",
     notifMythique: p => `✦ MYTHIC card: ${p.nom} ✦`,
     notifDiamant: p => `💎 DIAMOND card: ${p.nom}! 💎`,
-    notifAnimee: p => `✨ Animated card: ${p.nom}!`,
+    notifEmeraude: p => `💚 Emerald card: ${p.nom}!`,
     notifLegendaire: p => `Legendary card: ${p.nom}!`,
     notifEpique: p => `Epic card: ${p.nom}`,
     agrandir: "enlarge",
@@ -436,7 +436,7 @@ const TEXTES = {
     boosterDore: "בוסטר זהב · 5 קלפים",
     boosterDoreArrive: "הבוסטר הבא שלכם זהוב! יותר סיכוי לקלף נדיר.",
     chancesDore: p => `בוסטר זהב (בערך בוסטר 1 מתוך ${p.n}, רואים אותו לפני הפתיחה): לקלף המיוחד יש סיכויים טובים בהרבה.`,
-    chancesDoreFinitions: p => `בבוסטר זהב גם הגימורים נפוצים יותר: מונפש קלף 1 מתוך ${p.animee}, יהלום קלף 1 מתוך ${p.diamant}.`,
+    chancesDoreFinitions: p => `בבוסטר זהב גם הגימורים נפוצים יותר: אזמרגד קלף 1 מתוך ${p.emeraude}, יהלום קלף 1 מתוך ${p.diamant}.`,
     slogan: "״הציד אף פעם לא נגמר״",
     toutReveler: "לחשוף הכול",
     ouvrirUnAutre: "לפתוח חבילה נוספת",
@@ -496,7 +496,7 @@ const TEXTES = {
     nouvelle: "חדש",
     notifMythique: p => `✦ קלף מיתי: ${p.nom} ✦`,
     notifDiamant: p => `💎 קלף יהלום: ${p.nom}! 💎`,
-    notifAnimee: p => `✨ קלף מונפש: ${p.nom}!`,
+    notifEmeraude: p => `💚 קלף אזמרגד: ${p.nom}!`,
     notifLegendaire: p => `קלף אגדי: ${p.nom}!`,
     notifEpique: p => `קלף אפי: ${p.nom}`,
     agrandir: "הגדלה",
