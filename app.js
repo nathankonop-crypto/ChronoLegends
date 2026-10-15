@@ -171,17 +171,7 @@ function htmlCarte(carte) {
 
 const HTML_DOS = `
   <div class="dos">
-    <div class="dos-motif">
-      <svg viewBox="0 0 100 100" aria-hidden="true">
-        <g fill="none" stroke="currentColor">
-          <circle cx="50" cy="50" r="30" stroke-width="1"/>
-          <circle cx="50" cy="50" r="26" stroke-width=".5"/>
-          <path d="M50 8 L56 44 L92 50 L56 56 L50 92 L44 56 L8 50 L44 44 Z" stroke-width=".7"/>
-          <path d="M50 22 L53 47 L78 50 L53 53 L50 78 L47 53 L22 50 L47 47 Z" stroke-width=".5"/>
-        </g>
-        <text x="50" y="57" text-anchor="middle" font-family="Cinzel, serif" font-size="20" font-weight="700" fill="currentColor">C</text>
-      </svg>
-    </div>
+    <img class="dos-motif" src="images/logo-etoile.webp" alt="" draggable="false">
   </div>`;
 
 // ---------- Interface ----------
