@@ -49,7 +49,7 @@ let extensionActive = EXTENSIONS[etat.extension] ? etat.extension : "antiquite";
 let cartesExtension = [];
 
 // Texte d'un champ dans la langue du joueur : « nom_en » en anglais s'il existe, sinon « nom ».
-const champ = (ligne, nom) => (LANGUE === "en" && ligne[`${nom}_en`]) || ligne[nom] || "";
+const champ = (ligne, nom) => (langueCartes() === "en" && ligne[`${nom}_en`]) || ligne[nom] || "";
 
 async function chargerCartes() {
   const { data, error } = await sb.from("cartes").select("*")
@@ -61,7 +61,9 @@ async function chargerCartes() {
     id: l.id, gamme: l.gamme, region: l.region, extension: l.epoque, rarete: l.rarete, finition: l.finition,
     nom: champ(l, "nom"), dates: champ(l, "dates"), lieu: champ(l, "lieu"), texte: champ(l, "description"),
     image: l.image, ordre: l.ordre,
-    enSavoirPlus: l.gamme === "personnage" ? champ(l, "en_savoir_plus") : "",
+    // « En savoir plus » existe aussi en hébreu (le reste de la carte reste en anglais).
+    enSavoirPlus: l.gamme !== "personnage" ? ""
+      : (LANGUE === "he" && l.en_savoir_plus_he) || champ(l, "en_savoir_plus"),
   }));
   cartesExtension = cartesDe(extensionActive);
 }
@@ -195,7 +197,7 @@ function majRegion() {
   const v = etat.verrou;
   $("#verrou-region").hidden = !v;
   if (v) {
-    const quand = new Date(v.changement_le).toLocaleString(LANGUE === "en" ? "en-GB" : "fr-FR",
+    const quand = new Date(v.changement_le).toLocaleString({ fr: "fr-FR", en: "en-GB", he: "he-IL" }[LANGUE],
       { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
     $("#verrou-region").textContent = t("verrou", { region: nomRegion(v.region_detectee), quand });
   }

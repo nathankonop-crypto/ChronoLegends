@@ -1,9 +1,11 @@
 // =============================================================
-//  CHRONOLEGENDS — Langues (français / anglais)
-//  Langue choisie : celle mémorisée par le joueur (bouton FR / EN),
-//  sinon celle du navigateur (français si le navigateur est en
-//  français, anglais pour tous les autres).
-//  Pour ajouter un texte : une clé dans TEXTES.fr ET TEXTES.en.
+//  CHRONOLEGENDS — Langues (français / anglais / hébreu)
+//  Langue choisie : celle mémorisée par le joueur (bouton FR / EN / עב),
+//  sinon celle du navigateur (français ou hébreu si le navigateur
+//  l'est, anglais pour tous les autres).
+//  En hébreu, seule l'interface est traduite (avec « En savoir plus ») :
+//  les cartes elles-mêmes restent en anglais (voir langueCartes).
+//  Pour ajouter un texte : une clé dans TEXTES.fr, TEXTES.en ET TEXTES.he.
 // =============================================================
 
 const CLE_LANGUE = "chronolegends.langue";
@@ -11,41 +13,59 @@ const CLE_LANGUE = "chronolegends.langue";
 let LANGUE = (() => {
   try {
     const memo = localStorage.getItem(CLE_LANGUE);
-    if (memo === "fr" || memo === "en") return memo;
+    if (memo === "fr" || memo === "en" || memo === "he") return memo;
   } catch (e) {}
-  const nav = (navigator.languages && navigator.languages[0]) || navigator.language || "en";
-  return nav.toLowerCase().startsWith("fr") ? "fr" : "en";
+  const nav = ((navigator.languages && navigator.languages[0]) || navigator.language || "en").toLowerCase();
+  if (nav.startsWith("fr")) return "fr";
+  if (nav.startsWith("he") || nav.startsWith("iw")) return "he";
+  return "en";
 })();
+
+// Langue du contenu des cartes : le français, sinon l'anglais (aussi pour l'hébreu).
+const langueCartes = () => (LANGUE === "fr" ? "fr" : "en");
 
 function changerLangue(langue) {
   try { localStorage.setItem(CLE_LANGUE, langue); } catch (e) {}
   location.reload();
 }
 
-// ---------- Noms anglais des listes du jeu (le français est dans reglages.js) ----------
+// ---------- Noms anglais et hébreux des listes du jeu (le français est dans reglages.js) ----------
 
-const NOMS_EN = {
-  raretes: { ordinaire: "Common", notable: "Notable", rare: "Rare", epique: "Epic", legendaire: "Legendary", mythique: "Mythic" },
-  regions: { "europe": "Europe", "afrique": "Africa", "moyen-orient": "Middle East", "asie": "Asia", "ameriques": "Americas", "oceanie": "Oceania" },
-  epoques: {
-    antiquite:              { nom: "Antiquity",           sousTitre: "From the first empires to the 5th century" },
-    "moyen-age":            { nom: "Middle Ages",         sousTitre: "From the 5th to the 15th century" },
-    "temps-modernes":       { nom: "Early Modern Period", sousTitre: "From the late 15th century to 1789" },
-    "epoque-contemporaine": { nom: "Modern Era",          sousTitre: "From 1789 to the present day" },
+const NOMS = {
+  en: {
+    raretes: { ordinaire: "Common", notable: "Notable", rare: "Rare", epique: "Epic", legendaire: "Legendary", mythique: "Mythic" },
+    regions: { "europe": "Europe", "afrique": "Africa", "moyen-orient": "Middle East", "asie": "Asia", "ameriques": "Americas", "oceanie": "Oceania" },
+    epoques: {
+      antiquite:              { nom: "Antiquity",           sousTitre: "From the first empires to the 5th century" },
+      "moyen-age":            { nom: "Middle Ages",         sousTitre: "From the 5th to the 15th century" },
+      "temps-modernes":       { nom: "Early Modern Period", sousTitre: "From the late 15th century to 1789" },
+      "epoque-contemporaine": { nom: "Modern Era",          sousTitre: "From 1789 to the present day" },
+    },
+  },
+  he: {
+    raretes: { ordinaire: "רגיל", notable: "בולט", rare: "נדיר", epique: "אפי", legendaire: "אגדי", mythique: "מיתי" },
+    regions: { "europe": "אירופה", "afrique": "אפריקה", "moyen-orient": "המזרח התיכון", "asie": "אסיה", "ameriques": "אמריקה", "oceanie": "אוקיאניה" },
+    epoques: {
+      antiquite:              { nom: "העת העתיקה",          sousTitre: "מהאימפריות הראשונות ועד המאה ה־5" },
+      "moyen-age":            { nom: "ימי הביניים",          sousTitre: "מהמאה ה־5 ועד המאה ה־15" },
+      "temps-modernes":       { nom: "העת החדשה המוקדמת",   sousTitre: "מסוף המאה ה־15 ועד 1789" },
+      "epoque-contemporaine": { nom: "העת החדשה",           sousTitre: "מ־1789 ועד ימינו" },
+    },
   },
 };
 
-const nomRarete = k => (LANGUE === "en" ? NOMS_EN.raretes[k] : RARETES[k]?.nom) ?? k;
-const nomRegion = k => (LANGUE === "en" ? NOMS_EN.regions[k] : REGIONS[k]) ?? k;
-const nomEpoque = k => (LANGUE === "en" ? NOMS_EN.epoques[k]?.nom : EXTENSIONS[k]?.nom) ?? k;
+// Le paramètre langue sert au dessin des cartes, qui suit langueCartes().
+const nomRarete = (k, langue = LANGUE) => (langue === "fr" ? RARETES[k]?.nom : NOMS[langue].raretes[k]) ?? k;
+const nomRegion = (k, langue = LANGUE) => (langue === "fr" ? REGIONS[k] : NOMS[langue].regions[k]) ?? k;
+const nomEpoque = (k, langue = LANGUE) => (langue === "fr" ? EXTENSIONS[k]?.nom : NOMS[langue].epoques[k]?.nom) ?? k;
 // Gamme de la carte, en version courte : son initiale (P, A, É, L, M, O) s'affiche en bas de la carte
 // (le nom entier apparaît au survol).
 const GAMMES_CARTE = {
   fr: { personnage: "Personnage", archetype: "Archétype", evenement: "Événement", lieu: "Lieu", mythologie: "Mythologie", objet: "Objet" },
   en: { personnage: "Figure", archetype: "Archetype", evenement: "Event", lieu: "Landmark", mythologie: "Mythology", objet: "Object" },
 };
-const nomGamme = k => GAMMES_CARTE[LANGUE][k] ?? "";
-const sousTitreEpoque = k => (LANGUE === "en" ? NOMS_EN.epoques[k]?.sousTitre : EXTENSIONS[k]?.sousTitre) ?? "";
+const nomGamme = (k, langue = langueCartes()) => GAMMES_CARTE[langue]?.[k] ?? GAMMES_CARTE.en[k] ?? "";
+const sousTitreEpoque = k => (LANGUE === "fr" ? EXTENSIONS[k]?.sousTitre : NOMS[LANGUE].epoques[k]?.sousTitre) ?? "";
 
 // Nom d'un pays (code « IL ») dans la langue du jeu.
 function nomPays(code) {
@@ -198,16 +218,88 @@ const TEXTES = {
     illustrationAVenir: "ILLUSTRATION COMING SOON",
     portraitDe: p => `Portrait of ${p.nom}`,
   },
+
+  he: {
+    titrePage: "ChronoLegends — קלפי היסטוריה עולמית",
+    descriptionPage: "אספו את הדמויות הגדולות של ההיסטוריה העולמית.",
+    sousTitreMarque: "קלפי היסטוריה עולמית",
+    ongletBoosters: "חבילות",
+    ongletCollection: "אוסף",
+    ouvrirLeBooster: "פתיחת החבילה",
+    toutesEpoques: "כל התקופות",
+    cinqCartes: "5 קלפים",
+    slogan: "״הציד אף פעם לא נגמר״",
+    toutReveler: "לחשוף הכול",
+    ouvrirUnAutre: "לפתוח חבילה נוספת",
+    epoque: "תקופה",
+    fermer: "סגירה",
+    langue: "שפה",
+    piedPrototype: "אב־טיפוס — האוסף שלכם נשמר בשרתים שלנו, ומקושר לדפדפן הזה.",
+    piedGeo: "חשבון אנונימי (ללא דוא״ל) נוצר אוטומטית כדי לשמור את האוסף שלכם. החבילות שלכם תלויות באזור שלכם, שהשרת שלנו קובע לפי המדינה של כתובת ה־IP. נשמרים רק המדינה והאזור, לעולם לא כתובת ה־IP או המיקום שלכם.",
+
+    erreurAntiRobot: "בדיקת האנטי־רובוט נכשלה. טענו מחדש את הדף כדי לנסות שוב.",
+    erreurServeur: "אין חיבור לשרת. בדקו את החיבור לאינטרנט וטענו מחדש את הדף.",
+    verification: "בדיקה קטנה לפני החבילה הראשונה שלכם…",
+    chargement: "טוען…",
+    paysInconnu: "לא ניתן לזהות את המדינה שלכם (VPN או רשת אנונימית?). כבו אותם וטענו מחדש את הדף.",
+    regionVide: p => `עדיין אין קלפים לאזור ${p.region}. הם יגיעו בקרוב!`,
+    boostersDispo: p => (p.n > 1 ? `${p.n} חבילות זמינות` : "חבילה אחת זמינה") + " — הקישו כדי לפתוח",
+    plusDeBooster: p => `אין עוד חבילות כרגע. החבילה היומית הבאה בעוד ${p.attente}.`,
+    moinsDUneMinute: "פחות מדקה",
+
+    ligneRegion: p => `אזור: ${p.region}${p.pays ? ` · מתחברים מ: ${p.pays}` : ""}`,
+    verrou: p => `נראה שאתם ב${p.region}. אם תהיו שם עדיין החל מ־${p.quand}, החבילות שלכם יעברו לאזור הזה.`,
+    nouvelleRegion: p => `אתם ב${p.region}: החבילות שלכם יכילו את הדמויות שלו.`,
+
+    serveurPlusDeBooster: "אין חבילות זמינות.",
+    serveurRegionVide: "עדיין אין קלפים לאזור שלכם.",
+    serveurRegionInconnue: "לא ניתן לזהות את המדינה שלכם (VPN או רשת אנונימית?).",
+    serveurErreurOuverture: "השרת לא הצליח לפתוח את החבילה. נסו שוב.",
+
+    revelerLaCarte: "לחשוף את הקלף",
+    plusBelle: "הקלף הטוב ביותר בחבילה!",
+    touchezSuivante: "הקישו שוב לקלף הבא",
+    glissezSuivante: "החליקו את הקלף הצידה לקלף הבא",
+    touchezReveler: p => `הקישו על הקלף כדי לחשוף אותו  ·  ${p.n > 1 ? `נותרו ${p.n}` : "נותר אחד"}`,
+    nouvelle: "חדש",
+    notifMythique: p => `✦ קלף מיתי: ${p.nom} ✦`,
+    notifLegendaire: p => `קלף אגדי: ${p.nom}!`,
+    notifEpique: p => `קלף אפי: ${p.nom}`,
+    agrandir: "הגדלה",
+    retour: "חזרה",
+    ouvrirUnAutreN: p => `לפתוח חבילה נוספת (${p.n})`,
+
+    partager: "שיתוף",
+    gyroActiver: "הפעלת תנועה",
+    enSavoirPlus: "לקריאה נוספת",
+    partagerMeilleure: "לשתף את הקלף הכי טוב שלי",
+    partageObtenu: "הרגע קיבלתי",
+    partageTexte: p => `קיבלתי את ${p.nom} (${p.rarete}) ב־ChronoLegends! בואו לאסוף את ההיסטוריה העולמית:`,
+    partagePreparation: "מכין את התמונה…",
+    partageReessayer: "התמונה מוכנה: הקישו שוב על שיתוף.",
+    partageTelecharge: "התמונה נשמרה והטקסט הועתק: הדביקו אותם איפה שתרצו!",
+    partageCopie: "הטקסט הועתק: הדביקו אותו איפה שתרצו!",
+
+    progression: p => `${p.n} מתוך ${p.total} קלפים`,
+    epoqueVide: "הקלפים הראשונים של התקופה הזאת יגיעו בקרוב.",
+    quotidien: "החבילה היומית שלכם הגיעה.",
+    bienvenue: p => `ברוכים הבאים! הנה ${p.n} חבילות במתנה.`,
+
+    numero: "מס׳",
+    illustrationAVenir: "איור בקרוב",
+    portraitDe: p => `דיוקן של ${p.nom}`,
+  },
 };
 
-function t(cle, params = {}) {
-  const texte = TEXTES[LANGUE][cle] ?? TEXTES.fr[cle] ?? cle;
+function t(cle, params = {}, langue = LANGUE) {
+  const texte = TEXTES[langue][cle] ?? TEXTES.en[cle] ?? TEXTES.fr[cle] ?? cle;
   return typeof texte === "function" ? texte(params) : texte;
 }
 
 // Traduit les éléments de la page marqués data-t (texte) et data-t-aria (aria-label).
 function traduirePage() {
   document.documentElement.lang = LANGUE;
+  document.documentElement.dir = LANGUE === "he" ? "rtl" : "ltr";
   document.querySelectorAll("[data-t]").forEach(el => { el.textContent = t(el.dataset.t); });
   document.querySelectorAll("[data-t-aria]").forEach(el => { el.setAttribute("aria-label", t(el.dataset.tAria)); });
   document.querySelectorAll("[data-langue]").forEach(b => {

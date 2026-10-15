@@ -45,7 +45,7 @@ function illustrationProvisoire(carte) {
     <circle cx="150" cy="112" r="58" fill="hsl(${h} 30% 16%)" stroke="hsl(42 55% 62%)" stroke-width="1.5"/>
     <circle cx="150" cy="112" r="51" fill="none" stroke="hsl(42 55% 62% / .55)" stroke-width="0.8" stroke-dasharray="2 3"/>
     <text x="150" y="128" text-anchor="middle" font-family="Cinzel, serif" font-size="44" font-weight="600" fill="hsl(42 65% 72%)">${echapper(initiales(carte.nom))}</text>
-    <text x="150" y="212" text-anchor="middle" font-family="Cinzel, serif" font-size="9" letter-spacing="3" fill="hsl(42 40% 75% / .55)">${echapper(t("illustrationAVenir"))}</text>
+    <text x="150" y="212" text-anchor="middle" font-family="Cinzel, serif" font-size="9" letter-spacing="3" fill="hsl(42 40% 75% / .55)">${echapper(t("illustrationAVenir", {}, langueCartes()))}</text>
   </svg>`;
 }
 
@@ -91,26 +91,28 @@ new MutationObserver(mutations => {
 document.fonts?.ready.then(() => document.querySelectorAll(".carte-corps").forEach(ajusterTexte));
 
 // carte : objet carte du jeu ; numeroTexte : ex. "08/41"
+// Tout ce qui est écrit sur la carte suit la langue des cartes (anglais quand le site est en hébreu).
 function rendreCarte(carte, numeroTexte) {
+  const L = langueCartes();
   const nom = echapper(carte.nom);
   const illus = carte.image
-    ? `<img src="${echapper(carte.image)}" alt="${echapper(t("portraitDe", { nom: carte.nom }))}" loading="lazy">`
+    ? `<img src="${echapper(carte.image)}" alt="${echapper(t("portraitDe", { nom: carte.nom }, L))}" loading="lazy">`
     : illustrationProvisoire(carte);
   // Taille du nom adaptée à sa longueur pour tenir sur une ligne.
   const tailleNom = Math.min(6.6, 84 / (Math.max(carte.nom.length, 1) * 0.78));
   return `
-  <article class="carte rarete-${carte.rarete}">
+  <article class="carte rarete-${carte.rarete}" lang="${L}" dir="ltr">
     <div class="carte-cadre">
       <div class="carte-interieur">
         <header class="carte-tete"><h2 class="carte-nom" style="font-size:${tailleNom.toFixed(2)}cqw">${nom}</h2></header>
         <div class="carte-illus">${illus}</div>
-        <div class="carte-bandeau"><span class="gemme"></span>${nomRarete(carte.rarete)}<span class="gemme"></span></div>
+        <div class="carte-bandeau"><span class="gemme"></span>${nomRarete(carte.rarete, L)}<span class="gemme"></span></div>
         <div class="carte-corps">
           <p class="carte-dates">${echapper(carte.dates)}</p>
-          <p class="carte-lieu">${echapper(carte.lieu)} · ${nomRegion(carte.region)}</p>
+          <p class="carte-lieu">${echapper(carte.lieu)} · ${nomRegion(carte.region, L)}</p>
           <p class="carte-texte">${echapper(carte.texte)}</p>
         </div>
-        <footer class="carte-pied"><span>${nomEpoque(carte.extension)}</span><span class="carte-gamme" title="${nomGamme(carte.gamme)}">${nomGamme(carte.gamme).charAt(0)}</span><span>${t("numero")} ${numeroTexte}</span></footer>
+        <footer class="carte-pied"><span>${nomEpoque(carte.extension, L)}</span><span class="carte-gamme" title="${nomGamme(carte.gamme)}">${nomGamme(carte.gamme).charAt(0)}</span><span>${t("numero", {}, L)} ${numeroTexte}</span></footer>
       </div>
     </div>
   </article>`;

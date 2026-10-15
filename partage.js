@@ -29,7 +29,7 @@ function chargerOutilImage() {
 
 // Les polices du jeu (Google Fonts), intégrées dans l'image : sinon elle
 // s'afficherait dans une police par défaut. Seuls les alphabets latins
-// sont gardés (le reste alourdirait l'image pour rien). Fait une seule fois.
+// sont gardés, avec l'hébreu (le reste alourdirait l'image pour rien). Fait une seule fois.
 let policesIntegrees = null;
 
 function enDataUrl(blob) {
@@ -45,7 +45,7 @@ async function chargerPolices() {
   const lien = document.querySelector('link[href*="fonts.googleapis.com/css2"]');
   if (!lien) return "";
   const css = await (await fetch(lien.href)).text();
-  const blocs = css.split(/(?=\/\* )/).filter(b => /^\/\* (latin|latin-ext) \*\//.test(b));
+  const blocs = css.split(/(?=\/\* )/).filter(b => /^\/\* (latin|latin-ext|hebrew) \*\//.test(b));
   const resultats = await Promise.all(blocs.map(async bloc => {
     const adresse = bloc.match(/url\((https:[^)]+)\)/)?.[1];
     if (!adresse) return "";
@@ -62,7 +62,7 @@ async function fabriquerImage(carte) {
   const coulisse = document.createElement("div");
   coulisse.className = "coulisse-partage";
   coulisse.innerHTML = `
-    <div class="affiche-partage rarete-${carte.rarete}" lang="${LANGUE}">
+    <div class="affiche-partage rarete-${carte.rarete}" lang="${LANGUE}" dir="${LANGUE === "he" ? "rtl" : "ltr"}">
       <p class="affiche-titre">ChronoLegends</p>
       <p class="affiche-sous">${echapper(t("partageObtenu"))}</p>
       <div class="affiche-carte">${htmlCarte(carte)}</div>

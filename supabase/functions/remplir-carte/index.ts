@@ -1,7 +1,8 @@
 // =============================================================
 //  CHRONOLEGENDS — Edge Function « remplir-carte »
 //  Propose dates, lieu, description, région, époque, version anglaise
-//  et texte « En savoir plus » d'une carte à partir de son nom, avec
+//  et texte « En savoir plus » (français, anglais, hébreu) d'une carte
+//  à partir de son nom, avec
 //  Claude. Réservée à l'administrateur.
 //
 //  La clé Anthropic est lue dans les secrets Supabase
@@ -45,6 +46,9 @@ Version anglaise (champs *_en), pour les joueurs anglophones :
 - description_en : la même description en anglais naturel (pas mot à mot), même ton neutre, 140 à 230 caractères.
 - en_savoir_plus_en : le texte « Learn more » en anglais naturel, même contenu que en_savoir_plus (chaîne vide si celui-ci l'est).
 
+Version hébraïque (pour les joueurs israéliens ; le reste de la carte s'affiche en anglais) :
+- en_savoir_plus_he : le texte « En savoir plus » en hébreu moderne naturel, même contenu que en_savoir_plus, au passé, avec les noms propres dans leur forme hébraïque usuelle (chaîne vide si en_savoir_plus l'est).
+
 Exemples de cartes existantes :
 - Jules César | 100 – 44 av. J.-C. | Rome | Général et homme politique romain. Il conquiert la Gaule, remporte la guerre civile et devient dictateur. Il est assassiné lors d'une séance du Sénat.
 - Hatchepsout | règne v. 1479 – 1458 av. J.-C. | Égypte | Femme pharaon de la XVIIIe dynastie. Son règne prospère est marqué par de grands chantiers, dont le temple de Deir el-Bahari, et une expédition vers le pays de Pount.
@@ -66,8 +70,9 @@ const SCHEMA = {
     description_en: { type: "string" },
     en_savoir_plus: { type: "string" },
     en_savoir_plus_en: { type: "string" },
+    en_savoir_plus_he: { type: "string" },
   },
-  required: ["dates", "lieu", "description", "region", "epoque", "probleme", "nom_en", "dates_en", "lieu_en", "description_en", "en_savoir_plus", "en_savoir_plus_en"],
+  required: ["dates", "lieu", "description", "region", "epoque", "probleme", "nom_en", "dates_en", "lieu_en", "description_en", "en_savoir_plus", "en_savoir_plus_en", "en_savoir_plus_he"],
   additionalProperties: false,
 };
 

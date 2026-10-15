@@ -55,7 +55,7 @@ function versIdentifiant(nom) {
 LANGUE = "fr";
 let langueApercu = "fr";
 const CHAMPS_EN = ["nom_en", "dates_en", "lieu_en", "description_en"];
-const CHAMPS_PLUS = ["en_savoir_plus", "en_savoir_plus_en"];   // « En savoir plus », personnages historiques
+const CHAMPS_PLUS = ["en_savoir_plus", "en_savoir_plus_en", "en_savoir_plus_he"];   // « En savoir plus », personnages historiques
 
 // Ligne de la base → objet carte utilisé par le dessin (carte.js), dans la langue demandée.
 function versCarte(l, langue = "fr") {
@@ -329,7 +329,8 @@ function majApercu() {
   $("#compte-description-en").textContent = form.elements.description_en.value.length;
   $("#compte-plus").textContent = form.elements.en_savoir_plus.value.length;
   $("#compte-plus-en").textContent = form.elements.en_savoir_plus_en.value.length;
-  $("#bloc-plus").hidden = $("#bloc-plus-en").hidden = v.gamme !== "personnage";
+  $("#compte-plus-he").textContent = form.elements.en_savoir_plus_he.value.length;
+  $("#bloc-plus").hidden = $("#bloc-plus-en").hidden = $("#bloc-plus-he").hidden = v.gamme !== "personnage";
   const carte = versCarte({ ...v, nom: v.nom || "Nom de la carte", image: imageActuelle() }, langueApercu);
   LANGUE = langueApercu;                      // le dessin de la carte suit la langue de l'aperçu
   $("#apercu").innerHTML = rendreCarte(carte, numero);
