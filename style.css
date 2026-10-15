@@ -148,15 +148,19 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .zone-booster { display: flex; flex-direction: column; align-items: center; gap: 22px; padding-top: 2vh; }
 
 .booster {
+  --fond-booster:
+    repeating-linear-gradient(45deg, rgba(212, 178, 106, .05) 0 2px, transparent 2px 12px),
+    linear-gradient(160deg, #283055 0%, #151a33 55%, #0d1022 100%);
+  --dechirure: 0;
   position: relative;
   width: min(62vw, 250px);
   aspect-ratio: 63 / 98;
   border: 0;
   border-radius: 14px;
   padding: 0;
-  background:
-    repeating-linear-gradient(45deg, rgba(212, 178, 106, .05) 0 2px, transparent 2px 12px),
-    linear-gradient(160deg, #283055 0%, #151a33 55%, #0d1022 100%);
+  background: var(--fond-booster);
+  touch-action: none;          /* le doigt déchire le paquet au lieu de faire défiler la page */
+  user-select: none; -webkit-user-select: none;
   box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .8), 0 0 0 1px rgba(212, 178, 106, .4) inset;
   display: flex;
   flex-direction: column;
@@ -187,6 +191,63 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .booster.ouverture { animation: secouer .55s ease-in-out, eclater .35s .55s ease-in forwards; }
 
 @keyframes flotter { 50% { transform: translateY(-8px); } }
+
+/* ---------- Déchirer le booster (glisser de haut en bas, voir app.js) ---------- */
+
+/* Guide : pointillés lumineux qui descendent depuis le haut du paquet. */
+.guide-dechirure {
+  position: absolute; left: 50%; top: 4%; width: 2px; height: 30%; margin-left: -1px;
+  background: repeating-linear-gradient(180deg, rgba(243, 214, 150, .9) 0 6px, transparent 6px 12px);
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent);
+          mask-image: linear-gradient(180deg, #000, transparent);
+  animation: guider 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+.guide-dechirure::after {
+  content: ""; position: absolute; left: 50%; bottom: 18%; width: 9px; height: 9px; margin-left: -5px;
+  border-right: 2px solid rgba(243, 214, 150, .9); border-bottom: 2px solid rgba(243, 214, 150, .9);
+  transform: rotate(45deg);
+}
+@keyframes guider { 0% { opacity: 0; transform: translateY(-10%); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(25%); } }
+.booster:disabled .guide-dechirure, .booster.en-dechirure .guide-dechirure, .booster.dechire .guide-dechirure { display: none; }
+
+/* Ligne de déchirure qui suit le doigt. */
+/* La ligne est dévoilée du haut jusqu'au doigt (--dechirure : 0 → 1). */
+.ligne-dechirure {
+  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none;
+  clip-path: inset(-10px -10px calc((1 - var(--dechirure)) * 100%) -10px);
+  filter: drop-shadow(0 0 4px #ffd772) drop-shadow(0 0 10px rgba(255, 215, 114, .8));
+  transition: clip-path .25s ease-out;
+}
+.ligne-dechirure polyline { fill: none; stroke: #fff4d6; stroke-width: 3; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.booster.en-dechirure { animation: none; transform: rotate(calc(var(--dechirure) * -2deg)) scale(calc(1 + var(--dechirure) * .04)); transition: none; }
+.booster.en-dechirure .ligne-dechirure { transition: none; }
+
+/* Simple appui : le paquet invite à glisser vers le bas. */
+.booster.indice { animation: indiquer .7s ease-in-out; }
+.booster.indice .guide-dechirure { animation-duration: .9s; }
+@keyframes indiquer { 30% { transform: translateY(10px); } 60% { transform: translateY(-3px); } }
+
+/* Déchiré : deux moitiés qui s'envolent, un éclat de lumière au milieu. */
+.booster.dechire { animation: none; background: transparent; box-shadow: none; }
+.booster.dechire > :not(.moitie) { visibility: hidden; }
+.booster.dechire::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 30%; aspect-ratio: 1; margin: -15% 0 0 -15%;
+  border-radius: 50%; background: radial-gradient(circle, #fff, rgba(255, 220, 140, .6) 40%, transparent 70%);
+  animation: jaillir .6s ease-out forwards; pointer-events: none;
+}
+@keyframes jaillir { from { transform: scale(.2); opacity: 1; } to { transform: scale(4); opacity: 0; } }
+.moitie {
+  position: absolute; inset: 0; border-radius: 14px;
+  background: var(--fond-booster);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .8), 0 0 0 1px rgba(212, 178, 106, .4) inset;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  pointer-events: none;
+}
+.moitie.gauche { transform-origin: 30% 100%; animation: envol-gauche .65s cubic-bezier(.3, .1, .6, 1) forwards; }
+.moitie.droite { transform-origin: 70% 100%; animation: envol-droite .65s cubic-bezier(.3, .1, .6, 1) forwards; }
+@keyframes envol-gauche { to { transform: translate(-55%, 18%) rotate(-16deg); opacity: 0; } }
+@keyframes envol-droite { to { transform: translate(55%, 18%) rotate(16deg); opacity: 0; } }
 @keyframes secouer {
   20% { transform: rotate(-4deg) scale(1.03); }
   40% { transform: rotate(4deg) scale(1.05); }

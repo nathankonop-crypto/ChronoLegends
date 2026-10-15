@@ -107,7 +107,8 @@ const TEXTES = {
     chargement: "Chargement…",
     paysInconnu: "Impossible de déterminer votre pays (VPN ou réseau anonyme ?). Désactivez-le puis rechargez la page.",
     regionVide: p => `Pas encore de cartes pour la région ${p.region}. Elles arrivent bientôt !`,
-    boostersDispo: p => `${p.n} ${pluriel(p.n, "booster disponible", "boosters disponibles")} — touchez pour ouvrir`,
+    boostersDispo: p => `${p.n} ${pluriel(p.n, "booster disponible", "boosters disponibles")} — glissez vers le bas pour l'ouvrir`,
+    glisserPourOuvrir: "Faites glisser le doigt de haut en bas sur le paquet pour le déchirer",
     plusDeBooster: p => `Plus de booster pour l'instant. Prochain booster quotidien dans ${p.attente}.`,
     moinsDUneMinute: "moins d'une minute",
 
@@ -182,7 +183,8 @@ const TEXTES = {
     chargement: "Loading…",
     paysInconnu: "Unable to determine your country (VPN or anonymous network?). Turn it off, then reload the page.",
     regionVide: p => `No cards yet for the ${p.region} region. They're coming soon!`,
-    boostersDispo: p => `${p.n} ${pluriel(p.n, "booster", "boosters")} available — tap to open`,
+    boostersDispo: p => `${p.n} ${pluriel(p.n, "booster", "boosters")} available — swipe down to open`,
+    glisserPourOuvrir: "Slide your finger down the pack to tear it open",
     plusDeBooster: p => `No boosters left for now. Next daily booster in ${p.attente}.`,
     moinsDUneMinute: "less than a minute",
 
@@ -257,7 +259,8 @@ const TEXTES = {
     chargement: "טוען…",
     paysInconnu: "לא ניתן לזהות את המדינה שלכם (VPN או רשת אנונימית?). כבו אותם וטענו מחדש את הדף.",
     regionVide: p => `עדיין אין קלפים לאזור ${p.region}. הם יגיעו בקרוב!`,
-    boostersDispo: p => (p.n > 1 ? `${p.n} חבילות זמינות` : "חבילה אחת זמינה") + " — הקישו כדי לפתוח",
+    boostersDispo: p => (p.n > 1 ? `${p.n} חבילות זמינות` : "חבילה אחת זמינה") + " — החליקו למטה כדי לפתוח",
+    glisserPourOuvrir: "החליקו את האצבע מלמעלה למטה על החבילה כדי לקרוע אותה",
     plusDeBooster: p => `אין עוד חבילות כרגע. החבילה היומית הבאה בעוד ${p.attente}.`,
     moinsDUneMinute: "פחות מדקה",
 

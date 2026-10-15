@@ -343,19 +343,24 @@ const MESSAGES_SERVEUR = {
   region_inconnue: "serveurRegionInconnue",
 };
 
-async function ouvrirBooster() {
-  if (enCours || etat.boosters <= 0 || !etatJeu.pret || !etat.region || cartesRegion().length === 0) return;
+// dechire : le joueur vient de déchirer le paquet (les deux moitiés s'envolent déjà).
+async function ouvrirBooster(dechire = false) {
+  if (enCours || etat.boosters <= 0 || !etatJeu.pret || !etat.region || cartesRegion().length === 0) {
+    reinitialiserBooster();
+    return;
+  }
   enCours = true;
 
   const booster = $("#booster");
-  booster.classList.add("ouverture");
-  const animation = new Promise(r => setTimeout(r, 900));
+  if (!dechire) booster.classList.add("ouverture");
+  const animation = new Promise(r => setTimeout(r, dechire ? 700 : 900));
 
   // C'est le SERVEUR qui vérifie le stock, tire les cartes et les ajoute à la collection.
   // Aucune région envoyée : le serveur la déduit lui-même de l'adresse IP.
   const { data, error } = await sb.rpc("ouvrir_booster");
   if (error) {
     booster.classList.remove("ouverture");
+    reinitialiserBooster();
     enCours = false;
     const code = Object.keys(MESSAGES_SERVEUR).find(c => error.message.includes(c));
     if (code === "plus_de_booster") etat.boosters = 0;
@@ -376,6 +381,7 @@ async function ouvrirBooster() {
   await animation;
   $("#zone-booster").hidden = true;
   booster.classList.remove("ouverture");
+  reinitialiserBooster();
   afficherPile(tirage, data.cartes.map(c => c.nouvelle));
   enCours = false;
 }
@@ -581,8 +587,7 @@ function revenirAuBooster() {
   $("#tirage").hidden = true;
   $("#actions-tirage").hidden = true;
   $("#zone-booster").hidden = false;
-  majConsigne();
-  ouvrirBooster();   // ne fait rien s'il n'y a plus de booster
+  majConsigne();   // le joueur déchire lui-même le paquet suivant
 }
 
 // --- Collection ---
@@ -734,7 +739,79 @@ $("#activer-gyroscope").addEventListener("click", () => {
 
 // ---------- Démarrage ----------
 
-$("#booster").addEventListener("click", ouvrirBooster);
+// ---------- Déchirer le booster : glisser le doigt de haut en bas ----------
+
+const boosterEl = $("#booster");
+let dechirure = null;      // geste en cours : { y0, h, p, bouge }
+
+// Ligne de déchirure en zigzag, du haut (y = 0) au bas (y = 100) du paquet.
+const ZIGZAG = Array.from({ length: 17 }, (_, i) => [50 + (i % 2 ? 3.5 : -3.5) * (i && i < 16 ? 1 : 0), i * 6.25]);
+boosterEl.querySelector(".ligne-dechirure polyline").setAttribute("points", ZIGZAG.map(([x, y]) => `${x},${y}`).join(" "));
+
+function majDechirure(p) {
+  const palier = Math.floor(p * 8);
+  if (dechirure && palier > Math.floor(dechirure.p * 8)) navigator.vibrate?.(6);   // petit « crac » sous le doigt
+  if (dechirure) dechirure.p = p;
+  boosterEl.style.setProperty("--dechirure", p.toFixed(3));
+}
+
+function reinitialiserBooster() {
+  boosterEl.classList.remove("dechire", "en-dechirure", "indice");
+  boosterEl.querySelectorAll(".moitie").forEach(m => m.remove());
+  boosterEl.style.setProperty("--dechirure", 0);
+}
+
+// Le paquet se sépare en deux moitiés qui s'envolent, puis les cartes arrivent.
+function dechirerBooster() {
+  dechirure = null;
+  navigator.vibrate?.(35);
+  const contenu = [...boosterEl.querySelectorAll(".booster-bord, .booster-titre, .booster-sceau, .booster-info")];
+  const bord = ZIGZAG.map(([x, y]) => `${x}% ${y}%`).join(", ");
+  for (const [cote, forme] of [["gauche", `0% 0%, ${bord}, 0% 100%`], ["droite", `${bord}, 100% 100%, 100% 0%`]]) {
+    const moitie = document.createElement("span");
+    moitie.className = `moitie ${cote}`;
+    moitie.style.clipPath = `polygon(${forme})`;
+    contenu.forEach(el => moitie.appendChild(el.cloneNode(true)));
+    boosterEl.appendChild(moitie);
+  }
+  boosterEl.classList.remove("en-dechirure");
+  boosterEl.classList.add("dechire");
+  ouvrirBooster(true);
+}
+
+boosterEl.addEventListener("pointerdown", e => {
+  if (boosterEl.disabled || enCours || boosterEl.classList.contains("dechire")) return;
+  dechirure = { y0: e.clientY, h: boosterEl.offsetHeight, p: 0, bouge: false };
+  try { boosterEl.setPointerCapture(e.pointerId); } catch { /* pointeur déjà relâché */ }
+});
+boosterEl.addEventListener("pointermove", e => {
+  if (!dechirure) return;
+  const dy = e.clientY - dechirure.y0;
+  if (Math.abs(dy) > 8 && !dechirure.bouge) { dechirure.bouge = true; boosterEl.classList.add("en-dechirure"); }
+  if (!dechirure.bouge) return;
+  const p = Math.max(0, Math.min(1, dy / (dechirure.h * 0.7)));   // ~70 % de la hauteur suffit
+  majDechirure(p);
+  if (p >= 1) dechirerBooster();
+});
+const relacher = () => {
+  if (!dechirure) return;
+  boosterEl.dataset.glisse = dechirure.bouge ? "1" : "";
+  dechirure = null;
+  boosterEl.classList.remove("en-dechirure");
+  majDechirure(0);   // lâché trop tôt : la déchirure se referme
+};
+boosterEl.addEventListener("pointerup", relacher);
+boosterEl.addEventListener("pointercancel", relacher);
+
+boosterEl.addEventListener("click", e => {
+  if (boosterEl.dataset.glisse) { boosterEl.dataset.glisse = ""; return; }
+  if (e.detail === 0) return ouvrirBooster();   // clavier (Entrée / Espace) : ouverture directe
+  // Simple appui : on montre le geste à faire.
+  boosterEl.classList.remove("indice");
+  void boosterEl.offsetWidth;
+  boosterEl.classList.add("indice");
+  notifier(t("glisserPourOuvrir"));
+});
 $("#tout-reveler").addEventListener("click", toutReveler);
 $("#nouveau-booster").addEventListener("click", revenirAuBooster);
 $("#partager-tirage").addEventListener("click", () => partagerCarte(plusBelle(pileTirage)));
