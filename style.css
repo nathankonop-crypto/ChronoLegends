@@ -908,6 +908,16 @@ button.case-collection:hover { transform: translateY(-4px); }
 }
 .manquante-rarete { font-size: 10px; text-transform: uppercase; letter-spacing: .2em; }
 
+/* Téléphone : 4 cartes par ligne (on touche une carte pour l'agrandir). */
+@media (max-width: 640px) {
+  .grille-collection { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .manquante { border-radius: 6px; gap: 3px; container-type: inline-size; }
+  .manquante span { font-size: 13cqw; letter-spacing: .02em; }
+  .manquante .manquante-rarete { font-size: 9.5cqw; letter-spacing: .04em; }
+  .exemplaires { bottom: -4px; right: -4px; font-size: 10px; padding: 1px 5px; }
+  button.case-collection:hover { transform: none; }
+}
+
 /* ---------- Modale ---------- */
 
 .modale {
