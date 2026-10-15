@@ -16,6 +16,50 @@ const MONUMENTS = (() => {
   const toit = (wb, wr, y, cx = 0, ep = 2.4) =>
     `M${cx - wr / 2} ${y - 1.2}Q${cx - wr / 2 + 2} ${y} ${cx - wb / 2 - .5} ${y}H${cx + wb / 2 + .5}Q${cx + wr / 2 - 2} ${y} ${cx + wr / 2} ${y - 1.2}L${cx + wb / 2} ${y - ep}H${cx - wb / 2}Z`;
 
+  // ---------- Bustes de personnages (comme dans un musée) ----------
+  // Profil tourné vers la droite, posé sur un socle, entre deux branches de laurier.
+  // coupe : hauteur où commence un chapeau ou une coiffure (le haut du crâne n'est pas dessiné).
+  const tete = coupe => {
+    const haut = coupe == null ? "Q-4.6 -20.4 0 -20.5Q4.1 -20.3 4.4 -16.4" : `L-4.75 ${coupe}H4.3L4.4 -16.4`;
+    return `M-6.5 -3.2Q-6.6 -6.8 -3.2 -7.8L-2.6 -10.4Q-4.8 -11.6 -4.8 -15.2${haut}` +
+      "L4.7 -15.3L4.35 -14.7L5.5 -12.4L4.55 -12.1L4.75 -11.5L4.4 -11.2L4.6 -10.6L4.2 -10.2" +
+      "Q4.3 -9.2 3.4 -9Q2.2 -9 1.8 -8.4L1.9 -7.4Q5.6 -6.6 6.5 -3.2Z";
+  };
+  const OREILLE = "M-.9 -15.1Q-2.4 -14.1 -1 -12.5Q-1.9 -13.9 -.9 -15.1Z M-1.25 -14.3Q-1.7 -13.9 -1.15 -13.4Q-1.4 -13.9 -1.25 -14.3Z";
+  const OEIL = "M3.25 -14.45h.75v.28h-.75Z";
+  // Feuille en amande au point (x, y), orientée selon l'angle a (radians)
+  const feuille = (x, y, a, L = 1.7, l = .5) => {
+    const c = Math.cos(a), s = Math.sin(a), n = [-s * l, c * l];
+    const mx = x + c * L / 2, my = y + s * L / 2;
+    return `M${x.toFixed(2)} ${y.toFixed(2)}Q${(mx + n[0]).toFixed(2)} ${(my + n[1]).toFixed(2)} ${(x + c * L).toFixed(2)} ${(y + s * L).toFixed(2)}` +
+      `Q${(mx - n[0]).toFixed(2)} ${(my - n[1]).toFixed(2)} ${x.toFixed(2)} ${y.toFixed(2)}Z`;
+  };
+  // Branche de laurier qui monte le long du buste (cote : -1 à gauche, 1 à droite)
+  const branche = cote => {
+    let d = "";
+    const pt = t => [cote * (5.2 + 6 * t - 2.6 * t * t), -1.2 - 15 * t];
+    for (let i = 0; i < 9; i++) {
+      const t = .06 + i * .105, [x, y] = pt(t), [x2, y2] = pt(t + .02);
+      const dir = Math.atan2(y2 - y, x2 - x);
+      d += feuille(x, y, dir + cote * .75, 2.3, .62) + feuille(x, y, dir - cote * .75, 2.1, .58);
+    }
+    const [xa, ya] = pt(0), [xb, yb] = pt(.5), [xc, yc] = pt(1);
+    d += `M${xa} ${ya}Q${xb + cote * 1.2} ${yb} ${xc} ${yc}L${xc - cote * .25} ${yc + .2}Q${xb + cote * .9} ${yb} ${xa - cote * .3} ${ya}Z`;
+    return p(d, .8);
+  };
+  const SOCLE = "M-4.5 0H4.5V-.8H3.6V-2.6H4.2V-3.2H-4.2V-2.6H-3.6V-.8H-4.5Z";
+  const buste = ({ coupe = null, trous = "", dessus = "", derriere = "" }) =>
+    (derriere ? p(derriere) : "") + p(tete(coupe) + OREILLE + OEIL + trous) + (dessus ? p(dessus) : "") +
+    p(SOCLE + r(-3.6, -2.1, 7.2, .22)) + branche(-1) + branche(1) + sol(26);
+  const couronneLaurier = (x1, y1, x2, y2, h) => {
+    let d = "";
+    for (let i = 0; i <= 7; i++) {
+      const t = i / 7, x = x1 + (x2 - x1) * t, y = y1 + (y2 - y1) * t - Math.sin(t * Math.PI) * h;
+      d += feuille(x, y, Math.PI + .5 + (i % 2 ? .6 : -.2), 1.5, .45);
+    }
+    return d;
+  };
+
   return {
     gizeh: {
       nom: "Pyramides de Gizeh", w: 58, h: 15,
@@ -219,6 +263,72 @@ const MONUMENTS = (() => {
           sol(56),
         ].join("");
       },
+    },
+    // ---------- Personnages historiques (bustes) ----------
+    napoleon: {
+      nom: "Napoléon", type: "personnage", w: 26, h: 25,
+      dessin: () => buste({
+        coupe: -17.5,
+        // col haut de l'uniforme, épaulette
+        trous: "M-2.8 -8.3Q0 -7 2.2 -7.7Q0 -6.7 -2.8 -7.8Z" + r(-6, -5.7, .22, 1.3) + r(-5.3, -6.2, .22, 1.3) + r(-4.6, -6.6, .22, 1.3),
+        // bicorne porté « en bataille » + mèche sur le front
+        dessus: "M-10 -17Q-8.6 -18.6 -6.8 -20.4Q-3.6 -23.9 .2 -23.9Q4 -23.9 7.2 -20.4Q9 -18.6 10.4 -16.8Q.2 -19.6 -10 -17Z M4.6 -20.6a.85 .85 0 1 0 0 .01Z M3.6 -17.3Q4.7 -16.6 3.9 -15.8Q4.1 -16.7 3.6 -17.3Z",
+      }),
+    },
+    lincoln: {
+      nom: "Abraham Lincoln", type: "personnage", w: 26, h: 27.5,
+      dessin: () => buste({
+        coupe: -17.5,
+        trous: "M-1.6 -7.9Q1 -6.6 3.6 -6.9Q1 -6.2 -1.6 -7.4Z",
+        // haut-de-forme et barbe le long de la mâchoire
+        dessus: r(-4.4, -27.3, 8.4, 9.3) + "M-6.4 -17.9Q-.2 -18.9 6 -17.9V-17.5Q-.2 -18.4 -6.4 -17.5Z" +
+          "M-.9 -13Q-1.6 -9.6 1 -8.1Q3.5 -7.3 4.7 -8.8L4.5 -10.3Q4.3 -9.2 3.4 -9Q2.2 -9 1.8 -8.4Q.2 -9.8 -.3 -13Z",
+      }),
+    },
+    cesar: {
+      nom: "Jules César", type: "personnage", w: 26, h: 21.5,
+      dessin: () => buste({
+        // couronne de laurier et plis de la toge
+        trous: "M-5 -4Q-1.5 -7 3 -5.8Q-1.5 -6.4 -5 -4Z M-3.6 -3.4Q0 -5.6 4.4 -4.4Q0 -5 -3.6 -3.4Z",
+        // couronne de laurier : feuilles qui dépassent tout autour du crâne, pointées vers l'arrière
+        dessus: Array.from({ length: 9 }, (_, i) => {
+          const a = Math.PI * (1.05 + i * .085), x = -.2 + Math.cos(a) * 4.75, y = -15.7 + Math.sin(a) * 4.75;
+          return feuille(x, y, a - Math.PI / 2 - .35 + (i % 2 ? .5 : 0), 1.9, .5);
+        }).join(""),
+      }),
+    },
+    cleopatre: {
+      nom: "Cléopâtre", type: "personnage", w: 26, h: 23,
+      dessin: () => buste({
+        coupe: -17.5,
+        // œil maquillé à l'égyptienne, grand collier
+        trous: "M3 -14.5H4.2L4.5 -14.15H3Z M-4.6 -4.6Q0 -8 5 -5Q0 -7.2 -4.6 -4.6Z M-5.6 -3.6Q0 -7 6 -3.6Q0 -6.2 -5.6 -3.6Z",
+        // perruque qui tombe dans le dos, coiffe et cobra royal
+        derriere: "M-4.8 -15.2Q-6.6 -12 -5.8 -7.4L-3.2 -7.8L-2.6 -10.4Q-4.8 -11.6 -4.8 -15.2Z",
+        dessus: "M-5.1 -17.8Q-5.6 -21.6 -.2 -21.9Q4.4 -21.5 4.5 -17.8Z M-4.9 -17.6Q-5.6 -15.6 -4.8 -15.2Z" +
+          "M4.1 -19.4Q5.7 -20.4 5.3 -21.8Q4.9 -22.6 4.5 -21.7Q5 -20.6 3.8 -20.1Z",
+      }),
+    },
+    jeanne: {
+      nom: "Jeanne d'Arc", type: "personnage", w: 30, h: 25,
+      dessin: () => buste({
+        coupe: -16.2,
+        // plaques de l'armure sur l'épaule
+        trous: "M-6.3 -4.6Q-5.6 -7.4 -2.6 -7.6Q-5 -6.6 -6.3 -4.6Z M-6.4 -3.4Q-5.4 -6 -2.2 -6.2Q-4.8 -5.2 -6.4 -3.4Z" + r(-1, -6.4, .22, 3),
+        // cheveux courts « au bol » et étendard
+        dessus: "M-5 -16.4Q-5.6 -21.2 -.2 -21Q4.7 -20.8 4.6 -16.4L4.3 -16.6Q3.6 -16 3 -16.6Q2.4 -16 1.8 -16.6Z" +
+          r(7, -25, .35, 22) + "M7.35 -25H13L11.6 -22.5L13 -20H7.35Z",
+      }),
+    },
+    charlemagne: {
+      nom: "Charlemagne", type: "personnage", w: 26, h: 23,
+      dessin: () => buste({
+        coupe: -17.5,
+        trous: "M-3 -7.9Q0 -6.4 3 -7.2Q0 -6 -3 -7.4Z",
+        // couronne à fleurons et longue barbe
+        dessus: "M-4.7 -17.8V-20.6L-3.4 -19.6L-2 -22L-.5 -19.9L1 -22.2L2.4 -19.9L3.6 -21.4L4.3 -19.4V-17.8Z" +
+          "M-.6 -13Q-1.4 -9.2 .4 -7.2Q1.6 -5.6 3.4 -5.6Q5.6 -6.4 5.2 -9L4.6 -10.6Q4.3 -9.2 3.4 -9Q2.2 -9 1.8 -8.4Q.4 -9.6 0 -13Z",
+      }),
     },
   };
 })();

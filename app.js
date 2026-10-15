@@ -891,7 +891,7 @@ function reinitialiserBooster() {
   choisirMonument();
 }
 
-// Un monument différent sur chaque paquet (monuments.js), jamais deux fois de suite le même.
+// Un monument ou un personnage différent sur chaque paquet (monuments.js), jamais deux fois de suite le même.
 let monumentActuel = null;
 function choisirMonument() {
   const cles = Object.keys(MONUMENTS).filter(c => c !== monumentActuel);
