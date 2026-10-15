@@ -669,9 +669,9 @@ function fermerModale() {
 
 // Légère inclinaison 3D de la carte agrandie.
 // x et y vont de -0,5 à 0,5 (0 = carte bien de face) : la carte penche
-// au maximum de la moitié de l'amplitude (14 → 7°, 36 → 18°).
+// au maximum de la moitié de l'amplitude (14 → 7°, 60 → 30°).
 const INCLINAISON_SOURIS = 14;
-const INCLINAISON_DOIGT = 36;      // plus marquée au toucher
+const INCLINAISON_DOIGT = 60;      // plus marquée au toucher
 const INCLINAISON_GYROSCOPE = 14;
 
 function incliner(x, y, amplitude) {
