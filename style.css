@@ -441,13 +441,13 @@ html[lang="he"] .carte { font-family: var(--serif); }   /* sinon la carte hérit
 
 /* Médaillon de la famille (Conquérants, Sages…) dans le coin de l'illustration. */
 .medaillon-famille {
-  position: absolute; top: 2cqw; left: 2cqw; z-index: 2;
-  width: 10.5cqw; height: 10.5cqw; border-radius: 50%;
+  position: absolute; top: 1cqw; left: 1cqw; z-index: 2;
+  width: 7.5cqw; height: 7.5cqw; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   background: radial-gradient(circle at 35% 30%, #3a3020, #17130c 75%);
-  box-shadow: 0 0 0 .5cqw #c9a85a, 0 0 0 .9cqw rgba(30, 22, 10, .6), 0 .8cqw 2cqw rgba(0, 0, 0, .55);
+  box-shadow: 0 0 0 .35cqw #c9a85a, 0 0 0 .65cqw rgba(30, 22, 10, .6), 0 .5cqw 1.4cqw rgba(0, 0, 0, .55);
 }
-.medaillon-famille svg { width: 64%; height: 64%; fill: none; stroke: #f0d590; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.medaillon-famille svg { width: 66%; height: 66%; fill: none; stroke: #f0d590; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
 .carte-bandeau {
   margin: 2.6cqw 6cqw 0;
