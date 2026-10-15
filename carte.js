@@ -53,11 +53,14 @@ function illustrationProvisoire(carte) {
 // Sur certains téléphones (taille de police du système agrandie…), le
 // navigateur grossit le texte et la description déborde. On réduit alors
 // le texte de la carte, petit à petit, jusqu'à ce qu'il tienne.
+// Sur l'image partagée, le texte est redessiné et prend parfois un peu plus
+// de place qu'à l'écran (police, coupure des mots) : on garde une marge.
 function ajusterTexte(corps) {
   if (!corps.isConnected || corps.clientHeight === 0) return; // carte cachée : on attendra
+  const marge = corps.closest(".affiche-partage") ? corps.clientHeight * 0.12 : 0;
   let reduction = 1;
   corps.style.setProperty("--reduction", reduction);
-  while (corps.scrollHeight > corps.clientHeight + 1 && reduction > 0.55) {
+  while (corps.scrollHeight + marge > corps.clientHeight + 1 && reduction > 0.55) {
     reduction -= 0.04;
     corps.style.setProperty("--reduction", reduction.toFixed(2));
   }

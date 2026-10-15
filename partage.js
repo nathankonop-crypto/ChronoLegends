@@ -62,7 +62,7 @@ async function fabriquerImage(carte) {
   const coulisse = document.createElement("div");
   coulisse.className = "coulisse-partage";
   coulisse.innerHTML = `
-    <div class="affiche-partage rarete-${carte.rarete}">
+    <div class="affiche-partage rarete-${carte.rarete}" lang="${LANGUE}">
       <p class="affiche-titre">ChronoLegends</p>
       <p class="affiche-sous">${echapper(t("partageObtenu"))}</p>
       <div class="affiche-carte">${htmlCarte(carte)}</div>
@@ -76,6 +76,8 @@ async function fabriquerImage(carte) {
     const img = affiche.querySelector("img");
     if (img) { img.loading = "eager"; await img.decode().catch(() => {}); }
     policesIntegrees ??= await chargerPolices().catch(() => "");
+    // Polices et illustration maintenant prêtes : on réajuste le texte juste avant la photo.
+    affiche.querySelectorAll(".carte-corps").forEach(ajusterTexte);
 
     const options = { pixelRatio: 2, fontEmbedCSS: policesIntegrees, cacheBust: false };
     // Safari dessine parfois l'image vide la première fois : on lui fait faire un essai à blanc.
