@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261016-0124">
+<link rel="stylesheet" href="style.css?v=20261016-0215">
 </head>
 <body>
 
@@ -42,6 +42,7 @@
       <label class="interrupteur"><span data-t="reglageOuverture">Ouverture rapide des boosters</span><input type="checkbox" id="reglage-ouverture" role="switch"></label>
       <button class="lien-reglages" id="bouton-regles" data-t="reglesDuJeu">Règles du jeu</button>
       <button class="lien-reglages lien-reglages-suite" id="bouton-chances" data-t="chancesTirage">Chances de tirage</button>
+      <button class="lien-reglages lien-reglages-suite" id="bouton-historique" data-t="historiqueBoosters">Historique des boosters</button>
     </div>
   </div>
 </header>
@@ -162,17 +163,26 @@
   </section>
 </div>
 
+<!-- Historique des boosters ouverts (ouvert depuis les Paramètres, rempli par app.js) -->
+<div class="fond-dialogue" id="dialogue-historique" hidden>
+  <section class="dialogue-chances dialogue-historique" role="dialog" aria-modal="true" aria-labelledby="titre-historique">
+    <button class="savoir-plus-fermer" id="fermer-historique" aria-label="Fermer" data-t-aria="fermer">×</button>
+    <h2 id="titre-historique" data-t="historiqueBoosters">Historique des boosters</h2>
+    <div id="contenu-historique"></div>
+  </section>
+</div>
+
 <div id="notification" class="notification" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261016-0124"></script>
-<script src="langue.js?v=20261016-0124"></script>
-<script src="anti-robot.js?v=20261016-0124"></script>
-<script src="carte.js?v=20261016-0124"></script>
-<script src="partage.js?v=20261016-0124"></script>
-<script src="monuments.js?v=20261016-0124"></script>
-<script src="app.js?v=20261016-0124"></script>
+<script src="reglages.js?v=20261016-0215"></script>
+<script src="langue.js?v=20261016-0215"></script>
+<script src="anti-robot.js?v=20261016-0215"></script>
+<script src="carte.js?v=20261016-0215"></script>
+<script src="partage.js?v=20261016-0215"></script>
+<script src="monuments.js?v=20261016-0215"></script>
+<script src="app.js?v=20261016-0215"></script>
 </body>
 </html>

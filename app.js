@@ -880,6 +880,45 @@ $("#fermer-regles").addEventListener("click", fermerRegles);
 $("#dialogue-regles").addEventListener("click", e => { if (e.target.id === "dialogue-regles") fermerRegles(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") fermerRegles(); });
 $("#bouton-chances").addEventListener("click", afficherChances);
+
+// Historique : les derniers boosters ouverts, lus dans le journal du serveur
+// (table ouvertures : le joueur ne peut lire que les siens).
+const NB_HISTORIQUE = 30;
+async function afficherHistorique() {
+  basculerReglages(false);
+  const zone = $("#contenu-historique");
+  zone.innerHTML = `<p>${t("chargement")}</p>`;
+  $("#dialogue-historique").hidden = false;
+  $("#fermer-historique").focus();
+  const { data, error } = await sb.from("ouvertures").select("id, ouvert_le, region, cartes, finitions")
+    .order("ouvert_le", { ascending: false }).limit(NB_HISTORIQUE);
+  if (error) { zone.innerHTML = `<p>${t("historiqueIndispo")}</p>`; return; }
+  if (!data.length) { zone.innerHTML = `<p>${t("historiqueVide")}</p>`; return; }
+  const date = new Intl.DateTimeFormat(LANGUE, { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  zone.innerHTML = `<p class="chances-note">${t("historiqueIntro", { n: NB_HISTORIQUE })}</p>` + data.map(o => {
+    // Les 5 cartes, de la plus courante à la plus rare (comme à l'ouverture).
+    const cartes = o.cartes.map((id, i) => ({ id, carte: CARTES.find(x => x.id === id), finition: o.finitions?.[i] || "normale" }))
+      .sort((a, b) => RANG_RARETE.indexOf(a.carte?.rarete) - RANG_RARETE.indexOf(b.carte?.rarete));
+    return `<article class="historique-booster">
+      <h3><time datetime="${o.ouvert_le}">${date.format(new Date(o.ouvert_le))}</time><span>${nomRegion(o.region)}</span></h3>
+      <ul>${cartes.map(({ id, carte, finition }) => `<li><button class="historique-carte" data-id="${echapper(id)}" data-finition="${finition}"${carte ? "" : " disabled"}>
+        <span class="pastille-rarete rarete-${carte?.rarete || "ordinaire"}"></span>${echapper(carte?.nom || id)}${finition === "diamant" ? " 💎" : finition === "animee" ? " ✨" : ""}</button></li>`).join("")}</ul>
+    </article>`;
+  }).join("");
+}
+const fermerHistorique = () => { $("#dialogue-historique").hidden = true; };
+$("#bouton-historique").addEventListener("click", afficherHistorique);
+$("#fermer-historique").addEventListener("click", fermerHistorique);
+$("#dialogue-historique").addEventListener("click", e => {
+  if (e.target.id === "dialogue-historique") return fermerHistorique();
+  // Une carte de l'historique : on l'affiche en grand, dans la version obtenue.
+  const bouton = e.target.closest(".historique-carte");
+  const carte = bouton && CARTES.find(x => x.id === bouton.dataset.id);
+  if (!carte) return;
+  fermerHistorique();
+  ouvrirModale({ ...carte, finition: bouton.dataset.finition });
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#dialogue-historique").hidden) fermerHistorique(); });
 $("#fermer-chances").addEventListener("click", fermerChances);
 $("#dialogue-chances").addEventListener("click", e => { if (e.target.id === "dialogue-chances") fermerChances(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") fermerChances(); });
