@@ -172,7 +172,6 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .booster-bord { position: absolute; inset: 10px; border: 1px solid rgba(212, 178, 106, .55); border-radius: 8px; pointer-events: none; }
 .booster-bord::after { content: ""; position: absolute; inset: 4px; border: 1px solid rgba(212, 178, 106, .25); border-radius: 5px; }
 .booster-titre { font-family: var(--serif-titre); font-weight: 700; font-size: 16px; letter-spacing: .12em; color: var(--or-clair); text-align: center; }
-.booster-ext { font-style: italic; font-size: 18px; color: var(--or); }
 .booster-sceau {
   margin: 14px 0;
   width: 68px; height: 68px;
