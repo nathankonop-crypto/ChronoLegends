@@ -536,7 +536,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 }
 .dos::before { content: ""; position: absolute; inset: 6%; border: 1px solid rgba(212, 178, 106, .5); border-radius: 3cqw; }
 /* Logo de ChronoLegends (rose des vents dorée) */
-.dos-motif { display: block; width: 42%; height: auto; user-select: none; pointer-events: none;
+.dos-motif { display: block; width: 30%; height: auto; user-select: none; pointer-events: none;
   filter: drop-shadow(0 1cqw 2cqw rgba(0, 0, 0, .6)); }
 
 /* Hébreu : pas d'italique (le navigateur penche artificiellement les lettres)
