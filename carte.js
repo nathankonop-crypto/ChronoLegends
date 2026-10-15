@@ -90,6 +90,40 @@ new MutationObserver(mutations => {
 // Les polices arrivent parfois après la carte : on revérifie toutes les cartes.
 document.fonts?.ready.then(() => document.querySelectorAll(".carte-corps").forEach(ajusterTexte));
 
+// ---------- Familles (Conquérants, Sages…) ----------
+// Liste chargée depuis la base par le jeu et l'admin : { id: { nom, nom_en, nom_he, embleme } }.
+let FAMILLES = {};
+
+// Emblèmes au choix (dessins au trait, 24 × 24). Le nom sert dans l'admin.
+const EMBLEMES = {
+  epees:     { nom: "Épées croisées",  d: "M4 4l12 12m-3 3 6-6m-1.5 4.5L21 21M20 4 8 16m3 3-6-6m1.5 4.5L3 21" },
+  couronne:  { nom: "Couronne",        d: "M4 18h16M5 18 3.5 7.5l5 3.5L12 5l3.5 6 5-3.5L19 18M5 21h14" },
+  parchemin: { nom: "Parchemin",       d: "M8 4h10a2 2 0 0 1 2 2v1.5h-3.5M8 4a2 2 0 0 0-2 2v12a2 2 0 0 1-2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2M9 9h5M9 12.5h5M9 16h3" },
+  lunette:   { nom: "Lunette",         d: "M3.5 14.5 15 8.5l2 4-11.5 6zM15 8.5l3.5-1.8 2 4L17 12.5M9.5 16.5 7.5 21M11.5 15.5l2.5 5.5" },
+  colonne:   { nom: "Colonne",         d: "M4 21h16M5.5 18h13M5.5 6h13M4 3.5h16M8 6v12M11 6v12M13 6v12M16 6v12" },
+  flamme:    { nom: "Flamme",          d: "M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-4.3 4.2-6.3 4.2-11 3.4 2 5.7 5.2 5.7 8 .9-.8 1.4-1.9 1.5-3.2 1.7 1.8 2.6 4 2.6 6.2 0 3.6-3 6.2-7.5 6.2zM12 21c-1.7 0-2.8-1.2-2.8-2.8 0-2 2.8-3.7 2.8-3.7s2.8 1.7 2.8 3.7c0 1.6-1.1 2.8-2.8 2.8z" },
+  chaine:    { nom: "Chaîne brisée",   d: "M9.5 14.5 7.3 16.7a3 3 0 0 1-4.2-4.2l3-3a3 3 0 0 1 4.2 0M14.5 9.5l2.2-2.2a3 3 0 0 1 4.2 4.2l-3 3a3 3 0 0 1-4.2 0M8 3.5l1 2.5M3.5 8 6 9M16 20.5 15 18M20.5 16 18 15" },
+  boussole:  { nom: "Boussole",        d: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM15.8 8.2l-2.2 5.4-5.4 2.2 2.2-5.4z" },
+  plume:     { nom: "Plume",           d: "M20 3.5C13.5 4 8.5 8.5 7 15.5L5 20.5M20 3.5c-.5 6.5-5 11.5-12 12.5M10 14l5-5" },
+  balance:   { nom: "Balance",         d: "M12 3.5v17M7.5 20.5h9M4 7h16M7 7l-3 7h6zM17 7l-3 7h6z" },
+  bouclier:  { nom: "Bouclier",        d: "M12 3l8 3v5.5c0 4.7-3.4 8.3-8 9.5-4.6-1.2-8-4.8-8-9.5V6zM12 3v18M4.5 10.5h15" },
+  lyre:      { nom: "Lyre",            d: "M7.5 4C5 7.5 5.5 13 9 16h6c3.5-3 4-8.5 1.5-12M7.5 8h9M10.5 8v8M13.5 8v8M9 20h6M12 16v4" },
+  navire:    { nom: "Navire",          d: "M3 16.5h18l-2.5 4h-13zM12 3v13.5M12 4.5l6 9h-6M11 6.5 6 13.5h5" },
+  oeil:      { nom: "Œil",             d: "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" },
+  livre:     { nom: "Livre",           d: "M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5m0-13c2-1.5 5-2 8.5-1.5v13c-3.5-.5-6.5 0-8.5 1.5m0-13v13" },
+  etoile:    { nom: "Étoile",          d: "M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.6l-5.3 2.8 1.2-6-4.5-4.1 6-.7z" },
+};
+
+const nomFamille = (f, langue = LANGUE) => (langue === "en" && f.nom_en) || (langue === "he" && f.nom_he) || f.nom;
+const dessinEmbleme = cle =>
+  `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${(EMBLEMES[cle] || EMBLEMES.etoile).d}"/></svg>`;
+
+// Médaillon de la famille, dans le coin de l'illustration.
+function medaillonFamille(carte, langue) {
+  const f = carte.famille && FAMILLES[carte.famille];
+  return f ? `<span class="medaillon-famille" title="${echapper(nomFamille(f, langue))}">${dessinEmbleme(f.embleme)}</span>` : "";
+}
+
 // ---------- Finitions (par-dessus la rareté) ----------
 // Diamant : la carte de rareté reste intacte ; on y sertit un anneau de diamant taillé,
 // avec reflet holographique, paillettes, étincelles, halo glacé et sceau diamant.
@@ -137,7 +171,7 @@ function rendreCarte(carte, numeroTexte) {
     <div class="carte-cadre">
       <div class="carte-interieur">
         <header class="carte-tete"><h2 class="carte-nom" style="font-size:${tailleNom.toFixed(2)}cqw">${nom}</h2></header>
-        <div class="carte-illus">${illus}${decor.illus}</div>
+        <div class="carte-illus">${illus}${decor.illus}${medaillonFamille(carte, L)}</div>
         <div class="carte-bandeau"><span class="gemme"></span>${nomRarete(carte.rarete, L)}<span class="gemme"></span></div>
         <div class="carte-corps">
           <p class="carte-dates">${echapper(carte.dates)}</p>

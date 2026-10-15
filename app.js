@@ -53,13 +53,17 @@ let cartesExtension = [];
 const champ = (ligne, nom) => (langueCartes() === "en" && ligne[`${nom}_en`]) || ligne[nom] || "";
 
 async function chargerCartes() {
-  const { data, error } = await sb.from("cartes").select("*")
-    .order("epoque").order("ordre").order("nom");
+  const [{ data, error }, familles] = await Promise.all([
+    sb.from("cartes").select("*").order("epoque").order("ordre").order("nom"),
+    sb.from("familles").select("*").order("ordre"),
+  ]);
   if (error) throw error;
+  // Familles (Conquérants, Sages…) : sans elles, le jeu marche quand même.
+  FAMILLES = Object.fromEntries((familles.data || []).map(f => [f.id, f]));
   // On garde les noms de champs utilisés partout dans le jeu.
   CARTES = data.map(l => ({
     // Contenu en anglais si le joueur joue en anglais (le français sert de secours).
-    id: l.id, gamme: l.gamme, region: l.region, extension: l.epoque, rarete: l.rarete,
+    id: l.id, gamme: l.gamme, region: l.region, extension: l.epoque, rarete: l.rarete, famille: l.famille || null,
     nom: champ(l, "nom"), dates: champ(l, "dates"), lieu: champ(l, "lieu"), texte: champ(l, "description"),
     image: l.image, ordre: l.ordre,
     // « En savoir plus » existe aussi en hébreu (le reste de la carte reste en anglais).
@@ -238,15 +242,49 @@ function afficherEpoques() {
   for (const [cle, ext] of Object.entries(EXTENSIONS)) {
     const possedees = cartesDe(cle).filter(c => etat.collection[c.id]).length;
     const b = document.createElement("button");
-    b.className = "epoque" + (cle === extensionActive ? " actif" : "");
+    b.className = "epoque" + (cle === extensionActive && !familleActive ? " actif" : "");
     b.innerHTML = `${nomEpoque(cle)} <span>${possedees}/${cartesDe(cle).length}</span>`;
     b.addEventListener("click", () => choisirExtension(cle));
     nav.appendChild(b);
   }
+  afficherFamilles();
+}
+
+// ---------- Familles : une collection dans la collection, à travers toutes les époques ----------
+
+let familleActive = null;   // id de la famille affichée, ou null (on affiche une époque)
+
+// Cartes d'une famille, dans l'ordre des époques puis de la collection.
+function cartesFamille(id) {
+  const epoques = Object.keys(EXTENSIONS);
+  return CARTES.filter(c => c.famille === id)
+    .sort((a, b) => epoques.indexOf(a.extension) - epoques.indexOf(b.extension) || (a.ordre ?? 0) - (b.ordre ?? 0));
+}
+
+function afficherFamilles() {
+  const nav = $("#familles");
+  const familles = Object.values(FAMILLES).filter(f => cartesFamille(f.id).length);
+  nav.hidden = !familles.length;
+  nav.innerHTML = familles.length ? `<span class="familles-titre">${t("familles")}</span>` : "";
+  for (const f of familles) {
+    const cartes = cartesFamille(f.id);
+    const possedees = cartes.filter(c => etat.collection[c.id]).length;
+    const b = document.createElement("button");
+    b.className = "famille" + (f.id === familleActive ? " actif" : "") + (possedees === cartes.length ? " complete" : "");
+    b.innerHTML = `${dessinEmbleme(f.embleme)}${echapper(nomFamille(f))} <span>${possedees}/${cartes.length}</span>`;
+    b.addEventListener("click", () => choisirFamille(f.id));
+    nav.appendChild(b);
+  }
+}
+
+function choisirFamille(id) {
+  familleActive = familleActive === id ? null : id;   // second appui : retour à l'époque
+  afficherCollection();
 }
 
 function choisirExtension(cle) {
-  if (cle === extensionActive) return;
+  if (cle === extensionActive && !familleActive) return;
+  familleActive = null;
   extensionActive = cle;
   cartesExtension = cartesDe(cle);
   etat.extension = cle;
@@ -520,11 +558,14 @@ function revenirAuBooster() {
 
 function afficherCollection() {
   afficherEpoques();
-  $("#titre-extension").textContent = nomEpoque(extensionActive);
-  $("#sous-titre-extension").textContent = sousTitreEpoque(extensionActive);
+  const famille = familleActive && FAMILLES[familleActive];
+  if (!famille) familleActive = null;
+  const liste = famille ? cartesFamille(famille.id) : cartesExtension;
+  $("#titre-extension").textContent = famille ? nomFamille(famille) : nomEpoque(extensionActive);
+  $("#sous-titre-extension").textContent = famille ? t("familleToutesEpoques") : sousTitreEpoque(extensionActive);
 
-  const possedees = cartesExtension.filter(c => etat.collection[c.id]).length;
-  const total = cartesExtension.length;
+  const possedees = liste.filter(c => etat.collection[c.id]).length;
+  const total = liste.length;
   $("#barre-progression").style.width = total ? `${(possedees / total) * 100}%` : "0%";
   $("#texte-progression").textContent = total
     ? t("progression", { n: possedees, total })
@@ -532,7 +573,7 @@ function afficherCollection() {
 
   const grille = $("#grille-collection");
   grille.innerHTML = "";
-  for (const carte of cartesExtension) {
+  for (const carte of liste) {
     const nb = etat.collection[carte.id] || 0;
     const el = document.createElement(nb ? "button" : "div");
     el.className = "case-collection";

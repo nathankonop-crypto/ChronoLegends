@@ -9,8 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261015-1634">
-<link rel="stylesheet" href="admin.css?v=20261015-1634">
+<link rel="stylesheet" href="style.css?v=20261015-1648">
+<link rel="stylesheet" href="admin.css?v=20261015-1648">
 </head>
 <body class="admin">
 
@@ -58,7 +58,10 @@
     <section id="vue-liste">
       <div class="barre-liste">
         <h1>Les cartes <span id="nb-cartes"></span></h1>
-        <button class="bouton bouton-or" id="bouton-nouvelle">+ Nouvelle carte</button>
+        <div class="barre-boutons">
+          <button class="bouton" id="bouton-familles">Familles</button>
+          <button class="bouton bouton-or" id="bouton-nouvelle">+ Nouvelle carte</button>
+        </div>
       </div>
 
       <div class="filtres">
@@ -67,17 +70,38 @@
         <select id="filtre-gamme" aria-label="Filtrer par gamme"><option value="">Toutes les gammes</option></select>
         <select id="filtre-region" aria-label="Filtrer par région"><option value="">Toutes les régions</option></select>
         <select id="filtre-epoque" aria-label="Filtrer par époque"><option value="">Toutes les époques</option></select>
+        <select id="filtre-famille" aria-label="Filtrer par famille"><option value="">Toutes les familles</option><option value="-">Sans famille</option></select>
       </div>
 
       <div class="tableau-conteneur">
         <table class="tableau">
           <thead>
-            <tr><th></th><th>Nom</th><th>N°</th><th>Époque</th><th>Rareté</th><th>Gamme</th><th>Région</th><th></th></tr>
+            <tr><th></th><th>Nom</th><th>N°</th><th>Époque</th><th>Rareté</th><th>Gamme</th><th>Famille</th><th>Région</th><th></th></tr>
           </thead>
           <tbody id="lignes"></tbody>
         </table>
       </div>
       <p class="vide" id="aucun-resultat" hidden>Aucune carte ne correspond à ces filtres.</p>
+    </section>
+
+    <!-- Gestion des familles (Conquérants, Sages…) -->
+    <section id="vue-familles" hidden>
+      <div class="barre-liste">
+        <h1>Les familles <span id="nb-familles"></span></h1>
+        <div class="barre-boutons">
+          <button class="bouton" id="familles-retour">← Retour à la liste</button>
+          <button class="bouton bouton-or" id="famille-nouvelle">+ Nouvelle famille</button>
+        </div>
+      </div>
+      <p class="aide-familles">Une famille regroupe des personnages historiques de toutes les époques et de toutes les régions. Son emblème s'affiche dans le coin de l'illustration ; les joueurs la retrouvent dans leur collection. Supprimer une famille ne supprime aucune carte : ses personnages redeviennent « sans famille ».</p>
+      <div class="tableau-conteneur">
+        <table class="tableau tableau-familles">
+          <thead>
+            <tr><th>Emblème</th><th>Nom (français)</th><th>English</th><th>עברית</th><th>Ordre</th><th>Cartes</th><th></th></tr>
+          </thead>
+          <tbody id="lignes-familles"></tbody>
+        </table>
+      </div>
     </section>
 
     <!-- Formulaire de création / modification -->
@@ -108,6 +132,10 @@
             <label><span>Gamme <span class="requis">*</span></span><select name="gamme" required></select></label>
             <label><span>Rareté <span class="requis">*</span></span><select name="rarete" required></select></label>
           </div>
+          <label id="bloc-famille">Famille
+            <select name="famille"></select>
+            <small>Personnages historiques : une « collection dans la collection » (emblème dans le coin de l'illustration). Les familles se gèrent avec le bouton « Familles » de la liste.</small>
+          </label>
           <div class="ligne-champs">
             <label><span>Époque <span class="requis">*</span></span><select name="epoque" required></select></label>
             <label><span>Région <span class="requis">*</span></span><select name="region" required></select></label>
@@ -199,10 +227,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261015-1634"></script>
-<script src="langue.js?v=20261015-1634"></script>
-<script src="anti-robot.js?v=20261015-1634"></script>
-<script src="carte.js?v=20261015-1634"></script>
-<script src="admin.js?v=20261015-1634"></script>
+<script src="reglages.js?v=20261015-1648"></script>
+<script src="langue.js?v=20261015-1648"></script>
+<script src="anti-robot.js?v=20261015-1648"></script>
+<script src="carte.js?v=20261015-1648"></script>
+<script src="admin.js?v=20261015-1648"></script>
 </body>
 </html>

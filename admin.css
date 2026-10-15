@@ -59,7 +59,7 @@ body.admin { font-size: 16px; }
 
 /* ---------- Liste ---------- */
 .barre-liste { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
-.filtres { display: grid; grid-template-columns: 2fr repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
+.filtres { display: grid; grid-template-columns: 2fr repeat(5, 1fr); gap: 10px; margin-bottom: 18px; }
 @media (max-width: 900px) { .filtres { grid-template-columns: 1fr 1fr; } .filtres input { grid-column: 1 / -1; } }
 
 .tableau-conteneur { overflow-x: auto; border: 1px solid rgba(212, 178, 106, .18); border-radius: 12px; }
@@ -82,6 +82,21 @@ body.admin { font-size: 16px; }
   text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
 }
 .vide { text-align: center; color: var(--texte-doux); font-style: italic; }
+.barre-boutons { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- Familles ---------- */
+.aide-familles { margin: -6px 0 16px; color: var(--texte-doux); font-style: italic; max-width: 760px; }
+.tableau-familles td { vertical-align: middle; }
+.tableau-familles input, .tableau-familles select { width: 100%; min-width: 120px; }
+.tableau-familles input[name="ordre"] { min-width: 0; width: 64px; }
+.choix-embleme { display: flex; align-items: center; gap: 8px; }
+.choix-embleme select { min-width: 130px; }
+.embleme-apercu {
+  flex: none; width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 35% 30%, #3a3020, #17130c 75%); box-shadow: 0 0 0 2px #c9a85a;
+}
+.embleme-apercu svg { width: 64%; height: 64%; fill: none; stroke: #f0d590; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
 /* ---------- Formulaire + aperçu ---------- */
 .edition { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: clamp(20px, 4vw, 48px); align-items: start; }

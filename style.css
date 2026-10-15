@@ -120,6 +120,22 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .epoque.actif { background: linear-gradient(180deg, #e3c682, #b18d45); color: var(--encre); border-color: transparent; }
 .epoque span { font-family: var(--serif); font-style: italic; font-size: 13px; letter-spacing: 0; opacity: .7; }
 
+/* Familles (Conquérants, Sages…) : une rangée de pastilles sous les époques. */
+.familles { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; margin: -10px auto 22px; max-width: 900px; }
+.familles-titre { font-family: var(--serif-titre); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--texte-doux); margin-inline-end: 4px; }
+.famille {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border-radius: 999px; cursor: pointer;
+  font-family: var(--serif); font-size: 14px; color: var(--texte-doux);
+  background: rgba(255, 255, 255, .04); border: 1px solid rgba(212, 178, 106, .28);
+}
+.famille svg { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--or); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.famille span { font-style: italic; font-size: 12px; opacity: .7; }
+.famille:hover { color: var(--texte); }
+.famille.actif { background: linear-gradient(180deg, #e3c682, #b18d45); color: var(--encre); border-color: transparent; }
+.famille.actif svg { stroke: var(--encre); }
+.famille.complete:not(.actif) { border-color: var(--or); color: var(--or-clair); }
+
 .zone-booster { display: flex; flex-direction: column; align-items: center; gap: 22px; padding-top: 2vh; }
 
 .booster {
@@ -421,7 +437,17 @@ html[lang="he"] .carte { font-family: var(--serif); }   /* sinon la carte hérit
   box-shadow: 0 0 0 .5cqw var(--filet), 0 0 0 1.2cqw rgba(255, 255, 255, .5), 0 1cqw 2cqw rgba(0, 0, 0, .25);
   background: #1a1a22;
 }
-.carte-illus svg, .carte-illus img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.carte-illus > svg, .carte-illus > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* Médaillon de la famille (Conquérants, Sages…) dans le coin de l'illustration. */
+.medaillon-famille {
+  position: absolute; top: 2cqw; left: 2cqw; z-index: 2;
+  width: 10.5cqw; height: 10.5cqw; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 35% 30%, #3a3020, #17130c 75%);
+  box-shadow: 0 0 0 .5cqw #c9a85a, 0 0 0 .9cqw rgba(30, 22, 10, .6), 0 .8cqw 2cqw rgba(0, 0, 0, .55);
+}
+.medaillon-famille svg { width: 64%; height: 64%; fill: none; stroke: #f0d590; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 
 .carte-bandeau {
   margin: 2.6cqw 6cqw 0;

@@ -62,7 +62,7 @@ const CHAMPS_PLUS = ["en_savoir_plus", "en_savoir_plus_en", "en_savoir_plus_he"]
 function versCarte(l, langue = "fr") {
   const champ = nom => (langue === "en" && l[`${nom}_en`]) || l[nom] || "";
   return { id: l.id, nom: champ("nom"), gamme: l.gamme, dates: champ("dates"), lieu: champ("lieu"),
-    region: l.region, extension: l.epoque, rarete: l.rarete,
+    region: l.region, extension: l.epoque, rarete: l.rarete, famille: l.famille || null,
     texte: champ("description"), image: l.image };
 }
 
@@ -137,21 +137,43 @@ async function apresConnexion() {
 // ---------- Liste ----------
 
 async function chargerCartes() {
-  const { data, error } = await sb.from("cartes").select("*").order("epoque").order("ordre");
+  const [{ data, error }, familles] = await Promise.all([
+    sb.from("cartes").select("*").order("epoque").order("ordre"),
+    sb.from("familles").select("*").order("ordre").order("nom"),
+  ]);
   if (error) { notifier(`Erreur de chargement : ${error.message}`); return; }
   cartes = data;
+  if (familles.error) notifier(`Familles indisponibles : ${familles.error.message}`);
+  FAMILLES = Object.fromEntries((familles.data || []).map(f => [f.id, f]));
+  remplirFamilles();
+}
+
+// Listes déroulantes des familles (filtre de la liste + formulaire).
+function remplirFamilles() {
+  const noms = Object.fromEntries(Object.values(FAMILLES).map(f => [f.id, f.nom]));
+  const filtre = $("#filtre-famille");
+  const avant = filtre.value;
+  filtre.innerHTML = '<option value="">Toutes les familles</option><option value="-">Sans famille</option>';
+  remplirSelect(filtre, noms, true);
+  filtre.value = avant in noms || avant === "-" ? avant : "";
+  const select = form.elements.famille;
+  select.innerHTML = '<option value="">— Aucune famille —</option>';
+  remplirSelect(select, noms, true);
 }
 
 function afficherListe() {
   $("#vue-liste").hidden = false;
   $("#vue-formulaire").hidden = true;
+  $("#vue-familles").hidden = true;
 
   const texte = $("#recherche").value.trim().toLowerCase();
   const filtres = { rarete: $("#filtre-rarete").value, gamme: $("#filtre-gamme").value,
     region: $("#filtre-region").value, epoque: $("#filtre-epoque").value };
+  const famille = $("#filtre-famille").value;   // "" = toutes, "-" = sans famille
 
   const visibles = cartes.filter(c =>
     Object.entries(filtres).every(([champ, v]) => !v || c[champ] === v) &&
+    (!famille || (famille === "-" ? !c.famille : c.famille === famille)) &&
     (!texte || [c.nom, c.nom_en, c.lieu, c.dates, c.id].join(" ").toLowerCase().includes(texte)));
 
   $("#nb-cartes").textContent = visibles.length === cartes.length
@@ -169,6 +191,7 @@ function afficherListe() {
       <td>${EXTENSIONS[c.epoque].nom}</td>
       <td><span class="pastille rarete-${c.rarete}">${RARETES[c.rarete].nom}</span></td>
       <td>${GAMMES[c.gamme]}</td>
+      <td>${c.famille && FAMILLES[c.famille] ? echapper(FAMILLES[c.famille].nom) : ""}</td>
       <td>${REGIONS[c.region]}</td>
       <td class="col-actions">
         <button class="bouton petit" data-modifier="${echapper(c.id)}">Modifier</button>
@@ -185,7 +208,7 @@ $("#lignes").addEventListener("click", e => {
   if (sup) demanderSuppression(cartes.find(c => c.id === sup.dataset.supprimer));
 });
 
-for (const id of ["#recherche", "#filtre-rarete", "#filtre-gamme", "#filtre-region", "#filtre-epoque"]) {
+for (const id of ["#recherche", "#filtre-rarete", "#filtre-gamme", "#filtre-region", "#filtre-epoque", "#filtre-famille"]) {
   $(id).addEventListener("input", afficherListe);
 }
 
@@ -204,7 +227,7 @@ function ouvrirFormulaire(ligne) {
 
   const l = ligne || { nom: "", id: "", gamme: "personnage", rarete: "ordinaire",
     epoque: "antiquite", region: "moyen-orient", dates: "", lieu: "", description: "" };
-  for (const champ of ["nom", "id", "gamme", "rarete", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN, ...CHAMPS_PLUS]) {
+  for (const champ of ["nom", "id", "gamme", "rarete", "famille", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN, ...CHAMPS_PLUS]) {
     form.elements[champ].value = l[champ] ?? "";
   }
   form.elements.id.readOnly = !!ligne;
@@ -315,6 +338,8 @@ function valeursFormulaire() {
   return {
     id: f.id.value.trim(), nom: f.nom.value.trim(), gamme: f.gamme.value, rarete: f.rarete.value,
     epoque: f.epoque.value, region: f.region.value,
+    // Famille : seulement pour les personnages historiques.
+    famille: (f.gamme.value === "personnage" && f.famille.value) || null,
     dates: f.dates.value.trim(), lieu: f.lieu.value.trim(), description: f.description.value.trim(),
     // Anglais : vide = null, le jeu affiche alors le français.
     ...Object.fromEntries(CHAMPS_EN.map(c => [c, f[c].value.trim() || null])),
@@ -339,7 +364,7 @@ function majApercu() {
   $("#compte-plus").textContent = form.elements.en_savoir_plus.value.length;
   $("#compte-plus-en").textContent = form.elements.en_savoir_plus_en.value.length;
   $("#compte-plus-he").textContent = form.elements.en_savoir_plus_he.value.length;
-  $("#bloc-plus").hidden = $("#bloc-plus-en").hidden = $("#bloc-plus-he").hidden = v.gamme !== "personnage";
+  $("#bloc-plus").hidden = $("#bloc-plus-en").hidden = $("#bloc-plus-he").hidden = $("#bloc-famille").hidden = v.gamme !== "personnage";
   const carte = { ...versCarte({ ...v, nom: v.nom || "Nom de la carte", image: imageActuelle() }, langueApercu), finition: finitionApercu };
   LANGUE = langueApercu;                      // le dessin de la carte suit la langue de l'aperçu
   $("#apercu").innerHTML = rendreCarte(carte, numero);
@@ -501,6 +526,100 @@ $("#confirmer-suppression").addEventListener("click", async () => {
   notifier(`« ${ligne.nom} » supprimée.`);
   await chargerCartes();
   afficherListe();
+});
+
+// ---------- Familles : créer, renommer, changer d'emblème, supprimer ----------
+
+function afficherFamillesAdmin() {
+  $("#vue-liste").hidden = true;
+  $("#vue-formulaire").hidden = true;
+  $("#vue-familles").hidden = false;
+  const liste = Object.values(FAMILLES).sort((a, b) => a.ordre - b.ordre || a.nom.localeCompare(b.nom));
+  $("#nb-familles").textContent = `(${liste.length})`;
+  const tbody = $("#lignes-familles");
+  tbody.innerHTML = "";
+  for (const f of liste) tbody.appendChild(ligneFamille(f));
+}
+
+const optionsEmblemes = choisi => Object.entries(EMBLEMES)
+  .map(([cle, e]) => `<option value="${cle}"${cle === choisi ? " selected" : ""}>${e.nom}</option>`).join("");
+
+// Une ligne modifiable du tableau ; famille = null pour une nouvelle famille.
+function ligneFamille(f) {
+  const nouvelle = !f;
+  f ||= { id: "", nom: "", nom_en: "", nom_he: "", embleme: "etoile",
+          ordre: Math.max(0, ...Object.values(FAMILLES).map(x => x.ordre)) + 1 };
+  const nb = cartes.filter(c => c.famille === f.id).length;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><span class="choix-embleme"><span class="embleme-apercu">${dessinEmbleme(f.embleme)}</span>
+      <select name="embleme" aria-label="Emblème">${optionsEmblemes(f.embleme)}</select></span></td>
+    <td><input name="nom" maxlength="40" value="${echapper(f.nom)}" placeholder="ex. Conquérants" aria-label="Nom français"></td>
+    <td><input name="nom_en" maxlength="40" value="${echapper(f.nom_en || "")}" placeholder="ex. Conquerors" lang="en" aria-label="Nom anglais"></td>
+    <td><input name="nom_he" maxlength="40" value="${echapper(f.nom_he || "")}" lang="he" dir="rtl" aria-label="Nom hébreu"></td>
+    <td><input name="ordre" type="number" min="0" value="${f.ordre}" aria-label="Ordre"></td>
+    <td>${nouvelle ? "—" : nb}</td>
+    <td class="col-actions">
+      <button class="bouton petit bouton-or" data-action="enregistrer">${nouvelle ? "Créer" : "Enregistrer"}</button>
+      ${nouvelle ? `<button class="bouton petit" data-action="annuler">Annuler</button>`
+                 : `<button class="bouton petit bouton-danger" data-action="supprimer">Supprimer</button>`}
+    </td>`;
+  const champ = nom => tr.querySelector(`[name="${nom}"]`);
+  champ("embleme").addEventListener("input", () => {
+    tr.querySelector(".embleme-apercu").innerHTML = dessinEmbleme(champ("embleme").value);
+  });
+
+  tr.querySelector('[data-action="enregistrer"]').addEventListener("click", async e => {
+    const valeurs = {
+      nom: champ("nom").value.trim(), nom_en: champ("nom_en").value.trim() || null,
+      nom_he: champ("nom_he").value.trim() || null, embleme: champ("embleme").value,
+      ordre: Number(champ("ordre").value) || 0,
+    };
+    if (!valeurs.nom) return notifier("Le nom français est obligatoire.");
+    let requete;
+    if (nouvelle) {
+      const id = versIdentifiant(valeurs.nom);
+      if (!id) return notifier("Nom invalide.");
+      if (FAMILLES[id]) return notifier(`La famille « ${FAMILLES[id].nom} » existe déjà.`);
+      requete = sb.from("familles").insert({ id, ...valeurs }).select();
+    } else {
+      requete = sb.from("familles").update(valeurs).eq("id", f.id).select();
+    }
+    e.target.disabled = true;
+    const { data, error } = await requete;
+    e.target.disabled = false;
+    if (error || !data?.length) return notifier(`Enregistrement refusé${error ? ` : ${error.message}` : ""}.`);
+    notifier(nouvelle ? `Famille « ${valeurs.nom} » créée.` : `Famille « ${valeurs.nom} » enregistrée.`);
+    await chargerCartes();
+    afficherFamillesAdmin();
+  });
+
+  tr.querySelector('[data-action="annuler"]')?.addEventListener("click", () => tr.remove());
+
+  // Suppression en deux temps : le bouton demande confirmation.
+  const supprimer = tr.querySelector('[data-action="supprimer"]');
+  supprimer?.addEventListener("click", async () => {
+    if (!supprimer.dataset.confirme) {
+      supprimer.dataset.confirme = "1";
+      supprimer.textContent = nb ? `Confirmer (${nb} carte${nb > 1 ? "s" : ""} sans famille)` : "Confirmer";
+      setTimeout(() => { delete supprimer.dataset.confirme; supprimer.textContent = "Supprimer"; }, 4000);
+      return;
+    }
+    const { data, error } = await sb.from("familles").delete().eq("id", f.id).select();
+    if (error || !data?.length) return notifier(`Suppression refusée${error ? ` : ${error.message}` : ""}.`);
+    notifier(`Famille « ${f.nom} » supprimée.`);
+    await chargerCartes();
+    afficherFamillesAdmin();
+  });
+  return tr;
+}
+
+$("#bouton-familles").addEventListener("click", afficherFamillesAdmin);
+$("#familles-retour").addEventListener("click", afficherListe);
+$("#famille-nouvelle").addEventListener("click", () => {
+  const tr = ligneFamille(null);
+  $("#lignes-familles").prepend(tr);
+  tr.querySelector('[name="nom"]').focus();
 });
 
 // ---------- Démarrage ----------

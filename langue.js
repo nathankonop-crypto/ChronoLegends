@@ -149,6 +149,8 @@ const TEXTES = {
 
     progression: p => `${p.n} ${pluriel(p.n, "carte", "cartes")} sur ${p.total}`,
     epoqueVide: "Les premières cartes de cette époque arrivent bientôt.",
+    familles: "Familles",
+    familleToutesEpoques: "Une famille à travers toutes les époques",
     quotidien: "Votre booster quotidien est arrivé.",
     bienvenue: p => `Bienvenue ! Voici ${p.n} boosters offerts.`,
 
@@ -222,6 +224,8 @@ const TEXTES = {
 
     progression: p => `${p.n} of ${p.total} ${pluriel(p.total, "card", "cards")}`,
     epoqueVide: "The first cards of this era are coming soon.",
+    familles: "Families",
+    familleToutesEpoques: "One family across every era",
     quotidien: "Your daily booster has arrived.",
     bienvenue: p => `Welcome! Here are ${p.n} free boosters.`,
 
@@ -295,6 +299,8 @@ const TEXTES = {
 
     progression: p => `${p.n} מתוך ${p.total} קלפים`,
     epoqueVide: "הקלפים הראשונים של התקופה הזאת יגיעו בקרוב.",
+    familles: "משפחות",
+    familleToutesEpoques: "משפחה אחת לאורך כל התקופות",
     quotidien: "החבילה היומית שלכם הגיעה.",
     bienvenue: p => `ברוכים הבאים! הנה ${p.n} חבילות במתנה.`,
 
