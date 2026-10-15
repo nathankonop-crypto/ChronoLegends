@@ -54,6 +54,7 @@ function versIdentifiant(nom) {
 // L'admin est en français ; l'aperçu peut basculer en anglais (bouton FR / EN).
 LANGUE = "fr";
 let langueApercu = "fr";
+let finitionApercu = "normale";   // bureau de test : aperçu seulement, la finition est tirée au sort dans le jeu
 const CHAMPS_EN = ["nom_en", "dates_en", "lieu_en", "description_en"];
 const CHAMPS_PLUS = ["en_savoir_plus", "en_savoir_plus_en", "en_savoir_plus_he"];   // « En savoir plus », personnages historiques
 
@@ -232,6 +233,14 @@ document.querySelectorAll("[data-apercu]").forEach(b => b.addEventListener("clic
 }));
 $("#bouton-retour").addEventListener("click", afficherListe);
 
+document.querySelectorAll("[data-finition-apercu]").forEach(b => b.addEventListener("click", () => {
+  finitionApercu = b.dataset.finitionApercu;
+  document.querySelectorAll("[data-finition-apercu]").forEach(x => x.classList.toggle("actif", x === b));
+  $("#apercu-note").textContent = finitionApercu === "normale" ? ""
+    : "Aperçu seulement : dans le jeu, la finition est tirée au sort à l'ouverture des boosters.";
+  majApercu();
+}));
+
 form.elements.nom.addEventListener("input", () => {
   if (!carteEditee && !idModifieALaMain) form.elements.id.value = versIdentifiant(form.elements.nom.value);
   if (!iaEnCours) $("#bouton-ia").disabled = !form.elements.nom.value.trim();
@@ -331,7 +340,7 @@ function majApercu() {
   $("#compte-plus-en").textContent = form.elements.en_savoir_plus_en.value.length;
   $("#compte-plus-he").textContent = form.elements.en_savoir_plus_he.value.length;
   $("#bloc-plus").hidden = $("#bloc-plus-en").hidden = $("#bloc-plus-he").hidden = v.gamme !== "personnage";
-  const carte = versCarte({ ...v, nom: v.nom || "Nom de la carte", image: imageActuelle() }, langueApercu);
+  const carte = { ...versCarte({ ...v, nom: v.nom || "Nom de la carte", image: imageActuelle() }, langueApercu), finition: finitionApercu };
   LANGUE = langueApercu;                      // le dessin de la carte suit la langue de l'aperçu
   $("#apercu").innerHTML = rendreCarte(carte, numero);
   LANGUE = "fr";
