@@ -360,7 +360,7 @@ async function ouvrirBooster(dechire = false) {
   enCours = true;
 
   const booster = $("#booster");
-  if (!dechire) booster.classList.add("ouverture");
+  if (!dechire) { booster.classList.add("ouverture"); setTimeout(lancerEclat, 550); }
   const animation = new Promise(r => setTimeout(r, dechire ? 700 : 900));
 
   // C'est le SERVEUR qui vérifie le stock, tire les cartes et les ajoute à la collection.
@@ -421,6 +421,7 @@ function afficherPile(tirage, nouvelles) {
     emplacement.dataset.index = i;
     emplacement.dataset.finition = carte.finition || "normale";   // éclat spécial à la révélation
     emplacement.style.zIndex = tirage.length - i;   // la 1re carte est au-dessus
+    emplacement.style.setProperty("--rang", tirage.length - 1 - i);   // sort du paquet : celle du fond d'abord
     emplacement.setAttribute("aria-label", t("revelerLaCarte"));
     emplacement.innerHTML = `
       <div class="emplacement-interieur">
@@ -434,6 +435,9 @@ function afficherPile(tirage, nouvelles) {
 
   majPositions();
   majConsignePile();
+  // Les cartes sortent du paquet, puis l'animation s'efface (pour ne pas gêner les suivantes).
+  zone.classList.add("sortie");
+  setTimeout(() => zone.classList.remove("sortie"), 1200);
 }
 
 // Décale chaque carte selon sa profondeur dans la pile (0 = dessus) → effet « paquet ».
@@ -864,6 +868,7 @@ document.addEventListener("keydown", e => {
 
 const boosterEl = $("#booster");
 queueMicrotask(appliquerReglages);   // réglages enregistrés : animations, ouverture rapide
+queueMicrotask(() => choisirMonument());
 let dechirure = null;      // geste en cours : { y0, h, p, bouge }
 
 // Ligne de déchirure en zigzag, du haut (y = 0) au bas (y = 100) du paquet.
@@ -883,6 +888,39 @@ function reinitialiserBooster() {
   boosterEl.style.setProperty("--dechirure", 0);
   pencherBooster(0, 0);
   appliquerBoosterDore();
+  choisirMonument();
+}
+
+// Un monument différent sur chaque paquet (monuments.js), jamais deux fois de suite le même.
+let monumentActuel = null;
+function choisirMonument() {
+  const cles = Object.keys(MONUMENTS).filter(c => c !== monumentActuel);
+  monumentActuel = cles[Math.floor(Math.random() * cles.length)];
+  boosterEl.querySelector(".booster-filigrane").innerHTML = dessinMonument(monumentActuel);
+}
+
+// Éclat d'ouverture : rayons de lumière et étincelles qui jaillissent du paquet
+// (plus nombreuses et plus dorées pour un booster doré).
+function lancerEclat() {
+  if (animationsReduites()) return;
+  const z = boosterEl.getBoundingClientRect();
+  const dore = boosterEl.classList.contains("dore");
+  const eclat = document.createElement("div");
+  eclat.className = "eclat-ouverture" + (dore ? " dore" : "");
+  eclat.style.left = z.left + z.width / 2 + "px";
+  eclat.style.top = z.top + z.height / 2 + "px";
+  let html = '<span class="eclat-rayons"></span><span class="eclat-coeur"></span>';
+  for (let i = 0; i < (dore ? 48 : 28); i++) {
+    const a = Math.random() * Math.PI * 2, d = 80 + Math.random() * (dore ? 200 : 140);
+    html += `<i style="--dx:${(Math.cos(a) * d).toFixed(0)}px;--dy:${(Math.sin(a) * d - 30).toFixed(0)}px;` +
+      `--t:${(.6 + Math.random() * .6).toFixed(2)}s;--r:${(1.2 + Math.random() * 2.6).toFixed(1)}px"></i>`;
+  }
+  eclat.innerHTML = html;
+  document.body.appendChild(eclat);
+  const vue = $("#vue-booster");
+  vue.classList.add("secousse");
+  setTimeout(() => vue.classList.remove("secousse"), 400);
+  setTimeout(() => eclat.remove(), 1700);
 }
 
 // Le paquet se sépare en deux moitiés qui s'envolent, puis les cartes arrivent.
@@ -900,6 +938,7 @@ function dechirerBooster() {
   }
   boosterEl.classList.remove("en-dechirure");
   boosterEl.classList.add("dechire");
+  lancerEclat();
   ouvrirBooster(true);
 }
 
