@@ -238,6 +238,7 @@ function majCompteur() {
 
 function afficherEpoques() {
   const nav = $("#epoques");
+  nav.hidden = !!familleActive;
   nav.innerHTML = "";
   for (const [cle, ext] of Object.entries(EXTENSIONS)) {
     const possedees = cartesDe(cle).filter(c => etat.collection[c.id]).length;
@@ -248,11 +249,25 @@ function afficherEpoques() {
     nav.appendChild(b);
   }
   afficherFamilles();
+  // Interrupteur Époques | Familles (seulement s'il existe des familles avec des cartes).
+  $("#bascule-collection").hidden = !familleParDefaut();
+  $("#bascule-collection").querySelectorAll("button").forEach(b =>
+    b.classList.toggle("actif", (b.dataset.mode === "familles") === !!familleActive));
+  centrerPuceActive(familleActive ? $("#familles") : nav);
+}
+
+// Fait défiler la ligne de pastilles pour amener la pastille choisie au centre.
+function centrerPuceActive(rangee) {
+  const puce = rangee.querySelector(".actif");
+  if (!puce || rangee.scrollWidth <= rangee.clientWidth) return;
+  rangee.scrollLeft += puce.getBoundingClientRect().left - rangee.getBoundingClientRect().left
+    - (rangee.clientWidth - puce.offsetWidth) / 2;
 }
 
 // ---------- Familles : une collection dans la collection, à travers toutes les époques ----------
 
 let familleActive = null;   // id de la famille affichée, ou null (on affiche une époque)
+let derniereFamille = null; // pour retrouver la même famille en revenant sur « Familles »
 
 // Cartes d'une famille, dans l'ordre des époques puis de la collection.
 function cartesFamille(id) {
@@ -261,11 +276,17 @@ function cartesFamille(id) {
     .sort((a, b) => epoques.indexOf(a.extension) - epoques.indexOf(b.extension) || (a.ordre ?? 0) - (b.ordre ?? 0));
 }
 
+const famillesAvecCartes = () => Object.values(FAMILLES).filter(f => cartesFamille(f.id).length);
+const familleParDefaut = () => {
+  const familles = famillesAvecCartes();
+  return familles.find(f => f.id === derniereFamille) || familles[0] || null;
+};
+
 function afficherFamilles() {
   const nav = $("#familles");
-  const familles = Object.values(FAMILLES).filter(f => cartesFamille(f.id).length);
-  nav.hidden = !familles.length;
-  nav.innerHTML = familles.length ? `<span class="familles-titre">${t("familles")}</span>` : "";
+  const familles = famillesAvecCartes();
+  nav.hidden = !familleActive || !familles.length;
+  nav.innerHTML = "";
   for (const f of familles) {
     const cartes = cartesFamille(f.id);
     const possedees = cartes.filter(c => etat.collection[c.id]).length;
@@ -278,9 +299,19 @@ function afficherFamilles() {
 }
 
 function choisirFamille(id) {
-  familleActive = familleActive === id ? null : id;   // second appui : retour à l'époque
+  familleActive = derniereFamille = id;
   afficherCollection();
 }
+
+$("#bascule-collection").querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+  if (b.dataset.mode === "familles") {
+    const f = familleParDefaut();
+    if (f && !familleActive) choisirFamille(f.id);
+  } else if (familleActive) {
+    familleActive = null;
+    afficherCollection();
+  }
+}));
 
 function choisirExtension(cle) {
   if (cle === extensionActive && !familleActive) return;

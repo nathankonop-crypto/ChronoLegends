@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261015-1655">
+<link rel="stylesheet" href="style.css?v=20261015-1711">
 </head>
 <body>
 
@@ -59,10 +59,14 @@
 
   <!-- Vue : collection -->
   <section id="vue-collection" class="vue" hidden>
-    <!-- Un onglet par époque (rempli par app.js) -->
-    <nav id="epoques" class="epoques" aria-label="Époque" data-t-aria="epoque"></nav>
-    <!-- Familles (Conquérants, Sages…), à travers toutes les époques (rempli par app.js) -->
-    <nav id="familles" class="familles" aria-label="Familles" data-t-aria="familles" hidden></nav>
+    <!-- Ranger la collection par époque ou par famille (Conquérants, Sages…) -->
+    <div class="bascule-collection" id="bascule-collection" role="group" hidden>
+      <button data-mode="epoques" class="actif" data-t="epoques">Époques</button>
+      <button data-mode="familles" data-t="familles">Familles</button>
+    </div>
+    <!-- Une seule ligne de pastilles qu'on fait défiler (remplies par app.js) -->
+    <nav id="epoques" class="rangee-puces" aria-label="Époque" data-t-aria="epoque"></nav>
+    <nav id="familles" class="rangee-puces" aria-label="Familles" data-t-aria="familles" hidden></nav>
     <div class="collection-entete">
       <h1 id="titre-extension">Antiquité</h1>
       <p id="sous-titre-extension"></p>
@@ -105,11 +109,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261015-1655"></script>
-<script src="langue.js?v=20261015-1655"></script>
-<script src="anti-robot.js?v=20261015-1655"></script>
-<script src="carte.js?v=20261015-1655"></script>
-<script src="partage.js?v=20261015-1655"></script>
-<script src="app.js?v=20261015-1655"></script>
+<script src="reglages.js?v=20261015-1711"></script>
+<script src="langue.js?v=20261015-1711"></script>
+<script src="anti-robot.js?v=20261015-1711"></script>
+<script src="carte.js?v=20261015-1711"></script>
+<script src="partage.js?v=20261015-1711"></script>
+<script src="app.js?v=20261015-1711"></script>
 </body>
 </html>
