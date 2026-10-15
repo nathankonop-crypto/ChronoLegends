@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261015-1730">
+<link rel="stylesheet" href="style.css?v=20261015-1736">
 </head>
 <body>
 
@@ -36,6 +36,11 @@
         <button data-langue="en" lang="en">English</button>
         <button data-langue="he" lang="he">עברית</button>
       </div>
+      <p class="reglages-libelle" data-t="confort">Confort</p>
+      <label class="interrupteur"><span data-t="reglageVibrations">Vibrations</span><input type="checkbox" id="reglage-vibrations" role="switch"></label>
+      <label class="interrupteur"><span data-t="reglageAnimations">Animations réduites</span><input type="checkbox" id="reglage-animations" role="switch"></label>
+      <label class="interrupteur"><span data-t="reglageOuverture">Ouverture rapide des boosters</span><input type="checkbox" id="reglage-ouverture" role="switch"></label>
+      <button class="lien-reglages" id="bouton-chances" data-t="chancesTirage">Chances de tirage</button>
     </div>
   </div>
 </header>
@@ -117,16 +122,25 @@
   </section>
 </div>
 
+<!-- Chances de tirage (ouvert depuis les Paramètres, rempli par app.js) -->
+<div class="fond-dialogue" id="dialogue-chances" hidden>
+  <section class="dialogue-chances" role="dialog" aria-modal="true" aria-labelledby="titre-chances">
+    <button class="savoir-plus-fermer" id="fermer-chances" aria-label="Fermer" data-t-aria="fermer">×</button>
+    <h2 id="titre-chances" data-t="chancesTirage">Chances de tirage</h2>
+    <div id="contenu-chances"></div>
+  </section>
+</div>
+
 <div id="notification" class="notification" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261015-1730"></script>
-<script src="langue.js?v=20261015-1730"></script>
-<script src="anti-robot.js?v=20261015-1730"></script>
-<script src="carte.js?v=20261015-1730"></script>
-<script src="partage.js?v=20261015-1730"></script>
-<script src="app.js?v=20261015-1730"></script>
+<script src="reglages.js?v=20261015-1736"></script>
+<script src="langue.js?v=20261015-1736"></script>
+<script src="anti-robot.js?v=20261015-1736"></script>
+<script src="carte.js?v=20261015-1736"></script>
+<script src="partage.js?v=20261015-1736"></script>
+<script src="app.js?v=20261015-1736"></script>
 </body>
 </html>

@@ -118,6 +118,54 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .reglages-libelle { margin: 0 0 6px; font-size: 14px; font-style: italic; color: var(--texte-doux); }
 .panneau-reglages .langues { width: fit-content; }
 .panneau-reglages .langues button { letter-spacing: .02em; padding: 6px 11px; cursor: pointer; }
+/* Interrupteurs (cases à cocher en forme de bouton glissant) */
+.interrupteur {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 7px 0; font-size: 15px; color: var(--texte); cursor: pointer;
+}
+.interrupteur input {
+  appearance: none; -webkit-appearance: none; flex: none; margin: 0; cursor: pointer;
+  width: 40px; height: 23px; border-radius: 999px; position: relative;
+  background: var(--encre-3); border: 1px solid rgba(212, 178, 106, .35); transition: background .2s;
+}
+.interrupteur input::after {
+  content: ""; position: absolute; top: 2px; inset-inline-start: 2px; width: 17px; height: 17px; border-radius: 50%;
+  background: var(--texte-doux); transition: transform .2s, background .2s;
+}
+.interrupteur input:checked { background: linear-gradient(180deg, #e3c682, #b18d45); border-color: transparent; }
+.interrupteur input:checked::after { background: var(--encre); transform: translateX(17px); }
+html[dir="rtl"] .interrupteur input:checked::after { transform: translateX(-17px); }
+.interrupteur input:focus-visible { outline: 2px solid var(--or-clair); outline-offset: 2px; }
+.panneau-reglages .reglages-libelle:not(:first-of-type) { margin-top: 14px; }
+.lien-reglages {
+  display: block; width: 100%; margin-top: 12px; padding: 9px 0 0; text-align: start; cursor: pointer;
+  border: 0; border-top: 1px solid rgba(212, 178, 106, .2); background: none;
+  font-family: var(--serif); font-size: 15px; color: var(--or-clair); text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* Ouverture rapide : pas de guide de déchirure. */
+.booster.ouverture-rapide .guide-dechirure { display: none; }
+
+/* Chances de tirage */
+.fond-dialogue { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 16px; background: rgba(5, 7, 15, .75); }
+.dialogue-chances {
+  position: relative; width: min(100%, 420px); max-height: calc(100vh - 32px); overflow-y: auto;
+  padding: 22px 22px 18px; border-radius: 16px;
+  background: var(--encre-2); border: 1px solid rgba(212, 178, 106, .3); box-shadow: 0 24px 60px -16px rgba(0, 0, 0, .9);
+}
+.dialogue-chances h2 { margin: 0 40px 12px 0; font-family: var(--serif-titre); font-size: 18px; letter-spacing: .1em; color: var(--or-clair); }
+html[dir="rtl"] .dialogue-chances h2 { margin: 0 0 12px 40px; }
+html[dir="rtl"] .dialogue-chances .savoir-plus-fermer { right: auto; left: 14px; }
+.dialogue-chances .savoir-plus-fermer { color: var(--or-clair); background: rgba(255, 255, 255, .06); border-color: rgba(212, 178, 106, .45); }
+.dialogue-chances p { margin: 10px 0 6px; color: var(--texte-doux); }
+.chances-ligne { color: var(--texte) !important; }
+.chances-liste { list-style: none; margin: 0; padding: 0; }
+.chances-liste li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(212, 178, 106, .12); color: var(--texte); }
+.chances-liste b { margin-inline-start: auto; font-weight: 600; color: var(--or-clair); }
+.chances-liste small { font-weight: 400; color: var(--texte-doux); }
+.pastille-rarete { width: 12px; height: 12px; border-radius: 50%; background: var(--cadre); flex: none; }
+.chances-note { font-size: 14px; font-style: italic; }
+
 @media (max-width: 640px) {
   /* Sur téléphone, l'engrenage se range dans le coin : il ne prend pas de ligne. */
   .reglages { position: absolute; top: 12px; inset-inline-end: 12px; }
@@ -977,4 +1025,8 @@ html[dir="rtl"] .savoir-plus-sur { font-size: 13px; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+/* Même chose quand le joueur coche « Animations réduites » dans les Paramètres. */
+html.animations-reduites *, html.animations-reduites *::before, html.animations-reduites *::after {
+  animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important;
 }

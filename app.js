@@ -22,8 +22,9 @@ function chargerPrefs() {
   try { return JSON.parse(localStorage.getItem(CLE_PREFS)) || {}; } catch (e) { return {}; }
 }
 
+// Préférences du joueur : époque affichée + réglages (vibrations, animations, ouverture rapide).
 function sauvegarderPrefs() {
-  try { localStorage.setItem(CLE_PREFS, JSON.stringify({ extension: etat.extension })); } catch (e) {}
+  try { localStorage.setItem(CLE_PREFS, JSON.stringify({ ...prefs, extension: etat.extension })); } catch (e) {}
 }
 
 // ---------- Données du jeu ----------
@@ -206,7 +207,7 @@ function majConsigne() {
   else if (!etatJeu.pret) texte = t("chargement");
   else if (!etat.region) texte = t("paysInconnu");
   else if (vide) texte = t("regionVide", { region: nomRegion(etat.region) });
-  else if (b > 0) texte = t("boostersDispo", { n: b });
+  else if (b > 0) texte = t(prefs.ouvertureRapide ? "boostersDispoAppui" : "boostersDispo", { n: b });
   else texte = t("plusDeBooster", { attente: formatAttente(etat.prochainQuotidien - Date.now()) });
   $("#consigne").textContent = texte;
 }
@@ -705,7 +706,8 @@ for (const fin of ["pointerup", "pointerleave", "pointercancel"]) {
 //    seulement si le joueur appuie sur « Pencher avec le téléphone ».
 let positionDeDepart = null;
 let gyroscopeActif = false;
-const animationsReduites = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Mouvements réduits : réglage du téléphone, ou « Animations réduites » dans les Paramètres.
+const animationsReduites = () => matchMedia("(prefers-reduced-motion: reduce)").matches || !!prefs.animationsReduites;
 const autorisationIphone = typeof DeviceOrientationEvent !== "undefined"
   && typeof DeviceOrientationEvent.requestPermission === "function";
 
@@ -713,13 +715,13 @@ function surOrientation(e) {
   if (e.beta === null || e.gamma === null) return;
   gyroscopeActif = true;   // des mesures arrivent : le gyroscope marche (ou l'iPhone l'a déjà autorisé)
   $("#activer-gyroscope").hidden = true;
-  if ($("#modale").hidden || doigtPose) return;
+  if ($("#modale").hidden || doigtPose || animationsReduites()) return;
   if (!positionDeDepart) { positionDeDepart = { beta: e.beta, gamma: e.gamma }; return; }
   // 30° de penchement = inclinaison maximale de la carte.
   incliner((e.gamma - positionDeDepart.gamma) / 30, (e.beta - positionDeDepart.beta) / 30, INCLINAISON_GYROSCOPE);
 }
 
-if (!animationsReduites && typeof DeviceOrientationEvent !== "undefined") {
+if (typeof DeviceOrientationEvent !== "undefined") {
   addEventListener("deviceorientation", surOrientation);   // sur iPhone, ne reçoit rien tant que ce n'est pas autorisé
 }
 
@@ -727,7 +729,7 @@ if (!animationsReduites && typeof DeviceOrientationEvent !== "undefined") {
 // tant que le gyroscope n'envoie rien. Sur Android, les mesures arrivent
 // d'elles-mêmes dès le chargement : le bouton reste caché.
 function gyroscopeAActiver() {
-  return autorisationIphone && ecranTactile.matches && !animationsReduites && !gyroscopeActif;
+  return autorisationIphone && ecranTactile.matches && !animationsReduites() && !gyroscopeActif;
 }
 
 $("#activer-gyroscope").addEventListener("click", () => {
@@ -739,7 +741,59 @@ $("#activer-gyroscope").addEventListener("click", () => {
 
 // ---------- Démarrage ----------
 
-// ---------- Paramètres (engrenage) : choix de la langue ----------
+// ---------- Paramètres (engrenage) : langue, confort, chances de tirage ----------
+
+const vibrer = ms => { if (prefs.vibrations !== false) navigator.vibrate?.(ms); };
+
+// Interrupteurs : { id de la case : [nom de la préférence, valeur par défaut] }
+const INTERRUPTEURS = {
+  "reglage-vibrations": ["vibrations", true],
+  "reglage-animations": ["animationsReduites", false],
+  "reglage-ouverture": ["ouvertureRapide", false],
+};
+
+function appliquerReglages() {
+  document.documentElement.classList.toggle("animations-reduites", !!prefs.animationsReduites);
+  boosterEl.classList.toggle("ouverture-rapide", !!prefs.ouvertureRapide);
+  if (etatJeu.pret) majConsigne();
+}
+
+for (const [id, [cle, defaut]] of Object.entries(INTERRUPTEURS)) {
+  const caseACocher = $(`#${id}`);
+  caseACocher.checked = prefs[cle] ?? defaut;
+  caseACocher.addEventListener("change", () => {
+    prefs[cle] = caseACocher.checked;
+    sauvegarderPrefs();
+    appliquerReglages();
+    if (cle === "vibrations" && caseACocher.checked) vibrer(20);   // petit essai
+  });
+}
+
+// Chances de tirage : les mêmes chiffres que le serveur (supabase/5_verrou_region.sql, 10_finitions.sql).
+const CHANCES_SPECIALE = [["rare", 65], ["epique", 26], ["legendaire", 8], ["mythique", 1]];
+const CHANCES_FINITIONS = [["animee", 25], ["diamant", 150]];
+const pourcent = x => new Intl.NumberFormat(LANGUE, { maximumFractionDigits: 2 }).format(x) + " %";
+
+function afficherChances() {
+  $("#contenu-chances").innerHTML = `
+    <p>${t("chancesIntro")}</p>
+    <p class="chances-ligne">${t("chancesCartes", { ordinaire: nomRarete("ordinaire"), notable: nomRarete("notable"), rare: nomRarete("rare") })}</p>
+    <p>${t("chancesSpeciale")}</p>
+    <ul class="chances-liste">${CHANCES_SPECIALE.map(([r, p]) =>
+      `<li><span class="pastille-rarete rarete-${r}"></span>${nomRarete(r)}<b>${pourcent(p)}</b></li>`).join("")}</ul>
+    <p>${t("chancesFinitions")}</p>
+    <ul class="chances-liste">${CHANCES_FINITIONS.map(([f, n]) =>
+      `<li>${f === "diamant" ? "💎" : "✨"} ${nomFinition(f)}<b>${pourcent(100 / n)} <small>(${t("surX", { n })})</small></b></li>`).join("")}</ul>
+    <p class="chances-note">${t("chancesNote")}</p>`;
+  basculerReglages(false);
+  $("#dialogue-chances").hidden = false;
+  $("#fermer-chances").focus();
+}
+const fermerChances = () => { $("#dialogue-chances").hidden = true; };
+$("#bouton-chances").addEventListener("click", afficherChances);
+$("#fermer-chances").addEventListener("click", fermerChances);
+$("#dialogue-chances").addEventListener("click", e => { if (e.target.id === "dialogue-chances") fermerChances(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") fermerChances(); });
 
 function basculerReglages(ouvrir) {
   const panneau = $("#panneau-reglages");
@@ -760,6 +814,7 @@ document.addEventListener("keydown", e => {
 // ---------- Déchirer le booster : glisser le doigt de haut en bas ----------
 
 const boosterEl = $("#booster");
+queueMicrotask(appliquerReglages);   // réglages enregistrés : animations, ouverture rapide
 let dechirure = null;      // geste en cours : { y0, h, p, bouge }
 
 // Ligne de déchirure en zigzag, du haut (y = 0) au bas (y = 100) du paquet.
@@ -768,7 +823,7 @@ boosterEl.querySelector(".ligne-dechirure polyline").setAttribute("points", ZIGZ
 
 function majDechirure(p) {
   const palier = Math.floor(p * 8);
-  if (dechirure && palier > Math.floor(dechirure.p * 8)) navigator.vibrate?.(6);   // petit « crac » sous le doigt
+  if (dechirure && palier > Math.floor(dechirure.p * 8)) vibrer(6);   // petit « crac » sous le doigt
   if (dechirure) dechirure.p = p;
   boosterEl.style.setProperty("--dechirure", p.toFixed(3));
 }
@@ -782,7 +837,7 @@ function reinitialiserBooster() {
 // Le paquet se sépare en deux moitiés qui s'envolent, puis les cartes arrivent.
 function dechirerBooster() {
   dechirure = null;
-  navigator.vibrate?.(35);
+  vibrer(35);
   const contenu = [...boosterEl.querySelectorAll(".booster-bord, .booster-titre, .booster-sceau, .booster-info")];
   const bord = ZIGZAG.map(([x, y]) => `${x}% ${y}%`).join(", ");
   for (const [cote, forme] of [["gauche", `0% 0%, ${bord}, 0% 100%`], ["droite", `${bord}, 100% 100%, 100% 0%`]]) {
@@ -798,7 +853,7 @@ function dechirerBooster() {
 }
 
 boosterEl.addEventListener("pointerdown", e => {
-  if (boosterEl.disabled || enCours || boosterEl.classList.contains("dechire")) return;
+  if (boosterEl.disabled || enCours || boosterEl.classList.contains("dechire") || prefs.ouvertureRapide) return;
   dechirure = { y0: e.clientY, h: boosterEl.offsetHeight, p: 0, bouge: false };
   try { boosterEl.setPointerCapture(e.pointerId); } catch { /* pointeur déjà relâché */ }
 });
@@ -823,7 +878,8 @@ boosterEl.addEventListener("pointercancel", relacher);
 
 boosterEl.addEventListener("click", e => {
   if (boosterEl.dataset.glisse) { boosterEl.dataset.glisse = ""; return; }
-  if (e.detail === 0) return ouvrirBooster();   // clavier (Entrée / Espace) : ouverture directe
+  // Clavier (Entrée / Espace) ou « Ouverture rapide » : ouverture directe.
+  if (e.detail === 0 || prefs.ouvertureRapide) return ouvrirBooster();
   // Simple appui : on montre le geste à faire.
   boosterEl.classList.remove("indice");
   void boosterEl.offsetWidth;
