@@ -57,10 +57,15 @@ function illustrationProvisoire(carte) {
 // de place qu'à l'écran (police, coupure des mots) : on garde une marge.
 function ajusterTexte(corps) {
   if (!corps.isConnected || corps.clientHeight === 0) return; // carte cachée : on attendra
-  const marge = corps.closest(".affiche-partage") ? corps.clientHeight * 0.12 : 0;
+  const marge = corps.closest(".affiche-partage") ? corps.clientHeight * 0.06 : 0;
+  // Avec une marge, on regarde où s'arrête vraiment le texte (scrollHeight
+  // ne descend jamais sous la hauteur de la zone, même avec un texte court).
+  const deborde = () => marge
+    ? corps.lastElementChild.getBoundingClientRect().bottom > corps.getBoundingClientRect().bottom - marge
+    : corps.scrollHeight > corps.clientHeight + 1;
   let reduction = 1;
   corps.style.setProperty("--reduction", reduction);
-  while (corps.scrollHeight + marge > corps.clientHeight + 1 && reduction > 0.55) {
+  while (deborde() && reduction > 0.55) {
     reduction -= 0.04;
     corps.style.setProperty("--reduction", reduction.toFixed(2));
   }

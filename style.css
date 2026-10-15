@@ -558,7 +558,7 @@ button.case-collection:hover { transform: translateY(-4px); }
 .affiche-partage {
   width: 540px; height: 675px;            /* ×2 à l'export = 1080×1350, format portrait des réseaux */
   box-sizing: border-box;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
   background:
     radial-gradient(circle at 50% 56%, color-mix(in srgb, var(--gemme, #d4b26a) 38%, transparent), transparent 58%),
     linear-gradient(170deg, #1d2342, #0b0d18);
@@ -566,9 +566,9 @@ button.case-collection:hover { transform: translateY(-4px); }
   text-align: center;
 }
 .affiche-partage > p { margin: 0; white-space: nowrap; }
-.affiche-titre { font-family: var(--serif-titre); font-weight: 700; font-size: 34px; letter-spacing: .16em; color: var(--or-clair); }
-.affiche-sous { font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--texte-doux); margin-bottom: 6px !important; }
-.affiche-carte { width: 330px; }
+.affiche-titre { font-family: var(--serif-titre); font-weight: 700; font-size: 30px; letter-spacing: .16em; color: var(--or-clair); }
+.affiche-sous { font-family: var(--serif); font-style: italic; font-size: 19px; color: var(--texte-doux); margin-bottom: 6px !important; }
+.affiche-carte { width: 360px; }
 .affiche-carte .carte-cadre::after { animation: none; transform: translateX(-30%); }  /* reflet figé au milieu */
 .affiche-pied { margin-top: 10px !important; font-family: var(--serif-titre); font-size: 17px; letter-spacing: .12em; color: var(--or); }
 
