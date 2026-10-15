@@ -883,6 +883,39 @@ $("#dialogue-regles").addEventListener("click", e => { if (e.target.id === "dial
 document.addEventListener("keydown", e => { if (e.key === "Escape") fermerRegles(); });
 $("#bouton-chances").addEventListener("click", afficherChances);
 
+// ---------- Application installable : icône sur l'écran d'accueil ----------
+// Android / ordinateur : le navigateur propose l'installation, on la garde pour notre bouton.
+// iPhone / iPad : Apple ne le permet pas en un clic, on montre comment faire.
+let invitationInstallation = null;
+const estInstallee = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const estIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const ICONE_PARTAGE = `<svg class="icone-partage-ios" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>`;
+function majBoutonInstaller() {
+  $("#bouton-installer").hidden = estInstallee() || !(invitationInstallation || estIOS);
+}
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); invitationInstallation = e; majBoutonInstaller(); });
+addEventListener("appinstalled", () => { invitationInstallation = null; majBoutonInstaller(); notifier(t("appInstallee")); });
+$("#bouton-installer").addEventListener("click", async () => {
+  basculerReglages(false);
+  if (invitationInstallation) {
+    invitationInstallation.prompt();
+    await invitationInstallation.userChoice;
+    invitationInstallation = null;
+    majBoutonInstaller();
+    return;
+  }
+  $("#etapes-installer").innerHTML = [t("installerEtape1", { icone: ICONE_PARTAGE }), t("installerEtape2"), t("installerEtape3")]
+    .map(e => `<li>${e}</li>`).join("");
+  $("#dialogue-installer").hidden = false;
+  $("#fermer-installer").focus();
+});
+const fermerInstaller = () => { $("#dialogue-installer").hidden = true; };
+$("#fermer-installer").addEventListener("click", fermerInstaller);
+$("#dialogue-installer").addEventListener("click", e => { if (e.target.id === "dialogue-installer") fermerInstaller(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#dialogue-installer").hidden) fermerInstaller(); });
+majBoutonInstaller();
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => { /* le jeu marche aussi sans */ });
+
 // Historique : les derniers boosters ouverts, lus dans le journal du serveur
 // (table ouvertures : le joueur ne peut lire que les siens).
 const NB_HISTORIQUE = 30;

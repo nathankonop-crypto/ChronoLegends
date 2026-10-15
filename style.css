@@ -165,6 +165,17 @@ html[dir="rtl"] .dialogue-gyro h2 { margin: 4px 0 8px; }
 @keyframes incliner-icone { 0%, 100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
 .gyro-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
 .gyro-jamais { margin-top: 12px; background: none; border: 0; padding: 6px; font: inherit; font-size: 15px; color: var(--texte-doux); text-decoration: underline; cursor: pointer; }
+/* Installer l'application */
+.bouton-installer { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 14px; padding: 10px 14px; font-size: 13px; }
+.bouton-installer[hidden] { display: none; }
+.bouton-installer img { width: 20px; height: 20px; border-radius: 5px; }
+.dialogue-installer { text-align: center; width: min(100%, 380px); }
+.dialogue-installer h2 { margin: 8px 0 6px; }
+html[dir="rtl"] .dialogue-installer h2 { margin: 8px 0 6px; }
+.installer-icone { width: 72px; height: 72px; border-radius: 17px; box-shadow: 0 10px 24px -8px rgba(0, 0, 0, .8); }
+.installer-etapes { text-align: start; margin: 14px 0 4px; padding-inline-start: 22px; display: grid; gap: 10px; color: var(--texte); line-height: 1.4; }
+.icone-partage-ios { width: 20px; height: 20px; vertical-align: -4px; fill: none; stroke: #4ea3ff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
 /* Historique des boosters */
 .dialogue-historique { width: min(100%, 520px); }
 .historique-booster { padding: 12px 0; border-bottom: 1px solid rgba(212, 178, 106, .15); }

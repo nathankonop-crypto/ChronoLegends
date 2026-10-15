@@ -6,10 +6,18 @@
 <title>ChronoLegends — Cartes d'histoire du monde</title>
 <meta name="description" content="Collectionnez les grandes figures de l'histoire mondiale.">
 <meta name="theme-color" content="#101320">
+<!-- Application installable (écran d'accueil) : manifest.webmanifest, sw.js, icônes dans images/app -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="images/app/favicon.png">
+<link rel="apple-touch-icon" href="images/app/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ChronoLegends">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261016-0220">
+<link rel="stylesheet" href="style.css?v=20261016-0233">
 </head>
 <body>
 
@@ -43,6 +51,7 @@
       <button class="lien-reglages" id="bouton-regles" data-t="reglesDuJeu">Règles du jeu</button>
       <button class="lien-reglages lien-reglages-suite" id="bouton-chances" data-t="chancesTirage">Chances de tirage</button>
       <button class="lien-reglages lien-reglages-suite" id="bouton-historique" data-t="historiqueBoosters">Historique des boosters</button>
+      <button class="bouton bouton-or bouton-installer" id="bouton-installer" hidden><img src="images/app/favicon.png" alt=""><span data-t="installerApp">Installer l'application</span></button>
     </div>
   </div>
 </header>
@@ -163,6 +172,17 @@
   </section>
 </div>
 
+<!-- iPhone / iPad : comment ajouter le jeu à l'écran d'accueil (Apple ne permet pas de le faire en un clic) -->
+<div class="fond-dialogue" id="dialogue-installer" hidden>
+  <section class="dialogue-chances dialogue-installer" role="dialog" aria-modal="true" aria-labelledby="titre-installer">
+    <button class="savoir-plus-fermer" id="fermer-installer" aria-label="Fermer" data-t-aria="fermer">×</button>
+    <img class="installer-icone" src="images/app/icone-192.png" alt="">
+    <h2 id="titre-installer" data-t="installerTitre">Installer ChronoLegends</h2>
+    <p data-t="installerIntro"></p>
+    <ol class="installer-etapes" id="etapes-installer"></ol>
+  </section>
+</div>
+
 <!-- Historique des boosters ouverts (ouvert depuis les Paramètres, rempli par app.js) -->
 <div class="fond-dialogue" id="dialogue-historique" hidden>
   <section class="dialogue-chances dialogue-historique" role="dialog" aria-modal="true" aria-labelledby="titre-historique">
@@ -177,12 +197,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261016-0220"></script>
-<script src="langue.js?v=20261016-0220"></script>
-<script src="anti-robot.js?v=20261016-0220"></script>
-<script src="carte.js?v=20261016-0220"></script>
-<script src="partage.js?v=20261016-0220"></script>
-<script src="monuments.js?v=20261016-0220"></script>
-<script src="app.js?v=20261016-0220"></script>
+<script src="reglages.js?v=20261016-0233"></script>
+<script src="langue.js?v=20261016-0233"></script>
+<script src="anti-robot.js?v=20261016-0233"></script>
+<script src="carte.js?v=20261016-0233"></script>
+<script src="partage.js?v=20261016-0233"></script>
+<script src="monuments.js?v=20261016-0233"></script>
+<script src="app.js?v=20261016-0233"></script>
 </body>
 </html>
