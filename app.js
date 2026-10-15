@@ -361,7 +361,7 @@ async function ouvrirBooster(dechire = false) {
 
   const booster = $("#booster");
   if (!dechire) { booster.classList.add("ouverture"); setTimeout(lancerEclat, 550); }
-  const animation = new Promise(r => setTimeout(r, dechire ? 700 : 900));
+  const animation = new Promise(r => setTimeout(r, dechire ? 950 : 900));
 
   // C'est le SERVEUR qui vérifie le stock, tire les cartes et les ajoute à la collection.
   // Aucune région envoyée : le serveur la déduit lui-même de l'adresse IP.
@@ -869,10 +869,11 @@ document.addEventListener("keydown", e => {
 const boosterEl = $("#booster");
 queueMicrotask(appliquerReglages);   // réglages enregistrés : animations, ouverture rapide
 queueMicrotask(() => choisirMonument());
-let dechirure = null;      // geste en cours : { y0, h, p, bouge }
+let dechirure = null;      // geste en cours : { x0, y0, l, p, bouge, sens }
 
-// Ligne de déchirure en zigzag, du haut (y = 0) au bas (y = 100) du paquet.
-const ZIGZAG = Array.from({ length: 17 }, (_, i) => [50 + (i % 2 ? 3.5 : -3.5) * (i && i < 16 ? 1 : 0), i * 6.25]);
+// Ligne de découpe en zigzag, à travers le haut du paquet (x de 0 à 100, à COUPE % de la hauteur).
+const COUPE = 8;
+const ZIGZAG = Array.from({ length: 17 }, (_, i) => [i * 6.25, COUPE + (i % 2 ? .9 : -.9) * (i && i < 16 ? 1 : 0)]);
 boosterEl.querySelector(".ligne-dechirure polyline").setAttribute("points", ZIGZAG.map(([x, y]) => `${x},${y}`).join(" "));
 
 function majDechirure(p) {
@@ -886,6 +887,7 @@ function reinitialiserBooster() {
   boosterEl.classList.remove("dechire", "en-dechirure", "indice");
   boosterEl.querySelectorAll(".moitie").forEach(m => m.remove());
   boosterEl.style.setProperty("--dechirure", 0);
+  boosterEl.dataset.glisse = "";
   pencherBooster(0, 0);
   appliquerBoosterDore();
   choisirMonument();
@@ -901,17 +903,20 @@ function choisirMonument() {
 
 // Éclat d'ouverture : rayons de lumière et étincelles qui jaillissent du paquet
 // (plus nombreuses et plus dorées pour un booster doré).
-function lancerEclat() {
+// hauteur : où naît l'éclat, en fraction de la hauteur du paquet (0 = tout en haut).
+function lancerEclat(hauteur = .5) {
   if (animationsReduites()) return;
   const z = boosterEl.getBoundingClientRect();
+  const enHaut = hauteur < .3;   // ouverture par le haut : tout jaillit vers le haut
   const dore = boosterEl.classList.contains("dore");
   const eclat = document.createElement("div");
   eclat.className = "eclat-ouverture" + (dore ? " dore" : "");
   eclat.style.left = z.left + z.width / 2 + "px";
-  eclat.style.top = z.top + z.height / 2 + "px";
+  eclat.style.top = z.top + z.height * hauteur + "px";
   let html = '<span class="eclat-rayons"></span><span class="eclat-coeur"></span>';
   for (let i = 0; i < (dore ? 48 : 28); i++) {
-    const a = Math.random() * Math.PI * 2, d = 80 + Math.random() * (dore ? 200 : 140);
+    const a = enHaut ? -Math.PI * (.08 + Math.random() * .84) : Math.random() * Math.PI * 2;
+    const d = 80 + Math.random() * (dore ? 200 : 140);
     html += `<i style="--dx:${(Math.cos(a) * d).toFixed(0)}px;--dy:${(Math.sin(a) * d - 30).toFixed(0)}px;` +
       `--t:${(.6 + Math.random() * .6).toFixed(2)}s;--r:${(1.2 + Math.random() * 2.6).toFixed(1)}px"></i>`;
   }
@@ -923,13 +928,15 @@ function lancerEclat() {
   setTimeout(() => eclat.remove(), 1700);
 }
 
-// Le paquet se sépare en deux moitiés qui s'envolent, puis les cartes arrivent.
+// Le haut du paquet est découpé : la bande s'envole, la lumière jaillit,
+// le paquet descend et les cartes en sortent (comme sur Pokémon TCG Pocket).
 function dechirerBooster() {
   dechirure = null;
-  vibrer(35);
+  boosterEl.dataset.glisse = "1";   // le « clic » qui suit le geste ne doit pas afficher l'aide
+  vibrer([25, 40, 45]);
   const contenu = [...boosterEl.querySelectorAll(".booster-sachet, .booster-bord, .booster-titre, .booster-logo, .booster-info")];
-  const bord = ZIGZAG.map(([x, y]) => `${x}% ${y}%`).join(", ");
-  for (const [cote, forme] of [["gauche", `0% 0%, ${bord}, 0% 100%`], ["droite", `${bord}, 100% 100%, 100% 0%`]]) {
+  const points = l => l.map(([x, y]) => `${x}% ${y}%`).join(", ");
+  for (const [cote, forme] of [["haut", `0% 0%, 100% 0%, ${points([...ZIGZAG].reverse())}`], ["bas", `${points(ZIGZAG)}, 100% 100%, 0% 100%`]]) {
     const moitie = document.createElement("span");
     moitie.className = `moitie ${cote}`;
     moitie.style.clipPath = `polygon(${forme})`;
@@ -938,21 +945,44 @@ function dechirerBooster() {
   }
   boosterEl.classList.remove("en-dechirure");
   boosterEl.classList.add("dechire");
-  lancerEclat();
+  lancerEclat(COUPE / 100);
   ouvrirBooster(true);
+}
+
+// Clavier ou « Ouverture rapide » : le paquet se découpe tout seul.
+function decouperAuto() {
+  if (boosterEl.disabled || enCours || boosterEl.classList.contains("dechire")) return;
+  if (etat.boosters <= 0 || !etatJeu.pret || !etat.region) return ouvrirBooster();   // affiche le bon message
+  if (animationsReduites()) return dechirerBooster();
+  const debut = performance.now(), duree = prefs.ouvertureRapide ? 260 : 420;
+  boosterEl.classList.remove("vers-gauche");
+  boosterEl.classList.add("en-dechirure");
+  const avancer = maintenant => {
+    const p = Math.min(1, (maintenant - debut) / duree);
+    majDechirure(p);
+    if (p < 1) requestAnimationFrame(avancer);
+    else dechirerBooster();
+  };
+  requestAnimationFrame(avancer);
 }
 
 boosterEl.addEventListener("pointerdown", e => {
   if (boosterEl.disabled || enCours || boosterEl.classList.contains("dechire") || prefs.ouvertureRapide) return;
-  dechirure = { y0: e.clientY, h: boosterEl.offsetHeight, p: 0, bouge: false };
+  dechirure = { x0: e.clientX, y0: e.clientY, l: boosterEl.offsetWidth, p: 0, bouge: false, sens: 1 };
   try { boosterEl.setPointerCapture(e.pointerId); } catch { /* pointeur déjà relâché */ }
 });
 boosterEl.addEventListener("pointermove", e => {
   if (!dechirure) return;
-  const dy = e.clientY - dechirure.y0;
-  if (Math.abs(dy) > 8 && !dechirure.bouge) { dechirure.bouge = true; boosterEl.classList.add("en-dechirure"); }
-  if (!dechirure.bouge) return;
-  const p = Math.max(0, Math.min(1, dy / (dechirure.h * 0.7)));   // ~70 % de la hauteur suffit
+  const dx = e.clientX - dechirure.x0, dy = e.clientY - dechirure.y0;
+  if (!dechirure.bouge) {
+    // Le geste commence quand le doigt part sur le côté (dans un sens ou dans l'autre).
+    if (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(dy)) return;
+    dechirure.bouge = true;
+    dechirure.sens = Math.sign(dx);
+    boosterEl.classList.toggle("vers-gauche", dechirure.sens < 0);
+    boosterEl.classList.add("en-dechirure");
+  }
+  const p = Math.max(0, Math.min(1, dx * dechirure.sens / (dechirure.l * 0.75)));   // ~75 % de la largeur suffit
   majDechirure(p);
   if (p >= 1) dechirerBooster();
 });
@@ -968,8 +998,9 @@ boosterEl.addEventListener("pointercancel", relacher);
 
 boosterEl.addEventListener("click", e => {
   if (boosterEl.dataset.glisse) { boosterEl.dataset.glisse = ""; return; }
+  if (boosterEl.classList.contains("dechire")) return;
   // Clavier (Entrée / Espace) ou « Ouverture rapide » : ouverture directe.
-  if (e.detail === 0 || prefs.ouvertureRapide) return ouvrirBooster();
+  if (e.detail === 0 || prefs.ouvertureRapide) return decouperAuto();
   // Simple appui : on montre le geste à faire.
   boosterEl.classList.remove("indice");
   void boosterEl.offsetWidth;
