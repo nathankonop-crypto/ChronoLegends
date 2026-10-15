@@ -39,6 +39,7 @@ const etat = {
   prochainQuotidien: null, // instant (local) où le serveur dira qu'un nouveau cadeau est dû
   region: null,            // décidée par le serveur (adresse IP)
   pays: null,
+  boosterDore: false,      // le PROCHAIN booster est-il doré ? (décidé par le serveur)
   extension: prefs.extension,
 };
 
@@ -125,7 +126,22 @@ async function reclamerQuotidien() {
   etat.boosters = data.boosters;
   etat.prochainQuotidien = Date.now() + data.attente_secondes * 1000;
   appliquerRegion(data);
+  // Booster doré : lu sur la fiche du joueur (si le script 12_booster_dore.sql n'est
+  // pas encore installé, la colonne n'existe pas et le booster reste normal).
+  const fiche = await sb.from("joueurs").select("booster_dore").maybeSingle();
+  etat.boosterDore = !!fiche.data?.booster_dore;
+  appliquerBoosterDore();
   return data;
+}
+
+// Booster doré : de meilleures chances, visible AVANT l'ouverture.
+function appliquerBoosterDore() {
+  const b = $("#booster"), info = b.querySelector(".booster-info");
+  const avant = b.classList.contains("dore");
+  b.classList.toggle("dore", etat.boosterDore);
+  info.dataset.t = etat.boosterDore ? "boosterDore" : "cinqCartes";
+  info.textContent = t(info.dataset.t);
+  if (etat.boosterDore && !avant && etat.boosters > 0) { notifier(t("boosterDoreArrive")); vibrer(40); }
 }
 
 // ---------- Région du joueur ----------
@@ -136,6 +152,7 @@ function appliquerRegion(data) {
   if (!data.region) return;
   const change = etat.region && etat.region !== data.region;
   etat.region = data.region;
+  $("#booster").dataset.region = data.region;   // couleur du paquet selon la région
   if (data.pays) etat.pays = data.pays;
   // Verrou de région : changement en attente (null s'il n'y en a pas).
   if ("verrou" in data) etat.verrou = data.verrou;
@@ -365,6 +382,8 @@ async function ouvrirBooster(dechire = false) {
   // Chaque exemplaire tiré porte sa finition (normale, animée ou diamant), décidée par le serveur.
   const tirage = data.cartes.map(c => ({ ...CARTES.find(x => x.id === c.id), finition: c.finition || "normale" }));   // trié : la plus rare en dernier
   etat.boosters = data.boosters;
+  // Le paquet suivant change d'aspect seulement une fois celui-ci ouvert (reinitialiserBooster).
+  if ("booster_dore" in data) etat.boosterDore = data.booster_dore;
   appliquerRegion(data);
   tirage.forEach(c => ajouterExemplaires(c.id, c.finition));
   majCompteur();
@@ -762,6 +781,8 @@ for (const [id, [cle, defaut]] of Object.entries(INTERRUPTEURS)) {
 // Chances de tirage : les mêmes chiffres que le serveur (supabase/5_verrou_region.sql, 10_finitions.sql).
 const CHANCES_SPECIALE = [["rare", 65], ["epique", 26], ["legendaire", 8], ["mythique", 1]];
 const CHANCES_FINITIONS = [["animee", 25], ["diamant", 150]];
+// Booster doré (supabase/12_booster_dore.sql) : 1 booster sur 10.
+const CHANCES_DORE = { surX: 10, speciale: [["rare", 30], ["epique", 46], ["legendaire", 20], ["mythique", 4]], animee: 10, diamant: 50 };
 const pourcent = x => new Intl.NumberFormat(LANGUE, { maximumFractionDigits: 2 }).format(x) + " %";
 
 function afficherChances() {
@@ -774,6 +795,10 @@ function afficherChances() {
     <p>${t("chancesFinitions")}</p>
     <ul class="chances-liste">${CHANCES_FINITIONS.map(([f, n]) =>
       `<li>${f === "diamant" ? "💎" : "✨"} ${nomFinition(f)}<b>${pourcent(100 / n)} <small>(${t("surX", { n })})</small></b></li>`).join("")}</ul>
+    <p class="chances-dore">${t("chancesDore", { n: CHANCES_DORE.surX })}</p>
+    <ul class="chances-liste">${CHANCES_DORE.speciale.map(([r, p]) =>
+      `<li><span class="pastille-rarete rarete-${r}"></span>${nomRarete(r)}<b>${pourcent(p)}</b></li>`).join("")}</ul>
+    <p>${t("chancesDoreFinitions", { animee: CHANCES_DORE.animee, diamant: CHANCES_DORE.diamant })}</p>
     <p class="chances-note">${t("chancesNote")}</p>`;
   basculerReglages(false);
   $("#dialogue-chances").hidden = false;
@@ -856,13 +881,15 @@ function reinitialiserBooster() {
   boosterEl.classList.remove("dechire", "en-dechirure", "indice");
   boosterEl.querySelectorAll(".moitie").forEach(m => m.remove());
   boosterEl.style.setProperty("--dechirure", 0);
+  pencherBooster(0, 0);
+  appliquerBoosterDore();
 }
 
 // Le paquet se sépare en deux moitiés qui s'envolent, puis les cartes arrivent.
 function dechirerBooster() {
   dechirure = null;
   vibrer(35);
-  const contenu = [...boosterEl.querySelectorAll(".booster-bord, .booster-titre, .booster-logo, .booster-info")];
+  const contenu = [...boosterEl.querySelectorAll(".booster-sachet, .booster-bord, .booster-titre, .booster-logo, .booster-info")];
   const bord = ZIGZAG.map(([x, y]) => `${x}% ${y}%`).join(", ");
   for (const [cote, forme] of [["gauche", `0% 0%, ${bord}, 0% 100%`], ["droite", `${bord}, 100% 100%, 100% 0%`]]) {
     const moitie = document.createElement("span");
@@ -910,6 +937,38 @@ boosterEl.addEventListener("click", e => {
   boosterEl.classList.add("indice");
   notifier(t("glisserPourOuvrir"));
 });
+// ---------- Le paquet penche : vers la souris, ou quand on incline le téléphone ----------
+
+const INCLINAISON_BOOSTER = 16;   // degrés, au maximum
+function pencherBooster(x, y) {   // x, y : de -0,5 à 0,5 (0 = bien de face)
+  const borne = v => Math.max(-0.5, Math.min(0.5, v));
+  x = borne(x); y = borne(y);
+  const s = boosterEl.style;
+  s.setProperty("--incl-x", (x * 2 * INCLINAISON_BOOSTER).toFixed(2));
+  s.setProperty("--incl-y", (-y * 2 * INCLINAISON_BOOSTER).toFixed(2));
+  s.setProperty("--mx", (50 + x * 100).toFixed(1) + "%");   // le reflet suit le mouvement
+  s.setProperty("--my", (50 + y * 100).toFixed(1) + "%");
+  s.setProperty("--brillance", Math.min(1, Math.hypot(x, y) * 2.5).toFixed(2));
+}
+boosterEl.addEventListener("pointermove", e => {
+  if (e.pointerType !== "mouse" || dechirure || animationsReduites()) return;
+  const z = boosterEl.getBoundingClientRect();
+  pencherBooster((e.clientX - z.left) / z.width - 0.5, (e.clientY - z.top) / z.height - 0.5);
+});
+boosterEl.addEventListener("pointerleave", () => pencherBooster(0, 0));
+
+// Téléphone : la position « de repos » suit lentement le téléphone,
+// seuls les mouvements récents font pencher le paquet.
+let reposBooster = null;
+addEventListener("deviceorientation", e => {
+  if (e.beta === null || e.gamma === null) return;
+  if ($("#vue-booster").hidden || $("#zone-booster").hidden || dechirure || enCours || animationsReduites()) return;
+  reposBooster ??= { beta: e.beta, gamma: e.gamma };
+  reposBooster.beta += (e.beta - reposBooster.beta) * 0.02;
+  reposBooster.gamma += (e.gamma - reposBooster.gamma) * 0.02;
+  pencherBooster((e.gamma - reposBooster.gamma) / 30, (e.beta - reposBooster.beta) / 30);
+});
+
 $("#tout-reveler").addEventListener("click", toutReveler);
 $("#nouveau-booster").addEventListener("click", revenirAuBooster);
 $("#partager-tirage").addEventListener("click", () => partagerCarte(plusBelle(pileTirage)));

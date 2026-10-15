@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261015-2318">
+<link rel="stylesheet" href="style.css?v=20261015-2327">
 </head>
 <body>
 
@@ -51,11 +51,29 @@
   <section id="vue-booster" class="vue">
     <div id="zone-booster" class="zone-booster">
       <button id="booster" class="booster" aria-label="Ouvrir le booster" data-t-aria="ouvrirLeBooster">
+        <!-- Sachet : fond aux couleurs de la région, soudures dentelées, silhouettes des époques en filigrane -->
+        <span class="booster-sachet" aria-hidden="true">
+          <svg class="booster-filigrane" viewBox="0 0 63 98">
+            <defs>
+            <g id="horizon-epoques">
+              <path d="M0 0 L7 -9 L14 0Z M9 0 L14 -5.5 L19 0Z"/>
+              <g transform="translate(21 0)"><path d="M0 -9 L5.5 -12 L11 -9Z"/><rect y="-9" width="11" height="1"/><rect x="1" y="-7.8" width=".9" height="7"/><rect x="3.7" y="-7.8" width=".9" height="7"/><rect x="6.4" y="-7.8" width=".9" height="7"/><rect x="9.1" y="-7.8" width=".9" height="7"/><rect y="-.8" width="11" height=".8"/></g>
+              <path transform="translate(34 0)" d="M0 0 V-11 H1 V-10 H2.2 V-11 H3.2 V-6 H4.2 V-7 H5.1 V-6 H5.9 V-7 H6.8 V-6 H7.8 V-11 H8.8 V-10 H10 V-11 H11 V0 H6.6 V-2.4 A1.1 1.1 0 0 0 4.4 -2.4 V0Z"/>
+              <g transform="translate(47 0)"><rect x="2" y="-3" width="5" height="3"/><path d="M-.5 -3 H9.5 L7.5 -4.4 H1.5Z"/><rect x="2.6" y="-6.2" width="3.8" height="1.8"/><path d="M.3 -6.2 H8.7 L7 -7.5 H2Z"/><rect x="3.1" y="-9.2" width="2.8" height="1.7"/><path d="M1.2 -9.2 H7.8 L4.5 -11.5Z"/><rect x="4.3" y="-13" width=".4" height="1.6"/></g>
+              <rect x="-3" width="62" height=".35"/>
+            </g>
+            </defs>
+            <use href="#horizon-epoques" transform="translate(31.5 80) scale(.92) translate(-28 0)"/>
+            <use href="#horizon-epoques" transform="rotate(180 31.5 49) translate(31.5 80) scale(.92) translate(-28 0)"/>
+          </svg>
+        </span>
         <span class="booster-bord"></span>
         <img class="booster-titre" src="images/logo-mot.webp" alt="ChronoLegends" draggable="false">
         <img class="booster-logo" src="images/logo-etoile.webp" alt="" draggable="false">
         <span class="booster-info" data-t="cinqCartes">5 cartes</span>
         <img class="booster-titre envers" src="images/logo-mot.webp" alt="" draggable="false">
+        <!-- Reflet métallisé : passe de temps en temps, et suit l'inclinaison du paquet -->
+        <span class="booster-reflet" aria-hidden="true"></span>
         <!-- Déchirure : guide « glisser vers le bas » et ligne lumineuse qui suit le doigt (app.js) -->
         <span class="guide-dechirure" aria-hidden="true"></span>
         <svg class="ligne-dechirure" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline/></svg>
@@ -147,11 +165,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261015-2318"></script>
-<script src="langue.js?v=20261015-2318"></script>
-<script src="anti-robot.js?v=20261015-2318"></script>
-<script src="carte.js?v=20261015-2318"></script>
-<script src="partage.js?v=20261015-2318"></script>
-<script src="app.js?v=20261015-2318"></script>
+<script src="reglages.js?v=20261015-2327"></script>
+<script src="langue.js?v=20261015-2327"></script>
+<script src="anti-robot.js?v=20261015-2327"></script>
+<script src="carte.js?v=20261015-2327"></script>
+<script src="partage.js?v=20261015-2327"></script>
+<script src="app.js?v=20261015-2327"></script>
 </body>
 </html>

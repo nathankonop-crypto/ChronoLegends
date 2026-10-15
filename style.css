@@ -252,25 +252,33 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
     repeating-linear-gradient(45deg, rgba(212, 178, 106, .05) 0 2px, transparent 2px 12px),
     linear-gradient(160deg, #283055 0%, #151a33 55%, #0d1022 100%);
   --dechirure: 0;
+  /* Couleur du sachet : Moyen-Orient par défaut, puis une couleur par région (plus bas) */
+  --sachet-1: #283055; --sachet-2: #151a33; --sachet-3: #0d1022;
+  --fond-booster:
+    repeating-linear-gradient(45deg, rgba(212, 178, 106, .05) 0 2px, transparent 2px 12px),
+    linear-gradient(160deg, var(--sachet-1) 0%, var(--sachet-2) 55%, var(--sachet-3) 100%);
+  /* Soudures dentelées en haut et en bas du sachet */
+  --masque-sachet:
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 10px 5px repeat-x,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 10px 5px repeat-x,
+    linear-gradient(#000 0 0) center / 100% calc(100% - 9px) no-repeat;
   position: relative;
   width: min(62vw, 250px);
   aspect-ratio: 63 / 98;
   border: 0;
   border-radius: 14px;
   padding: 0;
-  background: var(--fond-booster);
+  background: none;
   touch-action: none;          /* le doigt déchire le paquet au lieu de faire défiler la page */
   user-select: none; -webkit-user-select: none;
-  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .8), 0 0 0 1px rgba(212, 178, 106, .4) inset;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: transform .3s ease, box-shadow .3s ease;
+  /* Ombre portée (filter) : elle suit la forme dentelée du sachet */
+  filter: drop-shadow(0 24px 22px rgba(0, 0, 0, .7));
+  /* Inclinaison : --incl-x / --incl-y réglés par app.js (souris ou téléphone) */
+  transform: perspective(800px) rotateX(calc(var(--incl-y, 0) * 1deg)) rotateY(calc(var(--incl-x, 0) * 1deg));
+  transition: transform .25s ease-out, scale .3s ease, filter .3s ease;
   animation: flotter 4s ease-in-out infinite;
 }
-.booster:hover:not(:disabled) { transform: translateY(-6px) scale(1.02); box-shadow: 0 40px 70px -20px rgba(0, 0, 0, .9), 0 0 40px rgba(212, 178, 106, .25), 0 0 0 1px rgba(212, 178, 106, .6) inset; }
+.booster:hover:not(:disabled) { scale: 1.03; filter: drop-shadow(0 30px 26px rgba(0, 0, 0, .8)) drop-shadow(0 0 18px rgba(212, 178, 106, .3)); }
 .booster:disabled { filter: grayscale(.8) brightness(.6); cursor: not-allowed; animation: none; }
 
 .booster-bord { position: absolute; inset: 10px; border: 1px solid rgba(212, 178, 106, .55); border-radius: 8px; pointer-events: none; }
@@ -287,7 +295,81 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 
 .booster.ouverture { animation: secouer .55s ease-in-out, eclater .35s .55s ease-in forwards; }
 
-@keyframes flotter { 50% { transform: translateY(-8px); } }
+@keyframes flotter { 50% { translate: 0 -8px; } }
+
+/* ---------- Sachet du booster ---------- */
+.booster-sachet, .booster-reflet {
+  position: absolute; inset: 0; border-radius: 10px; pointer-events: none;
+  -webkit-mask: var(--masque-sachet); mask: var(--masque-sachet);
+}
+.booster-sachet {
+  background:
+    /* soudures : fines stries verticales en haut et en bas, comme un vrai paquet */
+    repeating-linear-gradient(90deg, rgba(255, 240, 200, .16) 0 1px, rgba(0, 0, 0, .2) 1px 3px) top / 100% 6.5% no-repeat,
+    repeating-linear-gradient(90deg, rgba(255, 240, 200, .16) 0 1px, rgba(0, 0, 0, .2) 1px 3px) bottom / 100% 6.5% no-repeat,
+    var(--fond-booster);
+  box-shadow: 0 0 0 1px rgba(212, 178, 106, .4) inset;
+}
+/* Petite encoche en haut, là où commence la déchirure */
+.booster-sachet::after {
+  content: ""; position: absolute; top: 0; left: 50%; width: 12px; height: 10px; margin-left: -6px;
+  background: var(--encre); clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+/* Silhouettes des époques (pyramides, temple, château, pagode), à peine visibles */
+.booster-filigrane { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--or); opacity: .1; }
+.booster-bord { inset: 8.5% 10px; }
+
+/* Une couleur par région */
+.booster[data-region="europe"]    { --sachet-1: #5c1f2e; --sachet-2: #35111b; --sachet-3: #1c080e; }
+.booster[data-region="afrique"]   { --sachet-1: #6a3f1c; --sachet-2: #3a220f; --sachet-3: #1d1007; }
+.booster[data-region="asie"]      { --sachet-1: #1d4f40; --sachet-2: #0f2c24; --sachet-3: #071812; }
+.booster[data-region="ameriques"] { --sachet-1: #4a2463; --sachet-2: #28123a; --sachet-3: #14091f; }
+.booster[data-region="oceanie"]   { --sachet-1: #155a6e; --sachet-2: #0b3341; --sachet-3: #051a22; }
+
+/* Reflet métallisé : un éclat passe toutes les 6 s ; un halo suit l'inclinaison */
+.booster-reflet {
+  mix-blend-mode: overlay;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 250, 230, .75) 50%, transparent 60%) 105% 0 / 250% 100% no-repeat;
+  animation: balayer 6s ease-in-out 1.5s infinite;
+}
+.booster-reflet::before {
+  content: ""; position: absolute; inset: 0; opacity: var(--brillance, 0); transition: opacity .3s;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 40%), rgba(255, 248, 225, .7), transparent 55%);
+}
+@keyframes balayer { 0% { background-position: 105% 0; } 30%, 100% { background-position: -5% 0; } }
+
+/* ---------- Booster doré : noir et or, halo et paillettes ---------- */
+.booster.dore {
+  --fond-booster:
+    repeating-linear-gradient(45deg, rgba(241, 210, 140, .12) 0 1px, transparent 1px 10px),
+    repeating-linear-gradient(-45deg, rgba(241, 210, 140, .12) 0 1px, transparent 1px 10px),
+    radial-gradient(ellipse at 50% 45%, #3d3119 0%, #18130a 60%, #070604 100%);
+}
+.booster.dore .booster-sachet { box-shadow: 0 0 0 1.5px rgba(241, 220, 159, .9) inset, 0 0 30px rgba(212, 178, 106, .25) inset; }
+.booster.dore .booster-filigrane { opacity: .18; }
+.booster.dore .booster-info { color: var(--or-clair); }
+.booster.dore .booster-reflet { animation-duration: 3.5s; animation-delay: .5s; }
+/* Halo doré qui respire derrière le paquet */
+.booster.dore::after {
+  content: ""; position: absolute; inset: -8%; z-index: -1; border-radius: 30px; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(241, 200, 110, .45), transparent);
+  animation: respirer 2.6s ease-in-out infinite;
+}
+@keyframes respirer { 50% { opacity: .35; transform: scale(.94); } }
+/* Paillettes qui scintillent */
+.booster.dore .booster-reflet::after {
+  content: ""; position: absolute; inset: 0; mix-blend-mode: screen;
+  background:
+    radial-gradient(circle at 18% 30%, #fff8dc 0 1px, transparent 2px),
+    radial-gradient(circle at 80% 22%, #fff8dc 0 1.2px, transparent 2.5px),
+    radial-gradient(circle at 70% 70%, #fff8dc 0 1px, transparent 2px),
+    radial-gradient(circle at 26% 76%, #fff8dc 0 1.2px, transparent 2.5px),
+    radial-gradient(circle at 50% 36%, #fff8dc 0 .8px, transparent 1.8px),
+    radial-gradient(circle at 88% 52%, #fff8dc 0 .8px, transparent 1.8px);
+  animation: scintiller 1.8s ease-in-out infinite alternate;
+}
+@keyframes scintiller { from { opacity: .2; } to { opacity: 1; } }
+.booster.dechire::after { display: none; }
 
 /* ---------- Déchirer le booster (glisser de haut en bas, voir app.js) ---------- */
 
@@ -334,10 +416,9 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   animation: jaillir .6s ease-out forwards; pointer-events: none;
 }
 @keyframes jaillir { from { transform: scale(.2); opacity: 1; } to { transform: scale(4); opacity: 0; } }
+/* Chaque moitié reprend une copie du sachet (fond, dents, filigrane) */
 .moitie {
-  position: absolute; inset: 0; border-radius: 14px;
-  background: var(--fond-booster);
-  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .8), 0 0 0 1px rgba(212, 178, 106, .4) inset;
+  position: absolute; inset: 0;
   pointer-events: none;
 }
 .moitie.gauche { transform-origin: 30% 100%; animation: envol-gauche .65s cubic-bezier(.3, .1, .6, 1) forwards; }
