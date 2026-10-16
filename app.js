@@ -657,37 +657,44 @@ function reveler(emplacement, carte) {
 }
 
 // ---------- Grande révélation : Légendaire et Mythique en dernière carte ----------
-//  1. Suspense : la carte tremble et s'illumine, l'écran s'assombrit, un son monte.
-//  2. Explosion : flash, onde de choc, la carte se retourne et grandit, gerbe d'étincelles.
-//  3. Gloire : rayons qui tournent, paillettes, nom de la rareté lettre par lettre.
-//  La Mythique en fait plus (battements de cœur, double flash, secousse, arc-en-ciel).
+//  Mise en scène sobre, « cinéma » : de la lumière plutôt que des formes.
+//  1. Suspense : l'écran s'assombrit, des particules de lumière convergent vers la carte,
+//     son liseré s'illumine, elle s'élève en vibrant à peine.
+//  2. Révélation : flash bref, reflet horizontal qui traverse l'écran, anneau fin,
+//     la carte se retourne et un reflet balaie sa surface.
+//  3. Gloire : colonne de lumière, halo, poussières qui montent, titre fin entre deux filets.
+//  Mythique : aurore rose-violet-turquoise derrière la carte, reflets irisés.
 //  Le décor est dans style.css (.revelation) ; un appui pendant la gloire passe à la suite.
 let spectacleEnCours = false;
 const COULEURS_SPECTACLE = {
-  legendaire: ["#fff1b8", "#ffd772", "#e8a92c", "#ffffff", "#f7da84"],
-  mythique: ["#ff6fd8", "#7c3bd4", "#43e0e0", "#ffd36e", "#ffffff", "#c86ad0"],
+  legendaire: ["#fff4cf", "#ffe08a", "#f3c35a"],
+  mythique: ["#ffd0f1", "#ff8ade", "#9be9f0", "#c9a6ff", "#ffffff"],
 };
 const estSpectaculaire = i => i === pileTirage.length - 1 && !animationsReduites()
   && (pileTirage[i].rarete === "legendaire" || pileTirage[i].rarete === "mythique");
 const attendre = ms => new Promise(r => setTimeout(r, ms));
+const auHasard = (min, max) => min + Math.random() * (max - min);
 
-// Étincelles qui partent du centre de la carte dans toutes les directions.
-function gerbeEtincelles(scene, nombre, couleurs, force) {
+// Particules de lumière qui viennent de partout se fondre dans la carte (pendant le suspense).
+function particulesConvergentes(scene, nombre, couleurs, duree) {
+  const rayon = Math.max(innerWidth, innerHeight) * 0.55;
   let html = "";
   for (let n = 0; n < nombre; n++) {
-    const angle = Math.random() * Math.PI * 2, distance = force * (0.35 + Math.random() * 0.65);
-    html += `<span class="rev-etincelle" style="--x:${(Math.cos(angle) * distance).toFixed(0)}px;--y:${(Math.sin(angle) * distance).toFixed(0)}px;`
-      + `--c:${couleurs[n % couleurs.length]};--t:${(3 + Math.random() * 6).toFixed(1)}px;--d:${(Math.random() * 0.25).toFixed(2)}s"></span>`;
+    const angle = auHasard(0, Math.PI * 2), d = rayon * auHasard(0.45, 1);
+    html += `<span class="rev-particule" style="--x:${(Math.cos(angle) * d).toFixed(0)}px;--y:${(Math.sin(angle) * d).toFixed(0)}px;`
+      + `--c:${couleurs[n % couleurs.length]};--t:${auHasard(1.5, 3.5).toFixed(1)}px;`
+      + `--d:${auHasard(0, duree * 0.55).toFixed(2)}s;--duree:${auHasard(duree * 0.4, duree * 0.6).toFixed(2)}s"></span>`;
   }
   scene.insertAdjacentHTML("beforeend", html);
 }
 
-// Paillettes qui tombent doucement pendant la gloire.
-function pluiePaillettes(scene, nombre, couleurs) {
+// Poussières lumineuses qui montent lentement autour de la carte (pendant la gloire).
+function poussieres(scene, nombre, couleurs) {
   let html = "";
   for (let n = 0; n < nombre; n++) {
-    html += `<span class="rev-paillette" style="left:${(Math.random() * 100).toFixed(1)}%;--c:${couleurs[n % couleurs.length]};`
-      + `--d:${(Math.random() * 2.5).toFixed(2)}s;--duree:${(2.2 + Math.random() * 2).toFixed(2)}s;--t:${(10 + Math.random() * 12).toFixed(0)}px">✦</span>`;
+    html += `<span class="rev-poussiere" style="--x:${auHasard(-0.9, 0.9).toFixed(2)};--y:${auHasard(-0.2, 0.7).toFixed(2)};`
+      + `--c:${couleurs[n % couleurs.length]};--t:${auHasard(1.5, 3.2).toFixed(1)}px;--flou:${auHasard(0, 1.5).toFixed(1)}px;`
+      + `--d:${auHasard(0, 2.5).toFixed(2)}s;--duree:${auHasard(3, 5.5).toFixed(2)}s;--derive:${auHasard(-30, 30).toFixed(0)}px"></span>`;
   }
   scene.insertAdjacentHTML("beforeend", html);
 }
@@ -696,51 +703,55 @@ async function revelationSpectaculaire(emplacement, carte) {
   spectacleEnCours = true;
   const mythique = carte.rarete === "mythique";
   const couleurs = COULEURS_SPECTACLE[carte.rarete];
+  const suspense = mythique ? 1700 : 1150;
   const scene = $("#revelation");
   const r = emplacement.getBoundingClientRect();
   scene.style.setProperty("--cx", `${r.left + r.width / 2}px`);
   scene.style.setProperty("--cy", `${r.top + r.height / 2}px`);
+  scene.style.setProperty("--l", `${r.width}px`);
   scene.style.setProperty("--h", `${r.height}px`);
-  const titre = [...nomRarete(carte.rarete).toUpperCase()]
-    .map((l, i) => `<span style="--i:${i}">${l === " " ? "&nbsp;" : echapper(l)}</span>`).join("");
   scene.innerHTML = `
     <div class="rev-fond"></div>
-    <div class="rev-rayons"></div>
+    <div class="rev-aurore"><i></i><i></i><i></i></div>
+    <div class="rev-colonne"></div>
     <div class="rev-halo"></div>
-    ${[1, 2, 3].slice(0, mythique ? 3 : 1).map(n => `<div class="rev-onde onde-${n}"></div>`).join("")}
+    <div class="rev-anneau"></div>
+    <div class="rev-flare"></div>
     <div class="rev-flash"></div>
-    <p class="rev-titre">${titre}</p>
-    <p class="rev-nom">${echapper(carte.nom)}</p>`;
+    <div class="rev-texte">
+      <p class="rev-titre"><span>${echapper(nomRarete(carte.rarete).toUpperCase())}</span></p>
+      <p class="rev-nom">${echapper(carte.nom)}</p>
+    </div>`;
   scene.className = `revelation ${carte.rarete}`;
   scene.hidden = false;
   document.body.classList.add("en-revelation");
 
   // 1. Suspense
   emplacement.classList.add("suspense", `suspense-${carte.rarete}`);
+  particulesConvergentes(scene, mythique ? 46 : 32, couleurs, suspense / 1000);
   jouerSon(mythique ? "suspenseMythique" : "suspense");
   vibrer(mythique ? [30, 220, 30, 180, 40, 140, 50, 100, 60] : [20, 200, 30, 150, 40, 100]);
-  await attendre(mythique ? 1700 : 1150);
+  await attendre(suspense);
 
-  // 2. Explosion
+  // 2. Révélation
   emplacement.classList.remove("suspense", `suspense-${carte.rarete}`);
   emplacement.classList.add("apotheose");
   scene.classList.add("explosion");
   reveler(emplacement, carte);
-  gerbeEtincelles(scene, mythique ? 90 : 50, couleurs, Math.max(innerWidth, innerHeight) * (mythique ? 0.75 : 0.55));
-  vibrer(mythique ? [80, 40, 160, 60, 200] : [70, 40, 140]);
+  vibrer(mythique ? [60, 50, 140] : [50, 40, 110]);
   majConsignePile();
-  await attendre(700);
+  await attendre(650);
 
   // 3. Gloire (un appui la raccourcit)
   scene.classList.add("gloire");
-  pluiePaillettes(scene, mythique ? 40 : 24, couleurs);
+  poussieres(scene, mythique ? 34 : 24, couleurs);
   await Promise.race([
-    attendre(mythique ? 3600 : 2800),
+    attendre(mythique ? 3600 : 2900),
     new Promise(r => document.addEventListener("click", r, { once: true })),   // sur la carte ou à côté
   ]);
 
   scene.classList.add("fin");
-  await attendre(450);
+  await attendre(500);
   scene.hidden = true;
   scene.innerHTML = "";
   document.body.classList.remove("en-revelation");

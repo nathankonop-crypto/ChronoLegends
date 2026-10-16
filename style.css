@@ -1491,171 +1491,190 @@ html[dir="rtl"] .modale-contenu.arrivee-suivante > * { animation-name: arrivee-p
 html[dir="rtl"] .modale-contenu.arrivee-precedente > * { animation-name: arrivee-suivante; }
 
 /* ---------- Grande révélation : Légendaire et Mythique en dernière carte (app.js) ----------
-   La scène couvre tout l'écran ; la pile de cartes passe par-dessus. --cx / --cy : centre
-   de la carte, --h : sa hauteur. Couleurs : or (Légendaire), rose-violet-turquoise-or (Mythique). */
+   Sobre et « cinéma » : de la lumière diffuse, peu d'éléments, des mouvements lents.
+   La scène couvre l'écran, la pile de cartes passe par-dessus.
+   --cx / --cy : centre de la carte ; --l / --h : sa largeur et sa hauteur.
+   --c1 lumière principale, --c2 lumière secondaire, --c3 reflet. */
 .revelation {
-  --c1: #ffd772; --c2: #e8a92c; --c3: #fff1b8;
+  --c1: #ffd77a; --c2: #f0a83a; --c3: #fff6dc;
   position: fixed; inset: 0; z-index: 31; overflow: hidden; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.revelation.mythique { --c1: #ff6fd8; --c2: #7c3bd4; --c3: #43e0e0; }
+.revelation.mythique { --c1: #ff8ade; --c2: #8e5cf0; --c3: #f4fbff; }
 .revelation[hidden] { display: none; }
 body.en-revelation #tirage { z-index: 32; }
 body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibility: hidden; }
 
-/* Fond : l'écran s'assombrit autour de la carte */
+/* Fond : l'écran s'assombrit, une lueur très douce reste autour de la carte */
 .rev-fond {
   position: absolute; inset: 0;
-  background: radial-gradient(circle at var(--cx) var(--cy), rgba(10, 8, 20, .2), rgba(3, 4, 10, .94) 55%);
-  animation: rev-apparaitre .6s ease-out both;
+  background:
+    radial-gradient(circle at var(--cx) var(--cy), color-mix(in srgb, var(--c2) 14%, transparent), transparent 42%),
+    radial-gradient(circle at var(--cx) var(--cy), rgba(6, 7, 14, .55), rgba(3, 4, 9, .96) 70%);
+  animation: rev-fondu .8s ease-out both;
 }
-.revelation.mythique .rev-fond {
-  background: radial-gradient(circle at var(--cx) var(--cy), rgba(40, 10, 50, .25), rgba(5, 2, 12, .95) 55%);
-}
-@keyframes rev-apparaitre { from { opacity: 0; } }
+@keyframes rev-fondu { from { opacity: 0; } }
 
-/* Rayons de lumière qui tournent derrière la carte */
-.rev-rayons {
-  position: absolute; left: var(--cx); top: var(--cy); width: 240vmax; height: 240vmax;
-  translate: -50% -50%; opacity: .25; scale: .35;
-  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--c1) 70%, transparent) 0deg 5deg, transparent 5deg 15deg);
-  -webkit-mask: radial-gradient(circle, #000 4%, rgba(0, 0, 0, .6) 14%, transparent 32%);
-          mask: radial-gradient(circle, #000 4%, rgba(0, 0, 0, .6) 14%, transparent 32%);
-  animation: rev-tourne 16s linear infinite;
-  transition: opacity .5s ease-out, scale .7s cubic-bezier(.2, .9, .3, 1.2);
+/* Aurore (Mythique seulement) : trois grandes lueurs floues qui ondulent lentement derrière la carte */
+.rev-aurore { position: absolute; inset: 0; opacity: 0; filter: blur(48px); transition: opacity 1.2s ease-out; }
+.revelation.mythique.explosion .rev-aurore { opacity: .85; }
+.rev-aurore i {
+  position: absolute; left: var(--cx); top: var(--cy); width: calc(var(--l) * 1.5); height: calc(var(--h) * 1.1);
+  border-radius: 50%; translate: -50% -50%; mix-blend-mode: screen;
 }
-.revelation.mythique .rev-rayons {
-  background: repeating-conic-gradient(from 0deg, #ff6fd8cc 0deg 4deg, transparent 4deg 10deg, #43e0e0cc 10deg 14deg, transparent 14deg 20deg,
-    #ffd36ecc 20deg 24deg, transparent 24deg 30deg, #7c3bd4cc 30deg 34deg, transparent 34deg 40deg);
-  animation: rev-tourne 10s linear infinite, rev-arc-en-ciel 4s linear infinite;
-}
-.revelation.explosion .rev-rayons { opacity: 1; scale: 1; }
-@keyframes rev-tourne { to { rotate: 360deg; } }
-@keyframes rev-arc-en-ciel { to { filter: hue-rotate(360deg); } }
+.rev-aurore i:nth-child(1) { background: #ff6fd0; animation: rev-aurore-1 7s ease-in-out infinite alternate; }
+.rev-aurore i:nth-child(2) { background: #3fd6e6; animation: rev-aurore-2 8s ease-in-out infinite alternate; }
+.rev-aurore i:nth-child(3) { background: #7d4cf0; animation: rev-aurore-3 9s ease-in-out infinite alternate; }
+@keyframes rev-aurore-1 { from { transform: translate(-38%, -18%) scale(.9); } to { transform: translate(-8%, -30%) scale(1.15); } }
+@keyframes rev-aurore-2 { from { transform: translate(34%, 12%) scale(1); } to { transform: translate(8%, 30%) scale(.85); } }
+@keyframes rev-aurore-3 { from { transform: translate(0, 28%) scale(1.1); } to { transform: translate(-22%, -6%) scale(.9); } }
 
-/* Halo coloré derrière la carte, qui grossit pendant le suspense puis pulse */
+/* Colonne de lumière verticale derrière la carte */
+.rev-colonne {
+  position: absolute; left: var(--cx); top: 0; bottom: 0; width: calc(var(--l) * .9);
+  translate: -50% 0; opacity: 0; scale: .3 1;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--c1) 30%, transparent) 30%,
+    color-mix(in srgb, var(--c3) 55%, transparent) 50%, color-mix(in srgb, var(--c1) 30%, transparent) 70%, transparent);
+  -webkit-mask: linear-gradient(180deg, transparent, #000 25%, #000 75%, transparent);
+          mask: linear-gradient(180deg, transparent, #000 25%, #000 75%, transparent);
+  filter: blur(14px);
+  transition: opacity 1s ease-out, scale 1.2s cubic-bezier(.2, .8, .2, 1);
+}
+.revelation.explosion .rev-colonne { opacity: .75; scale: 1 1; }
+.revelation.gloire .rev-colonne { animation: rev-respire 3.5s ease-in-out infinite alternate; }
+@keyframes rev-respire { to { opacity: .45; } }
+
+/* Halo diffus derrière la carte : naît pendant le suspense, puis respire */
 .rev-halo {
-  position: absolute; left: var(--cx); top: var(--cy); width: calc(var(--h) * 1.6); height: calc(var(--h) * 1.6);
+  position: absolute; left: var(--cx); top: var(--cy); width: calc(var(--h) * 1.5); height: calc(var(--h) * 1.5);
   translate: -50% -50%; border-radius: 50%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--c3) 85%, transparent), color-mix(in srgb, var(--c1) 55%, transparent) 45%, transparent);
-  animation: rev-halo-monte 1.2s ease-in both;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--c1) 55%, transparent), color-mix(in srgb, var(--c2) 18%, transparent) 55%, transparent);
+  filter: blur(10px);
+  animation: rev-halo-nait 1.2s ease-in both;
 }
 .revelation.mythique .rev-halo { animation-duration: 1.7s; }
-.revelation.explosion .rev-halo { animation: rev-halo-pulse 1.6s ease-in-out infinite alternate; }
-.revelation.mythique.explosion .rev-halo { animation: rev-halo-pulse 1.2s ease-in-out infinite alternate, rev-arc-en-ciel 3s linear infinite; }
-@keyframes rev-halo-monte { from { scale: .2; opacity: 0; } to { scale: 1; opacity: .9; } }
-@keyframes rev-halo-pulse { from { scale: 1.05; opacity: .8; } to { scale: 1.35; opacity: 1; } }
+.revelation.gloire .rev-halo { animation: rev-halo-respire 3s ease-in-out infinite alternate; }
+@keyframes rev-halo-nait { from { opacity: 0; scale: .5; } to { opacity: .8; scale: 1; } }
+@keyframes rev-halo-respire { from { opacity: .8; scale: 1; } to { opacity: .55; scale: 1.08; } }
 
-/* Onde de choc (une pour la Légendaire, trois pour la Mythique) */
-.rev-onde {
-  position: absolute; left: var(--cx); top: var(--cy); width: calc(var(--h) * .9); height: calc(var(--h) * .9);
+/* Anneau fin qui s'étend au moment de la révélation */
+.rev-anneau {
+  position: absolute; left: var(--cx); top: var(--cy); width: var(--h); height: var(--h);
   translate: -50% -50%; border-radius: 50%; opacity: 0;
-  border: 6px solid var(--c3); box-shadow: 0 0 30px var(--c1), inset 0 0 30px var(--c1);
+  border: 1.5px solid color-mix(in srgb, var(--c3) 90%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c1) 60%, transparent);
 }
-.revelation.explosion .rev-onde { animation: rev-onde 1s cubic-bezier(.1, .7, .3, 1) both; }
-.revelation.mythique .rev-onde.onde-1 { border-color: #ff6fd8; }
-.revelation.mythique .rev-onde.onde-2 { border-color: #43e0e0; animation-delay: .15s; }
-.revelation.mythique .rev-onde.onde-3 { border-color: #ffd36e; animation-delay: .3s; }
-@keyframes rev-onde { from { scale: .3; opacity: 1; } to { scale: 5; opacity: 0; border-width: 1px; } }
+.revelation.explosion .rev-anneau { animation: rev-anneau 1.3s cubic-bezier(.15, .7, .25, 1) both; }
+@keyframes rev-anneau { from { scale: .6; opacity: .9; } to { scale: 3.2; opacity: 0; } }
 
-/* Flash : blanc pour la Légendaire, rose puis blanc pour la Mythique */
-.rev-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
-.revelation.explosion .rev-flash { animation: rev-flash .7s ease-out both; }
-.revelation.mythique.explosion .rev-flash { animation: rev-flash-mythique 1s ease-out both; }
-@keyframes rev-flash { 0% { opacity: 0; } 12% { opacity: .95; } to { opacity: 0; } }
-@keyframes rev-flash-mythique {
-  0% { opacity: 0; background: #ff6fd8; } 10% { opacity: .9; background: #ff6fd8; }
-  25% { opacity: .2; background: #ff6fd8; } 35% { opacity: 1; background: #fff; } to { opacity: 0; background: #fff; }
+/* Reflet horizontal « de cinéma » qui traverse tout l'écran (irisé pour la Mythique) */
+.rev-flare {
+  position: absolute; left: 50%; top: var(--cy); width: 160vw; height: 3px; translate: -50% -50%;
+  opacity: 0; scale: 0 1; border-radius: 50%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--c1) 70%, transparent) 30%, #fff 50%,
+    color-mix(in srgb, var(--c1) 70%, transparent) 70%, transparent);
+  box-shadow: 0 0 22px 6px color-mix(in srgb, var(--c1) 45%, transparent);
 }
+.revelation.mythique .rev-flare {
+  background: linear-gradient(90deg, transparent, #7d4cf0aa 20%, #ff8ade 38%, #fff 50%, #9be9f0 62%, #7d4cf0aa 80%, transparent);
+  box-shadow: 0 0 24px 6px rgba(255, 138, 222, .45);
+}
+.revelation.explosion .rev-flare { animation: rev-flare 1.1s cubic-bezier(.2, .8, .3, 1) both; }
+@keyframes rev-flare { 0% { opacity: 0; scale: 0 1; } 12% { opacity: 1; } 45% { opacity: .9; scale: 1 1; } 100% { opacity: 0; scale: 1.1 .4; } }
 
-/* Gerbe d'étincelles */
-.rev-etincelle {
+/* Flash : bref et doux, teinté de la couleur de la carte */
+.rev-flash {
+  position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  background: radial-gradient(circle at var(--cx) var(--cy), #fff 0%, color-mix(in srgb, var(--c3) 85%, transparent) 30%, color-mix(in srgb, var(--c1) 30%, transparent) 70%);
+}
+.revelation.explosion .rev-flash { animation: rev-flash .55s ease-out both; }
+@keyframes rev-flash { 0% { opacity: 0; } 15% { opacity: .85; } 100% { opacity: 0; } }
+
+/* Particules de lumière qui convergent vers la carte (suspense) */
+.rev-particule {
   position: absolute; left: var(--cx); top: var(--cy); width: var(--t); height: var(--t); margin: calc(var(--t) / -2) 0 0 calc(var(--t) / -2);
-  border-radius: 50%; background: var(--c); box-shadow: 0 0 10px 2px var(--c);
-  animation: rev-etincelle 1.5s var(--d) cubic-bezier(.05, .7, .3, 1) both;
+  border-radius: 50%; background: var(--c); box-shadow: 0 0 6px 1px var(--c); opacity: 0;
+  animation: rev-converge var(--duree) var(--d) cubic-bezier(.55, 0, .85, .35) forwards;
 }
-@keyframes rev-etincelle { from { translate: 0 0; scale: 1.4; opacity: 1; } 70% { opacity: 1; } to { translate: var(--x) var(--y); scale: .2; opacity: 0; } }
+@keyframes rev-converge { 0% { translate: var(--x) var(--y); opacity: 0; } 25% { opacity: .9; } 100% { translate: 0 0; opacity: 0; scale: .4; } }
 
-/* Paillettes qui tombent pendant la gloire */
-.rev-paillette {
-  position: absolute; top: -30px; font-size: var(--t); line-height: 1; color: var(--c);
-  text-shadow: 0 0 8px var(--c); pointer-events: none;
-  animation: rev-chute var(--duree) var(--d) linear infinite both;
+/* Poussières lumineuses qui montent lentement (gloire) */
+.rev-poussiere {
+  position: absolute; left: calc(var(--cx) + var(--x) * var(--l)); top: calc(var(--cy) + var(--y) * var(--h));
+  width: var(--t); height: var(--t); border-radius: 50%; background: var(--c);
+  box-shadow: 0 0 6px var(--c); filter: blur(var(--flou)); opacity: 0;
+  animation: rev-monte var(--duree) var(--d) ease-in-out infinite;
 }
-@keyframes rev-chute {
-  from { translate: 0 0; rotate: 0deg; opacity: 0; }
-  10% { opacity: 1; }
-  to { translate: 30px 110vh; rotate: 360deg; opacity: .2; }
-}
+@keyframes rev-monte { 0% { translate: 0 0; opacity: 0; } 20% { opacity: .85; } 100% { translate: var(--derive) calc(var(--h) * -.8); opacity: 0; } }
 
-/* Nom de la rareté, lettre par lettre, puis nom de la carte */
-.rev-titre, .rev-nom { position: absolute; left: 0; right: 0; margin: 0; text-align: center; pointer-events: none; }
+/* Titre : lettres fines et très espacées entre deux filets, qui apparaissent du flou au net */
+.rev-texte {
+  position: absolute; left: 0; right: 0; top: calc(var(--cy) + var(--h) / 2 + 22px);
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; pointer-events: none;
+}
 .rev-titre {
-  top: calc(var(--cy) + var(--h) / 2 + 14px); padding: 0 12px;
-  font-family: "Cinzel", "Times New Roman", serif; font-weight: 900; font-size: clamp(30px, 10vw, 58px); letter-spacing: .1em; line-height: 1.1;
-  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, .55)) drop-shadow(0 0 18px color-mix(in srgb, var(--c1) 80%, transparent));
+  margin: 0; display: flex; align-items: center; gap: 14px;
+  font-family: "Cinzel", "Times New Roman", serif; font-weight: 600; font-size: clamp(20px, 6vw, 30px); letter-spacing: .38em; line-height: 1;
+  opacity: 0;
 }
+.rev-titre::before, .rev-titre::after {
+  content: ""; width: clamp(28px, 10vw, 60px); height: 1px; flex: none;
+  background: linear-gradient(90deg, transparent, var(--c1));
+}
+.rev-titre::after { transform: scaleX(-1); }
 .rev-titre span {
-  display: inline-block; opacity: 0;
-  background: linear-gradient(180deg, #fff6d0 0%, #f3d688 30%, #c79434 52%, #f6dd94 70%, #a8762a 100%);
+  margin-inline-end: -.38em;   /* l'espacement après la dernière lettre décentrerait le mot */
+  background: linear-gradient(180deg, #fffaf0 0%, #f6dc96 45%, #c8973e 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--c1) 55%, transparent));
 }
 .revelation.mythique .rev-titre span {
-  background: linear-gradient(90deg, #ff6fd8, #c86ad0, #43e0e0, #ffd36e, #ff6fd8) 0 0 / 400% 100%;
+  background: linear-gradient(100deg, #ffffff 0%, #ffd0f1 25%, #c9e9ff 50%, #e6d4ff 75%, #ffffff 100%) 0 0 / 300% 100%;
   -webkit-background-clip: text; background-clip: text;
+  animation: rev-nacre 5s linear infinite;
+  filter: drop-shadow(0 1px 2px rgba(40, 10, 60, .8)) drop-shadow(0 0 16px rgba(255, 138, 222, .75));
 }
-.revelation.gloire .rev-titre span { animation: rev-lettre .55s calc(var(--i) * 55ms) cubic-bezier(.2, .9, .3, 1.5) forwards; }
-.revelation.mythique.gloire .rev-titre span {
-  animation: rev-lettre .55s calc(var(--i) * 70ms) cubic-bezier(.2, .9, .3, 1.5) forwards, rev-irise 2.5s calc(var(--i) * -.15s) linear infinite;
-}
-@keyframes rev-lettre { from { opacity: 0; translate: 0 30px; scale: 2.2; } to { opacity: 1; translate: 0 0; scale: 1; } }
-@keyframes rev-irise { to { background-position: 400% 0; } }
+@keyframes rev-nacre { to { background-position: 300% 0; } }
+.revelation.gloire .rev-titre { animation: rev-titre 1.1s cubic-bezier(.2, .7, .2, 1) forwards; }
+@keyframes rev-titre { from { opacity: 0; letter-spacing: .7em; filter: blur(8px); } to { opacity: 1; letter-spacing: .38em; filter: blur(0); } }
 .rev-nom {
-  top: calc(var(--cy) + var(--h) / 2 + 14px + clamp(30px, 10vw, 58px) * 1.25);
-  font-family: var(--serif); font-style: italic; font-size: 19px; color: var(--texte); opacity: 0;
+  margin: 0; font-family: var(--serif); font-style: italic; font-size: 18px; letter-spacing: .04em; color: rgba(240, 232, 214, .85);
+  opacity: 0;
 }
-.revelation.gloire .rev-nom { animation: rev-nom .6s .5s ease-out forwards; }
-@keyframes rev-nom { from { opacity: 0; translate: 0 8px; } to { opacity: 1; translate: 0 0; } }
+.revelation.gloire .rev-nom { animation: rev-nom .8s .45s ease-out forwards; }
+@keyframes rev-nom { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
 
-/* La carte : tremble de plus en plus pendant le suspense (son bord s'illumine), puis grandit d'un coup */
-.tirage.pile .emplacement.suspense { animation: rev-tremble 1.15s ease-in both; z-index: 10 !important; }
-.tirage.pile .emplacement.suspense-mythique { animation: rev-tremble-mythique 1.7s ease-in both; }
-.tirage.pile .emplacement.suspense .face-dos .dos { animation: rev-bord 1.15s ease-in both; }
-.tirage.pile .emplacement.suspense-mythique .face-dos .dos { animation: rev-bord-mythique 1.7s ease-in both; }
-@keyframes rev-tremble {
+/* La carte pendant le suspense : elle s'élève, vibre à peine, son liseré s'illumine */
+.tirage.pile .emplacement.suspense { animation: rev-eleve 1.15s cubic-bezier(.4, 0, .6, 1) both; z-index: 10 !important; }
+.tirage.pile .emplacement.suspense-mythique { animation-duration: 1.7s; }
+.tirage.pile .emplacement.suspense .face-dos .dos { animation: rev-liseré 1.15s ease-in both; }
+.tirage.pile .emplacement.suspense-mythique .face-dos .dos { animation: rev-liseré-mythique 1.7s ease-in both; }
+@keyframes rev-eleve {
   0% { translate: 0 0; scale: 1; }
-  20% { translate: -2px 0; } 30% { translate: 2px 0; } 40% { translate: -3px 1px; } 50% { translate: 3px -1px; }
-  60% { translate: -4px 1px; } 70% { translate: 5px 0; } 80% { translate: -6px -1px; } 90% { translate: 7px 1px; }
-  100% { translate: 0 0; scale: 1.06; }
+  40% { translate: 0 -4px; }
+  55% { translate: -1px -6px; } 62% { translate: 1px -6px; } 69% { translate: -1.5px -7px; } 76% { translate: 1.5px -7px; }
+  83% { translate: -2px -8px; } 90% { translate: 2px -8px; } 96% { translate: -1px -8px; }
+  100% { translate: 0 -8px; scale: 1.04; }
 }
-@keyframes rev-tremble-mythique {
-  0% { translate: 0 0; scale: 1; rotate: 0deg; }
-  15% { translate: -2px 0; } 25% { translate: 2px 0; } 35% { translate: -3px 1px; rotate: -1deg; } 45% { translate: 4px -1px; rotate: 1deg; }
-  55% { translate: -5px 1px; rotate: -1.5deg; } 65% { translate: 6px 0; rotate: 1.5deg; } 75% { translate: -8px -2px; rotate: -2deg; }
-  85% { translate: 9px 2px; rotate: 2deg; } 92% { translate: -10px 0; rotate: -2deg; }
-  100% { translate: 0 0; scale: 1.1; rotate: 0deg; }
+@keyframes rev-liseré {
+  from { box-shadow: 0 0 0 1px rgba(212, 178, 106, .5) inset, 0 0 0 1px rgba(255, 215, 122, .4), 0 0 0 0 transparent; }
+  to { box-shadow: 0 0 0 1px rgba(255, 246, 220, .9) inset, 0 0 0 1.5px #fff6dc, 0 0 36px 4px rgba(255, 215, 122, .8); }
 }
-@keyframes rev-bord {
-  from { box-shadow: 0 0 0 1px rgba(212, 178, 106, .5) inset, 0 0 0 2px #f0b43a, 0 0 10px 2px #f0b43a; }
-  to { box-shadow: 0 0 0 1px rgba(212, 178, 106, .5) inset, 0 0 0 3px #fff1b8, 0 0 60px 18px #ffd772; filter: brightness(1.5); }
+@keyframes rev-liseré-mythique {
+  0% { box-shadow: 0 0 0 1px rgba(212, 178, 106, .5) inset, 0 0 0 1px rgba(255, 138, 222, .4), 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 1px rgba(201, 166, 255, .8) inset, 0 0 0 1.5px #c9a6ff, 0 0 24px 2px rgba(155, 233, 240, .6); }
+  to { box-shadow: 0 0 0 1px rgba(255, 255, 255, .9) inset, 0 0 0 1.5px #ffffff, 0 0 40px 6px rgba(255, 138, 222, .85); }
 }
-/* Mythique : la lueur passe par les couleurs de la carte (rose, violet, turquoise, or), de plus en plus forte */
-@keyframes rev-bord-mythique {
-  0% { box-shadow: 0 0 0 2px #ff5fb0, 0 0 10px 2px #ff5fb0; }
-  25% { box-shadow: 0 0 0 2px #7c3bd4, 0 0 24px 6px #7c3bd4; }
-  50% { box-shadow: 0 0 0 3px #43e0e0, 0 0 38px 10px #43e0e0; }
-  75% { box-shadow: 0 0 0 3px #ffd36e, 0 0 52px 16px #ffd36e; }
-  to { box-shadow: 0 0 0 3px #fff, 0 0 75px 26px #ff6fd8; filter: brightness(1.5); }
+/* La carte révélée : elle grandit doucement, et un reflet balaie sa surface une fois */
+.tirage.pile .emplacement.apotheose { animation: rev-carte 1.1s cubic-bezier(.2, .8, .2, 1) both; z-index: 10 !important; }
+@keyframes rev-carte { 0% { translate: 0 -8px; scale: 1.04; } 35% { scale: 1.12; } 100% { translate: 0 -4px; scale: 1.08; } }
+.tirage.pile .emplacement.apotheose .face-avant::after {
+  content: ""; position: absolute; inset: 0; border-radius: 4.5cqw; pointer-events: none; overflow: hidden;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .55) 48%, rgba(255, 255, 255, .15) 54%, transparent 62%) -120% 0 / 250% 100% no-repeat;
+  animation: rev-balayage 1.2s .35s ease-in-out both;
 }
-.tirage.pile .emplacement.apotheose { animation: rev-carte 1s cubic-bezier(.2, .9, .3, 1.3) both; z-index: 10 !important; }
-@keyframes rev-carte { 0% { scale: 1.06; } 30% { scale: 1.2; } 100% { scale: 1.06; } }
-/* Mythique : tout l'écran tremble au moment de l'explosion */
-.revelation.mythique.explosion:not(.gloire) { animation: rev-secousse .5s ease-out; }
-body.en-revelation:has(.revelation.mythique.explosion:not(.gloire)) #tirage { animation: rev-secousse .5s ease-out; }
-@keyframes rev-secousse {
-  10% { translate: -10px 6px; } 25% { translate: 9px -7px; } 40% { translate: -7px 4px; }
-  60% { translate: 5px -3px; } 80% { translate: -2px 1px; } 100% { translate: 0 0; }
-}
-/* Fin : la scène s'efface */
-.revelation.fin { animation: rev-sortie .45s ease-in forwards; }
+@keyframes rev-balayage { from { background-position: 160% 0; } to { background-position: -60% 0; } }
+
+/* Fin : la scène s'efface doucement */
+.revelation.fin { animation: rev-sortie .5s ease-in forwards; }
 @keyframes rev-sortie { to { opacity: 0; } }
