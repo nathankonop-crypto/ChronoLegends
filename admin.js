@@ -223,6 +223,7 @@ function ouvrirFormulaire(ligne) {
   nouvelleImage = null;
   imageRetiree = false;
   idModifieALaMain = false;
+  oublierRetouches();
   form.reset();
   $("#erreur-carte").textContent = "";
   $("#fichier-image").value = "";
@@ -357,6 +358,7 @@ function majApercu() {
   const v = valeursFormulaire();
   $("#compte-description").textContent = form.elements.description.value.length;
   $("#retirer-image").hidden = !imageActuelle();
+  $("#zone-retouche").hidden = !imageActuelle();
 
   // Numéro tel qu'il apparaîtra : place actuelle, ou en fin d'époque pour une nouvelle carte.
   const autres = cartesEpoque(v.epoque).filter(c => c.id !== carteEditee?.id);
@@ -387,6 +389,7 @@ $("#fichier-image").addEventListener("change", async e => {
     nouvelleImage && URL.revokeObjectURL(nouvelleImage.url);
     nouvelleImage = { blob, url: URL.createObjectURL(blob) };
     imageRetiree = false;
+    oublierRetouches();
     const recadree = Math.abs(largeur / hauteur - 4 / 3) > 0.01;
     $("#info-image").textContent = `${largeur}×${hauteur} → ${recadree ? "recadrée au centre, " : ""}`
       + `${LARGEUR_IMAGE}×${HAUTEUR_IMAGE} WebP, ${Math.round(blob.size / 1024)} Ko. Envoyée à l'enregistrement.`;
@@ -402,6 +405,68 @@ $("#retirer-image").addEventListener("click", () => {
   nouvelleImage = null;
   imageRetiree = true;
   $("#fichier-image").value = "";
+  oublierRetouches();
+  majApercu();
+});
+
+// ---------- Retouche de l'illustration par l'IA (Nano Banana, Edge Function « agent-cartes ») ----------
+// La retouche part de l'image affichée (même pas encore enregistrée) : on peut enchaîner plusieurs retouches,
+// et revenir en arrière une à une. Rien n'est envoyé au stockage avant « Enregistrer ».
+
+let avantRetouche = [];   // images remplacées par les retouches ; null = l'image enregistrée de la carte
+let retoucheEnCours = false;
+
+function oublierRetouches() {
+  for (const ancienne of avantRetouche) ancienne && URL.revokeObjectURL(ancienne.url);
+  avantRetouche = [];
+  $("#annuler-retouche").hidden = true;
+  $("#consigne-retouche").value = "";
+}
+
+const versBase64 = blob => new Promise((ok, echec) => {
+  const lecteur = new FileReader();
+  lecteur.onload = () => ok(String(lecteur.result).split(",")[1]);
+  lecteur.onerror = () => echec(new Error("Lecture de l'image impossible."));
+  lecteur.readAsDataURL(blob);
+});
+
+async function retoucherImage() {
+  const consigne = $("#consigne-retouche").value.trim();
+  const source = imageActuelle();
+  if (!consigne) return ($("#info-retouche").textContent = "Écrivez d'abord ce qu'il faut changer.");
+  if (!source || retoucheEnCours) return;
+  retoucheEnCours = true;
+  const bouton = $("#bouton-retouche");
+  bouton.disabled = true;
+  bouton.textContent = "🎨 Retouche…";
+  $("#info-retouche").textContent = "Nano Banana retouche l'image… (20 à 60 secondes)";
+  try {
+    const blob = nouvelleImage?.blob ?? await (await fetch(source)).blob();
+    const peinte = await appelAgent({ action: "retouche", image: await versBase64(blob), mime: blob.type || "image/webp", consigne });
+    const brute = await (await fetch(`data:${peinte.mime};base64,${peinte.data}`)).blob();
+    const prete = await preparerImage(brute);
+    avantRetouche.push(nouvelleImage);   // gardée pour « Revenir à l'image d'avant »
+    nouvelleImage = { blob: prete.blob, url: URL.createObjectURL(prete.blob) };
+    imageRetiree = false;
+    $("#annuler-retouche").hidden = false;
+    $("#info-retouche").textContent = "Retouchée ✓ Cliquez sur « Enregistrer » pour la garder, ou retouchez encore.";
+    majApercu();
+  } catch (err) {
+    $("#info-retouche").textContent = `✗ ${err.message}`;
+  } finally {
+    retoucheEnCours = false;
+    bouton.disabled = false;
+    bouton.textContent = "🎨 Retoucher";
+  }
+}
+
+$("#bouton-retouche").addEventListener("click", retoucherImage);
+$("#annuler-retouche").addEventListener("click", () => {
+  if (!avantRetouche.length || retoucheEnCours) return;
+  nouvelleImage && URL.revokeObjectURL(nouvelleImage.url);
+  nouvelleImage = avantRetouche.pop();
+  $("#annuler-retouche").hidden = avantRetouche.length === 0;
+  $("#info-retouche").textContent = "Image d'avant remise.";
   majApercu();
 });
 

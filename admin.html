@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261016-1429">
-<link rel="stylesheet" href="admin.css?v=20261016-1429">
+<link rel="stylesheet" href="style.css?v=20261016-1432">
+<link rel="stylesheet" href="admin.css?v=20261016-1432">
 </head>
 <body class="admin">
 
@@ -225,6 +225,17 @@
             <small id="info-image">Recadrée automatiquement au centre en paysage 4:3, puis compressée (WebP 800×600).</small>
           </label>
           <button type="button" class="lien" id="retirer-image" hidden>Retirer l'illustration</button>
+          <!-- Retouche de l'illustration par Nano Banana (admin.js : retoucherImage ; Edge Function agent-cartes) -->
+          <div class="retouche" id="zone-retouche" hidden>
+            <label>Retoucher l'illustration avec l'IA
+              <textarea id="consigne-retouche" rows="2" maxlength="500" placeholder="Ex. : enlever le casque, ciel plus orageux, le personnage regarde vers la gauche, plus âgé…"></textarea>
+            </label>
+            <div class="ligne-retouche">
+              <button type="button" class="bouton bouton-ia" id="bouton-retouche">🎨 Retoucher</button>
+              <button type="button" class="lien" id="annuler-retouche" hidden>↩ Revenir à l'image d'avant</button>
+            </div>
+            <small id="info-retouche">Décrivez ce qu'il faut changer : le reste de l'image est gardé. Rien n'est enregistré avant « Enregistrer ».</small>
+          </div>
 
           <p class="erreur" id="erreur-carte" role="alert"></p>
           <div class="actions-form">
@@ -269,10 +280,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261016-1429"></script>
-<script src="langue.js?v=20261016-1429"></script>
-<script src="anti-robot.js?v=20261016-1429"></script>
-<script src="carte.js?v=20261016-1429"></script>
-<script src="admin.js?v=20261016-1429"></script>
+<script src="reglages.js?v=20261016-1432"></script>
+<script src="langue.js?v=20261016-1432"></script>
+<script src="anti-robot.js?v=20261016-1432"></script>
+<script src="carte.js?v=20261016-1432"></script>
+<script src="admin.js?v=20261016-1432"></script>
 </body>
 </html>

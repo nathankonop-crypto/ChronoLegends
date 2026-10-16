@@ -6,7 +6,9 @@
 //    2. « carte »  : Claude rédige la carte complète (français, anglais,
 //                    hébreu) et décrit son illustration ;
 //    3. « image »  : Nano Banana (Gemini) peint l'illustration, dans le
-//                    style des cartes existantes.
+//                    style des cartes existantes ;
+//    4. « retouche » : Nano Banana modifie une illustration existante
+//                    selon ce que l'administrateur demande.
 //  La page d'administration enchaîne les trois et enregistre la carte
 //  en BROUILLON : rien n'arrive dans le jeu avant validation.
 //  Réservée à l'administrateur.
@@ -214,23 +216,40 @@ function trouverImage(o: unknown): { data: string; mime: string } | null {
   return null;
 }
 
-async function peindre(promptImage: string) {
-  const cle = Deno.env.get("GEMINI_API_KEY");
-  if (!cle) throw new ErreurAgent("La clé Gemini (Nano Banana) n'est pas configurée dans Supabase.", 500);
-  const modele = Deno.env.get("GEMINI_MODELE_IMAGE") || "gemini-nano-banana-2.1";
+type ImageEntree = { type: "image"; mime_type: string; data: string };
 
+// Nouvelle illustration : la description de Claude + le style commun, avec les cartes de référence.
+async function peindre(promptImage: string) {
   const references = await Promise.all(IMAGES_REFERENCE.map(async (url) => {
     const r = await fetch(url);
     if (!r.ok) return null;
-    return { type: "image", mime_type: r.headers.get("content-type") || "image/webp", data: encodeBase64(new Uint8Array(await r.arrayBuffer())) };
+    return { type: "image", mime_type: r.headers.get("content-type") || "image/webp", data: encodeBase64(new Uint8Array(await r.arrayBuffer())) } as ImageEntree;
   }));
+  return appelerNanoBanana(`${promptImage}\n\n${STYLE_IMAGE}`, references.filter((r): r is ImageEntree => r !== null));
+}
+
+// Retouche : l'image actuelle de la carte + ce que l'administrateur veut changer.
+function retoucher(image: ImageEntree, consigne: string) {
+  return appelerNanoBanana(
+    `Edit this historical trading-card illustration. Requested change (it may be written in French): ${consigne}\n\n` +
+    "Apply only this change. Keep the same art style, lighting, colour palette and framing, and keep everything else " +
+    "(subject, face, clothing, background) as it is unless the change requires otherwise. Landscape 4:3. " +
+    "No text, no letters, no frame, no border, no watermark.",
+    [image],
+  );
+}
+
+async function appelerNanoBanana(texte: string, images: ImageEntree[]) {
+  const cle = Deno.env.get("GEMINI_API_KEY");
+  if (!cle) throw new ErreurAgent("La clé Gemini (Nano Banana) n'est pas configurée dans Supabase.", 500);
+  const modele = Deno.env.get("GEMINI_MODELE_IMAGE") || "gemini-nano-banana-2.1";
 
   const appel = (format: string) => fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
     method: "POST",
     headers: { "x-goog-api-key": cle, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: modele,
-      input: [{ type: "text", text: `${promptImage}\n\n${STYLE_IMAGE}` }, ...references.filter(Boolean)],
+      input: [{ type: "text", text: texte }, ...images],
       response_format: { type: "image", aspect_ratio: format, image_size: "1K" },
     }),
   });
@@ -275,6 +294,15 @@ Deno.serve(async (req) => {
       const prompt = String(corps.prompt ?? "").trim();
       if (!prompt || prompt.length > 3000) return reponse({ erreur: "Description d'image manquante ou trop longue." }, 400);
       return reponse(await peindre(prompt));
+    }
+
+    if (corps.action === "retouche") {
+      const consigne = String(corps.consigne ?? "").trim();
+      const data = String(corps.image ?? "");
+      const mime = String(corps.mime ?? "image/webp");
+      if (!consigne || consigne.length > 500) return reponse({ erreur: "Retouche à décrire (500 caractères au plus)." }, 400);
+      if (!data || data.length > 8_000_000 || !/^image\/(webp|png|jpeg)$/.test(mime)) return reponse({ erreur: "Image à retoucher manquante ou trop lourde." }, 400);
+      return reponse(await retoucher({ type: "image", mime_type: mime, data }, consigne));
     }
 
     if (!REGIONS[region] || !GAMMES.includes(gamme)) return reponse({ erreur: "Région ou type de carte inconnu." }, 400);

@@ -168,3 +168,8 @@ body.admin { font-size: 16px; }
 .agent-liste .agent-statut { flex: none; font-size: 13px; color: var(--texte-doux); white-space: nowrap; }
 .agent-liste .agent-statut.ok { color: #8fd19e; }
 .agent-liste .agent-statut.erreur { color: #f1b3ab; white-space: normal; max-width: 280px; }
+
+/* ---------- Retouche de l'illustration par l'IA ---------- */
+.retouche { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border: 1px dashed rgba(212, 178, 106, .3); border-radius: 10px; }
+.retouche textarea { resize: vertical; }
+.ligne-retouche { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
