@@ -1,10 +1,13 @@
 // =============================================================
-//  CHRONOLEGENDS — Sons discrets
-//  Fabriqués par le navigateur (Web Audio) : aucun fichier à
-//  télécharger. La découpe du paquet, le retournement d'une carte,
-//  et une petite fanfare pour les cartes exceptionnelles, de plus
-//  en plus grande : Épique < Légendaire / Émeraude < Mythique / Diamant.
-//  Désactivables dans les Paramètres (préférence « sons »).
+//  CHRONOLEGENDS — Sons et musique
+//  • Bruitages fabriqués par le navigateur (Web Audio) : découpe du
+//    paquet, retournement d'une carte.
+//  • Jingle d'ouverture et fanfares des cartes rares : fichiers du
+//    dossier sons/ (musiques Suno découpées) ; si un fichier manque,
+//    la fanfare fabriquée ci-dessous le remplace.
+//  • Musique d'ambiance : une par région (sons/ambiance-<région>.mp3),
+//    en boucle (fondu, courte pause, reprise douce).
+//  Préférences « sons » et « musique », séparées, dans les Paramètres.
 // =============================================================
 
 let contexteAudio = null;
@@ -129,10 +132,58 @@ function etincelles(ctx, debut, nombre, duree, volume) {
   }
 }
 
+// Cuivre : note de trompette (attaque « bwah » qui s'ouvre, léger vibrato).
+function cuivre(ctx, debut, frequence, duree, volume) {
+  const vibrato = ctx.createOscillator(), profondeur = ctx.createGain();
+  vibrato.frequency.value = 5.5;
+  profondeur.gain.setValueAtTime(0, debut);
+  profondeur.gain.linearRampToValueAtTime(frequence * 0.006, debut + Math.min(duree, 0.4));
+  vibrato.connect(profondeur);
+  const filtre = ctx.createBiquadFilter();
+  filtre.type = "lowpass";
+  filtre.Q.value = 2;
+  filtre.frequency.setValueAtTime(frequence * 1.2, debut);
+  filtre.frequency.exponentialRampToValueAtTime(frequence * 6, debut + 0.06);
+  filtre.frequency.exponentialRampToValueAtTime(frequence * 3, debut + duree);
+  filtre.connect(enveloppe(ctx, debut, duree, volume, 0.025));
+  for (const ecart of [-6, 6]) {
+    const osc = ctx.createOscillator();
+    osc.type = "sawtooth";
+    osc.frequency.value = frequence;
+    osc.detune.value = ecart;
+    profondeur.connect(osc.frequency);
+    osc.connect(filtre);
+    osc.start(debut);
+    osc.stop(debut + duree);
+  }
+  vibrato.start(debut);
+  vibrato.stop(debut + duree);
+}
+
 // Notes (Hz)
-const DO4 = 262, MI4 = 330, SOL4 = 392, DO5 = 523, MI5 = 659, SOL5 = 784, SI5 = 988, DO6 = 1047, MI6 = 1319, SOL6 = 1568, DO7 = 2093;
+const SOL3 = 196, DO4 = 262, MI4 = 330, SOL4 = 392, DO5 = 523, MI5 = 659, SOL5 = 784, SI5 = 988, DO6 = 1047, MI6 = 1319, SOL6 = 1568, DO7 = 2093;
 
 const SONS = {
+  // Ouverture du jeu : courte fanfare héroïque de trompettes et timbales (environ 3 s),
+  // calée sur l'écran d'ouverture (la rose des vents arrive, puis le nom apparaît).
+  ouverture(ctx, t) {
+    // Roulement de timbales et cymbale qui enfle.
+    [0, 0.08, 0.16, 0.24, 0.32].forEach((d, i) => boum(ctx, t + d, 0.18 + i * 0.05));
+    bruit(ctx, t, 0.75, 3000, 9000, 0.12, 0.6, 0.7);
+    // « Ta-ta-taaa… ta-ta-ta-TAAAA ! »
+    const s = t + 0.45;
+    [[SOL4, 0, 0.14], [SOL4, 0.16, 0.14], [DO5, 0.32, 0.5],
+     [SOL4, 0.86, 0.12], [DO5, 1.0, 0.12], [MI5, 1.14, 0.12], [SOL5, 1.28, 1.6]]
+      .forEach(([f, d, duree]) => cuivre(ctx, s + d, f, duree, 0.32));
+    // Grand final : accord de cuivres, timbale, cloches et étincelles.
+    cuivre(ctx, s + 1.28, MI5, 1.6, 0.2);
+    cuivre(ctx, s + 1.28, DO5, 1.6, 0.2);
+    cuivre(ctx, s + 1.28, SOL3, 1.6, 0.18);
+    boum(ctx, s + 1.28, 0.7);
+    bruit(ctx, s + 1.28, 1.4, 6000, 3000, 0.1, 0.5, 0.01);
+    [DO6, MI6, SOL6, DO7].forEach((f, i) => cloche(ctx, s + 1.3 + i * 0.05, f, 2, 0.12));
+    etincelles(ctx, s + 1.5, 10, 1.2, 0.07);
+  },
   // Le paquet est découpé : un « zip » de papier.
   decoupe(ctx, t) {
     bruit(ctx, t, 0.3, 1500, 4000, 0.5, 1.2);
@@ -168,11 +219,113 @@ const SONS = {
   },
 };
 
+// Musiques enregistrées (fichiers dans sons/) : elles remplacent le son fabriqué du même nom.
+// Téléchargées dès le chargement de la page, pour partir sans délai au premier appui.
+// Fichier absent : on garde le son fabriqué ci-dessus.
+const FICHIERS_SONS = {
+  ouverture: "sons/ouverture.mp3",
+  epique: "sons/epique.mp3",
+  legendaire: "sons/legendaire.mp3",   // aussi pour l'Émeraude
+  diamant: "sons/mythique.mp3",        // Mythique et Diamant
+  dore: "sons/dore.mp3",               // le prochain booster est doré
+};
+const fichiersCharges = {};
+for (const [nom, chemin] of Object.entries(FICHIERS_SONS)) {
+  fichiersCharges[nom] = fetch(chemin).then(r => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+}
+
+async function jouerFichier(ctx, nom) {
+  const donnees = await fichiersCharges[nom];
+  if (!donnees) return false;
+  // decodeAudioData « consomme » les données : on décode une copie et on garde le résultat.
+  if (!(donnees instanceof AudioBuffer)) {
+    fichiersCharges[nom] = Promise.resolve(await ctx.decodeAudioData(donnees.slice(0)));
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = await fichiersCharges[nom];
+  const volume = ctx.createGain();
+  volume.gain.value = 0.9;
+  source.connect(volume).connect(ctx.destination);   // sans l'écho : la musique a déjà le sien
+  source.start();
+  return true;
+}
+
 // jouerSon("decoupe") — ne fait rien si le joueur a coupé les sons.
-function jouerSon(nom) {
-  if (prefs.sons === false || !SONS[nom]) return;
+async function jouerSon(nom) {
+  if (prefs.sons === false || (!SONS[nom] && !FICHIERS_SONS[nom])) return;
+  // Pas encore touché l'écran : le navigateur bloquerait le son (et le jouerait plus tard, au mauvais moment).
+  if (!contexteAudio && navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+  if (FICHIERS_SONS[nom]) etoufferMusique(nom === "ouverture" ? 0 : 3.5);   // la musique s'efface derrière la fanfare
   try {
     const ctx = audio();
-    if (ctx) SONS[nom](ctx, ctx.currentTime + 0.01);
+    if (!ctx) return;
+    if (FICHIERS_SONS[nom] && await jouerFichier(ctx, nom)) return;
+    SONS[nom]?.(ctx, ctx.currentTime + 0.01);
   } catch (e) { /* pas de son : le jeu marche quand même */ }
 }
+
+// ---------- Musique d'ambiance : celle de la région du joueur ----------
+const VOLUME_MUSIQUE = 0.3;   // en fond, sous les bruitages et les fanfares
+const PAUSE_BOUCLE = 1500;    // silence (ms) entre deux passages
+const musique = { el: null, gain: null, region: null, attente: null };
+
+// Lance (ou change) la musique de la région ; ne fait rien si elle joue déjà.
+function demarrerMusique(region) {
+  if (prefs.musique === false || !region) return;
+  if (!contexteAudio && navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+  if (musique.region === region && musique.el) {
+    if (musique.el.paused && !musique.attente && !document.hidden) musique.el.play().catch(() => {});
+    return;
+  }
+  const ctx = audio();
+  if (!ctx) return;
+  arreterMusique(1.5);
+  const el = new Audio(`sons/ambiance-${region}.mp3`);
+  el.preload = "auto";
+  // Le volume passe par Web Audio : sur iPhone, le volume d'un lecteur audio ne se règle pas autrement.
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(VOLUME_MUSIQUE, ctx.currentTime + 2.5);
+  ctx.createMediaElementSource(el).connect(gain).connect(ctx.destination);
+  el.addEventListener("ended", () => {
+    musique.attente = setTimeout(() => {
+      musique.attente = null;
+      if (musique.el !== el || prefs.musique === false) return;
+      el.currentTime = 0;
+      if (!document.hidden) el.play().catch(() => {});
+    }, PAUSE_BOUCLE);
+  });
+  Object.assign(musique, { el, gain, region });
+  if (!document.hidden) el.play().catch(() => {});
+}
+
+function arreterMusique(fondu = 1) {
+  const { el, gain } = musique;
+  clearTimeout(musique.attente);
+  Object.assign(musique, { el: null, gain: null, region: null, attente: null });
+  if (!el) return;
+  const t = contexteAudio.currentTime;
+  gain.gain.cancelScheduledValues(t);
+  gain.gain.setValueAtTime(Math.max(gain.gain.value, 0.0001), t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + fondu);
+  setTimeout(() => { el.pause(); el.removeAttribute("src"); el.load(); }, fondu * 1000 + 100);
+}
+
+// Baisse la musique pendant une fanfare, puis la remonte doucement.
+function etoufferMusique(duree) {
+  const { gain } = musique;
+  if (!gain) return;
+  const t = contexteAudio.currentTime;
+  gain.gain.cancelScheduledValues(t);
+  gain.gain.setValueAtTime(Math.max(gain.gain.value, 0.0001), t);
+  gain.gain.exponentialRampToValueAtTime(VOLUME_MUSIQUE * 0.25, t + 0.25);
+  gain.gain.setValueAtTime(VOLUME_MUSIQUE * 0.25, t + 0.25 + duree);
+  gain.gain.exponentialRampToValueAtTime(VOLUME_MUSIQUE, t + duree + 2.5);
+}
+
+// Application en arrière-plan ou écran éteint : la musique se met en pause.
+document.addEventListener("visibilitychange", () => {
+  if (!musique.el) return;
+  if (document.hidden) musique.el.pause();
+  else if (!musique.attente && prefs.musique !== false) musique.el.play().catch(() => {});
+});

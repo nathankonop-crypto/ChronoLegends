@@ -144,7 +144,7 @@ function appliquerBoosterDore() {
   b.classList.toggle("dore", etat.boosterDore);
   info.dataset.t = etat.boosterDore ? "boosterDore" : "cinqCartes";
   info.textContent = t(info.dataset.t);
-  if (etat.boosterDore && !avant && etat.boosters > 0) { notifier(t("boosterDoreArrive")); vibrer(40); }
+  if (etat.boosterDore && !avant && etat.boosters > 0) { notifier(t("boosterDoreArrive")); vibrer(40); jouerSon("dore"); }
 }
 
 // ---------- Région du joueur ----------
@@ -160,6 +160,7 @@ function appliquerRegion(data) {
   // Verrou de région : changement en attente (null s'il n'y en a pas).
   if ("verrou" in data) etat.verrou = data.verrou;
   majRegion();
+  lancerMusique();
   if (change) notifier(t("nouvelleRegion", { region: nomRegion(etat.region) }));
 }
 
@@ -903,8 +904,8 @@ $("#gyro-plus-tard").addEventListener("click", fermerGyro);
 $("#gyro-jamais").addEventListener("click", () => { prefs.gyroJamais = true; sauvegarderPrefs(); fermerGyro(); });
 $("#dialogue-gyro").addEventListener("click", e => { if (e.target.id === "dialogue-gyro") fermerGyro(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#dialogue-gyro").hidden) fermerGyro(); });
-// Petit délai : si le mouvement est déjà autorisé, les mesures arrivent entre-temps et la fenêtre ne s'ouvre pas.
-setTimeout(proposerGyroscope, 2900);   // après l'écran d'ouverture
+// Proposée une fois l'écran d'ouverture effacé (voir plus bas). Le délai laisse arriver les mesures :
+// si le mouvement est déjà autorisé, la fenêtre ne s'ouvre pas.
 
 // ---------- Démarrage ----------
 
@@ -915,6 +916,7 @@ const vibrer = ms => { if (prefs.vibrations !== false) navigator.vibrate?.(ms); 
 // Interrupteurs : { id de la case : [nom de la préférence, valeur par défaut] }
 const INTERRUPTEURS = {
   "reglage-sons": ["sons", true],
+  "reglage-musique": ["musique", true],
   "reglage-vibrations": ["vibrations", true],
   "reglage-animations": ["animationsReduites", false],
   "reglage-ouverture": ["ouvertureRapide", false],
@@ -935,6 +937,7 @@ for (const [id, [cle, defaut]] of Object.entries(INTERRUPTEURS)) {
     appliquerReglages();
     if (cle === "vibrations" && caseACocher.checked) vibrer(20);   // petit essai
     if (cle === "sons" && caseACocher.checked) jouerSon("legendaire");
+    if (cle === "musique") caseACocher.checked ? autoriserMusique() : arreterMusique();
   });
 }
 
@@ -1421,12 +1424,55 @@ $("#car-prevenir").addEventListener("click", () => {
   setTimeout(majCompteARebours, 1500);
 });
 
-// Écran d'ouverture : un appui le passe ; il est retiré une fois effacé.
-const intro = $("#intro");
+// ---------- Musique d'ambiance (sons.js) ----------
+// Elle ne démarre qu'après un appui du joueur (règle des navigateurs) :
+// après le jingle de « Touchez pour jouer », sinon au premier appui sur l'écran.
+let musiqueAutorisee = false;
+const lancerMusique = () => { if (musiqueAutorisee) demarrerMusique(etat.region); };
+function autoriserMusique() {
+  musiqueAutorisee = true;
+  lancerMusique();
+}
+let attenteJingle = false;   // « Touchez pour jouer » vient d'être touché : la musique attend la fin du jingle
+document.addEventListener("pointerdown", function premierAppui() {
+  if (!musiqueAutorisee) {
+    if (intro?.isConnected && !racine.classList.contains("intro-lancee")) return;   // l'écran d'ouverture s'en charge
+    if (attenteJingle) return;
+    autoriserMusique();
+  }
+  document.removeEventListener("pointerdown", premierAppui);
+});
+
+// Écran d'ouverture : « Touchez pour jouer » → fanfare (sons.js) et animation ;
+// un 2e appui le passe. Il est retiré une fois effacé.
+const intro = getComputedStyle($("#intro")).display === "none" ? null : $("#intro");
+const racine = document.documentElement;
+// Retire l'écran d'ouverture (une seule fois), puis propose le gyroscope sur iPhone.
+function retirerIntro() {
+  if (!intro.isConnected) return;
+  intro.remove();
+  setTimeout(proposerGyroscope, 400);
+}
+function lancerIntro() {
+  if (racine.classList.contains("intro-lancee")) return;
+  racine.classList.add("intro-lancee");
+  jouerSon("ouverture");
+  attenteJingle = true;
+  setTimeout(autoriserMusique, 4500);   // l'ambiance de la région prend le relais du jingle
+  setTimeout(retirerIntro, 3500);   // sécurité
+}
 if (intro) {
-  intro.addEventListener("click", () => intro.classList.add("fini"));
-  intro.addEventListener("animationend", e => { if (e.animationName === "intro-sortie") intro.remove(); });
-  setTimeout(() => intro.remove(), 3500);   // sécurité
+  intro.addEventListener("click", () => {
+    if (racine.classList.contains("intro-lancee")) intro.classList.add("fini");
+    else lancerIntro();
+  });
+  addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") lancerIntro(); });
+  intro.addEventListener("animationend", e => {
+    if (e.animationName === "intro-sortie" && e.target === intro) retirerIntro();
+  });
+  if (racine.classList.contains("intro-lancee")) setTimeout(retirerIntro, 3500);   // sons coupés : sécurité
+} else {
+  setTimeout(proposerGyroscope, 600);
 }
 
 async function demarrer() {
