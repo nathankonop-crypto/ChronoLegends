@@ -6,6 +6,18 @@
 <title>ChronoLegends — Cartes d'histoire du monde</title>
 <meta name="description" content="Collectionnez les grandes figures de l'histoire mondiale.">
 <meta name="theme-color" content="#101320">
+<!-- Aperçu du lien quand on le partage (WhatsApp, Messenger, SMS, Facebook…) : images/partage/apercu-*.jpg -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ChronoLegends">
+<meta property="og:url" content="https://chronolegendsgames.com/">
+<meta property="og:title" content="ChronoLegends — Les grandes figures de l'histoire, à collectionner">
+<meta property="og:description" content="Ouvrez vos boosters, découvrez Cléopâtre, César, Ishtar et des dizaines de légendes. Un booster gratuit chaque jour !">
+<meta property="og:image" content="https://chronolegendsgames.com/images/partage/apercu-fr.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Cartes ChronoLegends : Cléopâtre, Ishtar et Jules César">
+<meta property="og:locale" content="fr_FR">
+<meta name="twitter:card" content="summary_large_image">
 <!-- Application installable (écran d'accueil) : manifest.webmanifest, sw.js, icônes dans images/app -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="images/app/favicon.png">
@@ -28,7 +40,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261016-1222">
+<link rel="stylesheet" href="style.css?v=20261016-1228">
 </head>
 <body>
 
@@ -235,6 +247,7 @@
   <section class="dialogue-chances dialogue-inviter" role="dialog" aria-modal="true" aria-labelledby="titre-inviter">
     <button class="savoir-plus-fermer" id="fermer-inviter" aria-label="Fermer" data-t-aria="fermer">×</button>
     <h2 id="titre-inviter" data-t="inviterAmi">Inviter un ami</h2>
+    <img class="inviter-image" id="inviter-image" alt="" width="1200" height="630">
     <p class="inviter-message" id="inviter-message"></p>
     <div class="inviter-actions">
       <a class="bouton bouton-whatsapp" id="inviter-whatsapp" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5a9.5 9.5 0 0 0-8.2 14.3L2.5 21.5l4.8-1.3A9.5 9.5 0 1 0 12 2.5zm5.5 13.4c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9 0-1.4.7-2 1-2.3.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .6l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.3 2.4 1.5.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.5.3.1.1.1.6-.1 1.2z"/></svg><span>WhatsApp</span></a>
@@ -260,13 +273,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261016-1222"></script>
-<script src="langue.js?v=20261016-1222"></script>
-<script src="anti-robot.js?v=20261016-1222"></script>
-<script src="carte.js?v=20261016-1222"></script>
-<script src="partage.js?v=20261016-1222"></script>
-<script src="monuments.js?v=20261016-1222"></script>
-<script src="sons.js?v=20261016-1222"></script>
-<script src="app.js?v=20261016-1222"></script>
+<script src="reglages.js?v=20261016-1228"></script>
+<script src="langue.js?v=20261016-1228"></script>
+<script src="anti-robot.js?v=20261016-1228"></script>
+<script src="carte.js?v=20261016-1228"></script>
+<script src="partage.js?v=20261016-1228"></script>
+<script src="monuments.js?v=20261016-1228"></script>
+<script src="sons.js?v=20261016-1228"></script>
+<script src="app.js?v=20261016-1228"></script>
 </body>
 </html>

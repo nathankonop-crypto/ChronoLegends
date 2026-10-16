@@ -1730,3 +1730,4 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
 .inviter-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
 .bouton-whatsapp { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; background: #25d366; border-color: #25d366; color: #06301a; }
 .bouton-whatsapp svg { width: 18px; height: 18px; fill: currentColor; }
+.inviter-image { display: block; width: 100%; height: auto; margin: 12px 0 0; border-radius: 10px; box-shadow: 0 10px 24px rgba(0, 0, 0, .5); }

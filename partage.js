@@ -148,11 +148,28 @@ async function partagerCarte(carte) {
 // Ordinateur : petite fenêtre « WhatsApp » ou « Copier le lien ».
 const texteInvitation = () => `${t("invitationTexte")} ${ADRESSE_SITE}`;
 
+// Image d'aperçu du jeu (logo + cartes légendaires), jointe à l'invitation sur téléphone.
+// Préparée à l'avance : un partage doit partir tout de suite après l'appui (sinon l'iPhone le refuse).
+const imageInvitation = () => `images/partage/apercu-${LANGUE}.jpg`;
+let fichierInvitation = null;
+setTimeout(() => {
+  fetch(imageInvitation()).then(r => (r.ok ? r.blob() : null))
+    .then(b => { if (b) fichierInvitation = new File([b], "chronolegends.jpg", { type: "image/jpeg" }); })
+    .catch(() => {});
+}, 4000);
+
 async function inviterUnAmi() {
   if (navigator.share && matchMedia("(pointer: coarse)").matches) {
+    // 1. Avec l'image (WhatsApp l'envoie avec le message et le lien en légende)
+    if (fichierInvitation && navigator.canShare?.({ files: [fichierInvitation] })) {
+      try { await navigator.share({ files: [fichierInvitation], text: texteInvitation() }); return; }
+      catch (e) { if (e.name === "AbortError") return; }   // menu fermé par le joueur
+    }
+    // 2. Sans image : le lien seul (l'aperçu du site s'affiche quand même dans WhatsApp)
     try { await navigator.share({ title: "ChronoLegends", text: t("invitationTexte"), url: ADRESSE_SITE }); return; }
-    catch (e) { if (e.name === "AbortError") return; }   // menu fermé par le joueur
+    catch (e) { if (e.name === "AbortError") return; }
   }
+  $("#inviter-image").src = imageInvitation();
   $("#inviter-message").textContent = texteInvitation();
   $("#inviter-whatsapp").href = `https://wa.me/?text=${encodeURIComponent(texteInvitation())}`;
   $("#dialogue-inviter").hidden = false;
