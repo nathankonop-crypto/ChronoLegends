@@ -1882,3 +1882,27 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
   font-family: var(--serif); font-size: 15px; font-style: italic; color: var(--texte-doux);
 }
 .retour-roue:hover { color: var(--or-clair); }
+
+/* ---------- Mon compte (compte.js) ---------- */
+.bloc-compte { display: flex; flex-direction: column; gap: 6px; }
+.bloc-compte[hidden], .reglages-rubrique[hidden] { display: none; }
+.compte-etat { margin: 0; font-size: 13px; line-height: 1.4; color: var(--texte-doux); }
+.compte-connecte { display: flex; flex-direction: column; gap: 2px; }
+.compte-connecte b { font-family: var(--serif-titre); font-size: 15px; letter-spacing: .04em; color: var(--or-clair); }
+.compte-connecte span { font-size: 12px; overflow-wrap: anywhere; }
+.bouton-compte { width: 100%; margin-top: 4px; padding: 10px 14px; font-size: 13px; }
+.form-compte { display: flex; flex-direction: column; gap: 10px; }
+.form-compte p { margin: 0; line-height: 1.45; color: var(--texte-doux); }
+.form-compte small { margin-top: -6px; font-size: 12px; color: var(--texte-doux); opacity: .8; }
+.champ-compte { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--texte-doux); }
+.champ-compte input {
+  width: 100%; padding: 11px 12px; border-radius: 10px; font: inherit; font-size: 16px; color: var(--texte);
+  background: rgba(255, 255, 255, .04); border: 1px solid rgba(212, 178, 106, .3);
+}
+.champ-compte input:focus { outline: none; border-color: var(--or); box-shadow: 0 0 0 3px rgba(212, 178, 106, .18); }
+.champ-compte .champ-code { font-family: var(--serif-titre); font-size: 26px; letter-spacing: .4em; text-align: center; }
+.form-compte .bouton-or { margin-top: 4px; }
+.form-compte .lien-reglages { align-self: center; width: auto; margin-top: 0; padding: 4px 0; border-top: 0; text-align: center; font-size: 14px; }
+.erreur-compte { min-height: 1em; color: #f1b3ab !important; font-size: 13px; }
+.erreur-compte:empty { display: none; }
+.avertissement-compte { padding: 8px 10px; border-radius: 8px; background: rgba(220, 150, 60, .12); border: 1px solid rgba(220, 150, 60, .35); font-size: 13px; }

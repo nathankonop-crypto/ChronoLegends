@@ -855,6 +855,11 @@ function revenirAuBooster() {
   $("#zone-booster").hidden = false;
   remplacerPaquetOuvert();   // un nouveau paquet prend la place de celui qu'on vient d'ouvrir
   afficherRoue();
+  if (!DEMO) {
+    prefs.nbOuvertures = (prefs.nbOuvertures || 0) + 1;
+    sauvegarderPrefs();
+    if (typeof proposerCompte === "function") proposerCompte();   // compte.js : après 3 boosters en invité
+  }
 }
 
 // --- Collection ---
@@ -1988,6 +1993,7 @@ async function demarrer() {
     const q = await reclamerQuotidien();
     etatJeu.pret = true;
     majNotifications();
+    if (typeof majCompte === "function") majCompte().catch(console.error);   // compte.js
     majCompteur();
     majPointCollection();
     majConsigne();
