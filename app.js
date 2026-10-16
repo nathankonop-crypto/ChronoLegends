@@ -1478,7 +1478,7 @@ function dechirerBooster(trace) {
   vibrer([25, 40, 45]);
   jouerSon("decoupe");
   musiqueOuverture(true, boosterEl.classList.contains("dore"));
-  setTimeout(() => jouerSon("glissement"), 150);   // les cartes sortent du paquet (style.css : cartes-montent)
+  setTimeout(() => jouerSon("glissement"), 330);   // les cartes sortent du paquet (style.css : cartes-montent)
   // Tracé de gauche à droite, prolongé jusqu'aux deux bords du paquet.
   const t = trace[0][0] > trace[trace.length - 1][0] ? [...trace].reverse() : [...trace];
   t.unshift([0, t[0][1]]);
@@ -1495,10 +1495,12 @@ function dechirerBooster(trace) {
     moitie.className = `moitie ${cote}`;
     moitie.style.clipPath = `polygon(${forme})`;
     contenu.forEach(el => moitie.appendChild(el.cloneNode(true)));
-    // Bord de la face avant : un fin liseré argenté irisé (l'intérieur du film), qui suit exactement la coupe.
+    // Bord de la face avant, qui suit exactement la coupe : un fin liseré argenté irisé (l'intérieur du film)
+    // et, juste dessous, le reflet du film qui se courbe vers nous (style.css : .levre-paquet, .pli-paquet).
     if (cote === "bas") {
-      const decale = t.map(([x, y]) => [x, y + 1.2]).reverse();
-      moitie.insertAdjacentHTML("beforeend", `<span class="levre-paquet" style="clip-path: polygon(${points(t)}, ${points(decale)})"></span>`);
+      const bande = h => `polygon(${points(t)}, ${points(t.map(([x, y]) => [x, y + h]).reverse())})`;
+      moitie.insertAdjacentHTML("beforeend", `<span class="pli-paquet" style="clip-path: ${bande(9)}"></span>`
+        + `<span class="levre-paquet" style="clip-path: ${bande(1.2)}"></span>`);
     }
     boosterEl.appendChild(moitie);
   }
