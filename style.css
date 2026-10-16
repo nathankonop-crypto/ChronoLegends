@@ -1807,9 +1807,9 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
   background: radial-gradient(ellipse at 50% 40%, rgba(212, 178, 106, .16), transparent 65%);
   pointer-events: none;
 }
-/* Pas de booster disponible : la roue est grisée et ne réagit plus */
-.roue.inactive .roue-scene { filter: grayscale(.85) brightness(.55); }
-.roue.inactive { cursor: default; }
+/* Pas de booster disponible : les paquets sont grisés, mais la roue tourne toujours (seul l'appui pour ouvrir est refusé).
+   Le gris va sur chaque paquet, jamais sur .roue-scene : un filtre sur la scène écrase la 3D (paquets à plat sur Android). */
+.roue.inactive .paquet-roue, .roue.inactive .paquet-dos { filter: grayscale(.85) brightness(.55); }
 /* Revenir à la roue sans ouvrir le paquet */
 .retour-roue {
   align-self: center; margin-bottom: -10px; padding: 6px 10px; border: 0; background: none; cursor: pointer;

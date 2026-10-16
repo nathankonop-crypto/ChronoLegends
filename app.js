@@ -1666,7 +1666,7 @@ const INCLINAISON_PAQUET = 26;   // degrés, au maximum
 $("#roue").addEventListener("pointerdown", e => {
   roue.glisse = { x: e.clientX, angle: roue.angle, dernierX: e.clientX, dernierT: performance.now(), vitesse: 0, bouge: false };
   const place = e.target.closest(".roue-place");
-  if (place && !$("#roue").classList.contains("inactive")) {
+  if (place) {
     clearTimeout(roue.attentePenche);
     roue.attentePenche = setTimeout(() => entrerPenche(place, e), DELAI_PENCHE);
   }
