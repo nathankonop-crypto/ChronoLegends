@@ -47,7 +47,8 @@ function afficherBlocCompte() {
       <button class="bouton bouton-or bouton-compte" data-compte="creer">${echapper(t("creerCompteBonus"))}</button>
       <button class="lien-reglages" data-compte="connexion">${echapper(t("dejaCompte"))}</button>`;
   } else {
-    bloc.innerHTML = `<p class="compte-etat compte-connecte"><b>${echapper(compte.pseudo || "—")}</b><span>${echapper(compte.email)}</span></p>
+    // L'e-mail n'est pas affiché (captures d'écran, écran partagé…) : seulement le pseudo.
+    bloc.innerHTML = `<p class="compte-etat compte-connecte"><b>${echapper(compte.pseudo || "—")}</b></p>
       <button class="lien-reglages" data-compte="pseudo">${echapper(t(compte.pseudo ? "changerPseudo" : "choisirPseudo"))}</button>
       <button class="lien-reglages" data-compte="deconnexion">${echapper(t("seDeconnecter"))}</button>`;
   }
