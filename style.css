@@ -1402,9 +1402,12 @@ html:not(.intro-lancee) .intro-etoile img { animation: intro-respire 2.6s ease-i
   .car-temps { font-size: 20px; letter-spacing: .06em; }
   .car-prevenir { flex-basis: 100%; max-width: max-content; margin-top: 4px; padding: 6px 14px; font-size: 11px; }
   .zone-booster.mode-roue { gap: 14px; padding-top: 0; min-height: calc(100svh - 190px - env(safe-area-inset-bottom)); justify-content: flex-start; }
-  /* Roue : le compte à rebours passe en haut de l'écran, la roue est poussée vers le bas, près du pouce */
-  .zone-booster.mode-roue > .compte-a-rebours { order: -1; margin-top: 0; }
-  .zone-booster.mode-roue > .roue { margin-top: auto; }
+  /* Roue : compte à rebours, consigne et région en haut de l'écran ; la roue est poussée tout en bas, près du pouce */
+  .zone-booster.mode-roue > .compte-a-rebours { order: -4; margin-top: 0; }
+  .zone-booster.mode-roue > .consigne { order: -3; }
+  .zone-booster.mode-roue > .region-joueur, .zone-booster.mode-roue > .verrou-region { order: -2; margin-top: -6px; }
+  .zone-booster.mode-roue > .anti-robot { order: -1; }
+  .zone-booster.mode-roue > .roue { margin-top: auto; margin-bottom: -40px; }   /* le bas du reflet passe sous les onglets */
 }
 
 /* ---------- 1er booster : un doigt fait le geste de découpe, en boucle ---------- */
