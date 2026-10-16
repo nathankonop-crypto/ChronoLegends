@@ -1801,7 +1801,7 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
 .zone-booster:not(.mode-roue) .roue, .zone-booster.mode-roue #booster,
 .zone-booster.mode-roue .retour-roue { display: none; }
 .roue {
-  --lp: min(40vw, 168px);
+  --lp: min(50vw, 210px);   /* largeur d'un paquet de la roue */
   position: relative; width: calc(100% + 32px); max-width: 900px; margin: -6px -16px 0;
   height: calc(var(--lp) * 98 / 63 + 100px);
   overflow: hidden; perspective: 620px; perspective-origin: 50% 32%;
