@@ -662,6 +662,11 @@ function reveler(emplacement, carte) {
     : carte.finition === "emeraude" || carte.rarete === "legendaire" ? "legendaire"
     : carte.rarete === "epique" ? "epique" : null;
   if (carillon) setTimeout(() => jouerSon(carillon), 180);
+  // Légendaire / Mythique révélée sans la grande révélation (2ᵉ Légendaire du booster, animations
+  // réduites) : le téléphone vibre quand même (pendant la grande révélation, elle a ses propres vibrations).
+  if (!spectacleEnCours && (carte.rarete === "legendaire" || carte.rarete === "mythique")) {
+    vibrer(carte.rarete === "mythique" ? [60, 50, 140, 50, 200] : [50, 40, 120]);
+  }
   if (spectacleEnCours && carte.finition === "normale") return;   // la grande révélation affiche déjà le nom
   if (carte.finition === "diamant") notifier(t("notifDiamant", { nom: carte.nom }));
   else if (carte.finition === "emeraude") notifier(t("notifEmeraude", { nom: carte.nom }));
@@ -1090,7 +1095,35 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#dialo
 
 // ---------- Paramètres (engrenage) : langue, confort, chances de tirage ----------
 
-const vibrer = ms => { if (prefs.vibrations !== false) navigator.vibrate?.(ms); };
+// Vibrations : ms = durée, ou motif [vibre, pause, vibre…] en millisecondes.
+// iPhone : Apple ne laisse pas les sites faire vibrer le téléphone (pas de navigator.vibrate).
+// Astuce (iOS 18 et plus) : basculer un interrupteur caché produit un petit « tic » haptique ;
+// on en joue un au début de chaque vibration du motif.
+const interrupteurHaptique = (() => {
+  if (navigator.vibrate || !estIOSAppareil()) return null;
+  const etiquette = document.createElement("label");
+  etiquette.setAttribute("aria-hidden", "true");
+  etiquette.style.cssText = "position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden";
+  etiquette.innerHTML = '<input type="checkbox" switch tabindex="-1">';
+  // Ce clic invisible ne doit rien déclencher d'autre (fermer les Paramètres, passer une révélation…).
+  etiquette.addEventListener("click", e => e.stopPropagation());
+  document.body.appendChild(etiquette);
+  return etiquette;
+})();
+function estIOSAppareil() {
+  return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+function vibrer(ms) {
+  if (prefs.vibrations === false) return;
+  if (navigator.vibrate) return navigator.vibrate(ms);
+  if (!interrupteurHaptique) return;
+  const motif = Array.isArray(ms) ? ms : [ms];
+  let t = 0;
+  motif.forEach((duree, i) => {
+    if (i % 2 === 0) setTimeout(() => interrupteurHaptique.click(), t);   // un « tic » par vibration
+    t += duree;
+  });
+}
 
 // Interrupteurs : { id de la case : [nom de la préférence, valeur par défaut] }
 const INTERRUPTEURS = {
@@ -1210,7 +1243,7 @@ $("#inviter-copier").addEventListener("click", async () => {
 // iPhone / iPad : Apple ne le permet pas en un clic, on montre comment faire.
 let invitationInstallation = null;
 const estInstallee = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
-const estIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const estIOS = estIOSAppareil();
 const ICONE_PARTAGE = `<svg class="icone-partage-ios" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 7l4-4 4 4M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1"/></svg>`;
 function majBoutonInstaller() {
   $("#bouton-installer").hidden = estInstallee() || !(invitationInstallation || estIOS);
