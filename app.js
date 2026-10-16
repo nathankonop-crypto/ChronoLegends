@@ -353,7 +353,34 @@ function afficherVue(nom) {
   document.querySelectorAll(".onglet").forEach(o => o.classList.toggle("actif", o.dataset.vue === nom));
   $("#vue-booster").hidden = nom !== "booster";
   $("#vue-collection").hidden = nom !== "collection";
-  if (nom === "collection") afficherCollection();
+  if (nom === "collection") {
+    voirNouvelles();
+    afficherCollection();
+  }
+}
+
+// ---------- Point rouge sur l'onglet Collection : des cartes nouvelles à découvrir ----------
+let nouvellesAffichees = new Set();   // cartes marquées « Nouvelle » dans la collection, pendant cette visite
+
+function majPointCollection() {
+  $("#point-collection").hidden = !(prefs.cartesAVoir || []).some(id => CARTES.find(c => c.id === id));
+}
+
+// Le joueur ouvre la collection : les nouvelles cartes portent l'étiquette « Nouvelle »,
+// le point rouge disparaît, et on affiche l'époque qui contient la première nouvelle carte.
+function voirNouvelles() {
+  const ids = (prefs.cartesAVoir || []).filter(id => CARTES.find(c => c.id === id));
+  nouvellesAffichees = new Set(ids);
+  if (!ids.length) return;
+  const visible = familleActive ? cartesFamille(familleActive) : cartesExtension;
+  if (!visible.some(c => nouvellesAffichees.has(c.id))) {
+    familleActive = null;
+    extensionActive = etat.extension = CARTES.find(c => c.id === ids[0]).extension;
+    cartesExtension = cartesDe(extensionActive);
+  }
+  prefs.cartesAVoir = [];
+  sauvegarderPrefs();
+  majPointCollection();
 }
 
 // --- Ouverture d'un booster (style Pokémon : une pile de cartes) ---
@@ -405,7 +432,14 @@ async function ouvrirBooster(dechire = false) {
   if (data.pitie) notifier(t("notifPitie"));   // la pitié a forcé une Légendaire
   appliquerRegion(data);
   tirage.forEach(c => ajouterExemplaires(c.id, c.finition));
+  // Nouvelles cartes : point rouge sur l'onglet Collection jusqu'à ce que le joueur aille les voir.
+  const nouvellesIds = tirage.filter((c, i) => data.cartes[i].nouvelle).map(c => c.id);
+  if (nouvellesIds.length) {
+    prefs.cartesAVoir = [...new Set([...(prefs.cartesAVoir || []), ...nouvellesIds])];
+    sauvegarderPrefs();
+  }
   majCompteur();
+  majPointCollection();
 
   await animation;
   $("#zone-booster").hidden = true;
@@ -552,6 +586,12 @@ function reveler(emplacement, carte) {
   if (pileNouvelles[Number(emplacement.dataset.index)] && !emplacement.querySelector(".nouvelle")) {
     emplacement.insertAdjacentHTML("beforeend", `<span class="nouvelle">${t("nouvelle")}</span>`);
   }
+  // Son : la carte se retourne, puis un carillon pour les cartes exceptionnelles.
+  jouerSon("retournement");
+  const carillon = carte.finition === "diamant" || carte.rarete === "mythique" ? "diamant"
+    : carte.finition === "emeraude" || carte.rarete === "legendaire" ? "legendaire"
+    : carte.rarete === "epique" ? "epique" : null;
+  if (carillon) setTimeout(() => jouerSon(carillon), 180);
   if (carte.finition === "diamant") notifier(t("notifDiamant", { nom: carte.nom }));
   else if (carte.finition === "emeraude") notifier(t("notifEmeraude", { nom: carte.nom }));
   else if (carte.rarete === "mythique") notifier(t("notifMythique", { nom: carte.nom }));
@@ -579,7 +619,7 @@ function terminerPile() {
     el.innerHTML = htmlCarte(carte)
       + (pileNouvelles[i] ? `<span class="nouvelle">${t("nouvelle")}</span>` : "");
     el.setAttribute("aria-label", `${carte.nom}, ${nomRarete(carte.rarete)}, ${t("agrandir")}`);
-    el.addEventListener("click", () => ouvrirModale(carte));
+    el.addEventListener("click", () => ouvrirModale(carte, pileTirage));
     zone.appendChild(el);
   });
 
@@ -642,27 +682,37 @@ function afficherCollection() {
     ? t("progression", { n: possedees, total })
     : t("epoqueVide");
 
-  // Toutes (les obtenues d'abord) / Obtenues / Manquantes.
+  // Toutes (les obtenues d'abord) / Obtenues / Manquantes / Doublons (pour les futurs échanges).
   const mode = prefs.possession || "toutes";
   $("#filtre-possession").querySelectorAll("button").forEach(b => b.classList.toggle("actif", b.dataset.possession === mode));
   const obtenues = liste.filter(c => etat.collection[c.id]);
   const manquantes = liste.filter(c => !etat.collection[c.id]);
-  const affichees = mode === "obtenues" ? obtenues : mode === "manquantes" ? manquantes : [...obtenues, ...manquantes];
+  const doublons = obtenues.filter(c => etat.collection[c.id] > 1);
+  const affichees = { obtenues, manquantes, doublons }[mode] || [...obtenues, ...manquantes];
   $("#collection-vide").hidden = affichees.length > 0 || total === 0;
-  $("#collection-vide").textContent = t(mode === "obtenues" ? "aucuneObtenue" : "toutObtenu");
+  $("#collection-vide").textContent = t({ obtenues: "aucuneObtenue", doublons: "aucunDoublon" }[mode] || "toutObtenu");
+  // Doublons : combien de cartes en double, et combien d'exemplaires en trop (à échanger plus tard).
+  $("#doublons-info").hidden = mode !== "doublons" || !doublons.length;
+  $("#doublons-info").textContent = t("doublonsInfo", {
+    n: doublons.length, total: doublons.reduce((s, c) => s + etat.collection[c.id] - 1, 0) });
 
   const grille = $("#grille-collection");
   grille.innerHTML = "";
+  // Cartes possédées, dans l'ordre affiché, dans leur plus belle version :
+  // dans la carte agrandie, on passe de l'une à l'autre.
+  const possedeesAffichees = affichees.filter(c => etat.collection[c.id])
+    .map(c => ({ ...c, finition: versionsPossedees(c.id)[0] || "normale" }));
   for (const carte of affichees) {
     const nb = etat.collection[carte.id] || 0;
     const el = document.createElement(nb ? "button" : "div");
     el.className = "case-collection";
     if (nb) {
-      // On montre la plus belle version possédée.
-      const versionCarte = { ...carte, finition: versionsPossedees(carte.id)[0] || "normale" };
-      el.innerHTML = htmlCarte(versionCarte) + (nb > 1 ? `<span class="exemplaires">×${nb}</span>` : "");
-      el.setAttribute("aria-label", `${carte.nom}, ${t("agrandir")}`);
-      el.addEventListener("click", () => ouvrirModale(versionCarte));
+      const versionCarte = possedeesAffichees.find(c => c.id === carte.id);
+      el.innerHTML = htmlCarte(versionCarte)
+        + (nb > 1 ? `<span class="exemplaires">×${nb}</span>` : "")
+        + (nouvellesAffichees.has(carte.id) ? `<span class="nouvelle">${t("nouvelle")}</span>` : "");
+      el.setAttribute("aria-label", `${carte.nom}${nb > 1 ? ` ×${nb}` : ""}, ${t("agrandir")}`);
+      el.addEventListener("click", () => ouvrirModale(versionCarte, possedeesAffichees));
     } else {
       el.innerHTML = `<div class="manquante"><span>${t("numero")} ${numero(carte)}</span><span class="manquante-rarete">${nomRarete(carte.rarete)}</span></div>`;
     }
@@ -686,7 +736,35 @@ function afficherVersion(carte) {
   setTimeout(() => preparerPartage(carte), 400);   // après l'animation d'ouverture
 }
 
-function ouvrirModale(carte) {
+// liste : les cartes voisines (collection affichée, booster ouvert) pour passer de l'une à l'autre.
+let listeModale = [];
+let indexModale = -1;
+
+function ouvrirModale(carte, liste = []) {
+  listeModale = liste;
+  indexModale = liste.findIndex(c => c.id === carte.id);
+  montrerCarteModale(carte);
+  $("#modale-contenu").style.transform = "";
+  positionDeDepart = null; // le gyroscope repart de la façon dont on tient le téléphone
+  $("#activer-gyroscope").hidden = !gyroscopeAActiver();
+  $("#modale").hidden = false;
+  requestAnimationFrame(() => $("#modale").classList.add("ouverte"));
+}
+
+// Carte précédente (-1) ou suivante (+1), avec un petit glissement.
+function changerCarteModale(sens) {
+  const i = indexModale + sens;
+  if (indexModale < 0 || i < 0 || i >= listeModale.length || !$("#savoir-plus").hidden) return;
+  indexModale = i;
+  montrerCarteModale(listeModale[i]);
+  const contenu = $("#modale-contenu");
+  contenu.classList.remove("arrivee-suivante", "arrivee-precedente");
+  void contenu.offsetWidth;   // relance l'animation
+  contenu.classList.add(sens > 0 ? "arrivee-suivante" : "arrivee-precedente");
+  jouerSon("retournement");
+}
+
+function montrerCarteModale(carte) {
   afficherVersion(carte);
   // Plusieurs versions possédées (normale, animée, diamant) : boutons pour passer de l'une à l'autre.
   const versions = versionsPossedees(carte.id);
@@ -703,12 +781,31 @@ function ouvrirModale(carte) {
   $("#savoir-plus").hidden = true;
   $("#savoir-plus-nom").textContent = carte.nom;
   $("#savoir-plus-texte").textContent = carte.enSavoirPlus || "";
-  $("#modale-contenu").style.transform = "";
-  positionDeDepart = null; // le gyroscope repart de la façon dont on tient le téléphone
-  $("#activer-gyroscope").hidden = !gyroscopeAActiver();
-  $("#modale").hidden = false;
-  requestAnimationFrame(() => $("#modale").classList.add("ouverte"));
+  // Flèches et position « 3 / 12 » (seulement s'il y a des cartes voisines).
+  const navigation = indexModale >= 0 && listeModale.length > 1;
+  $("#modale-precedente").hidden = !navigation || indexModale === 0;
+  $("#modale-suivante").hidden = !navigation || indexModale === listeModale.length - 1;
+  $("#modale-position").hidden = !navigation;
+  $("#modale-position").textContent = navigation ? `${indexModale + 1} / ${listeModale.length}` : "";
 }
+
+$("#modale-precedente").addEventListener("click", () => changerCarteModale(-1));
+$("#modale-suivante").addEventListener("click", () => changerCarteModale(1));
+// Glisser la carte à gauche ou à droite (en hébreu, le sens de lecture est inversé).
+const sensLecture = () => (document.documentElement.dir === "rtl" ? -1 : 1);
+let departGlisseModale = null;
+$("#modale-contenu").addEventListener("pointerdown", e => { departGlisseModale = { x: e.clientX, y: e.clientY }; });
+$("#modale-contenu").addEventListener("pointerup", e => {
+  if (!departGlisseModale) return;
+  const dx = e.clientX - departGlisseModale.x, dy = e.clientY - departGlisseModale.y;
+  departGlisseModale = null;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) changerCarteModale((dx < 0 ? 1 : -1) * sensLecture());
+});
+$("#modale-contenu").addEventListener("pointercancel", () => { departGlisseModale = null; });
+document.addEventListener("keydown", e => {
+  if ($("#modale").hidden || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
+  changerCarteModale((e.key === "ArrowRight" ? 1 : -1) * sensLecture());
+});
 
 function fermerModale() {
   const m = $("#modale");
@@ -817,6 +914,7 @@ const vibrer = ms => { if (prefs.vibrations !== false) navigator.vibrate?.(ms); 
 
 // Interrupteurs : { id de la case : [nom de la préférence, valeur par défaut] }
 const INTERRUPTEURS = {
+  "reglage-sons": ["sons", true],
   "reglage-vibrations": ["vibrations", true],
   "reglage-animations": ["animationsReduites", false],
   "reglage-ouverture": ["ouvertureRapide", false],
@@ -836,6 +934,7 @@ for (const [id, [cle, defaut]] of Object.entries(INTERRUPTEURS)) {
     sauvegarderPrefs();
     appliquerReglages();
     if (cle === "vibrations" && caseACocher.checked) vibrer(20);   // petit essai
+    if (cle === "sons" && caseACocher.checked) jouerSon("legendaire");
   });
 }
 
@@ -1126,6 +1225,7 @@ function dechirerBooster(trace) {
   if (!prefs.tutoDecoupe) { prefs.tutoDecoupe = true; sauvegarderPrefs(); boosterEl.classList.remove("tuto"); }
   boosterEl.dataset.glisse = "1";   // le « clic » qui suit le geste ne doit pas afficher l'aide
   vibrer([25, 40, 45]);
+  jouerSon("decoupe");
   // Tracé de gauche à droite, prolongé jusqu'aux deux bords du paquet.
   const t = trace[0][0] > trace[trace.length - 1][0] ? [...trace].reverse() : [...trace];
   t.unshift([0, t[0][1]]);
@@ -1341,6 +1441,7 @@ async function demarrer() {
     etatJeu.pret = true;
     majNotifications();
     majCompteur();
+    majPointCollection();
     majConsigne();
     if (!$("#vue-collection").hidden) afficherCollection();
     if (q.nouveau) notifier(t("bienvenue", { n: q.boosters }));

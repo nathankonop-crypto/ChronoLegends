@@ -26,7 +26,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261016-0329">
+<link rel="stylesheet" href="style.css?v=20261016-0900">
 </head>
 <body>
 
@@ -43,7 +43,7 @@
   </div>
   <nav class="onglets" aria-label="Navigation">
     <button class="onglet actif" data-vue="booster"><svg class="onglet-icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12M6 20.5h12M7 3.5v17M17 3.5v17"/><path d="M12 9l1.2 2.3 2.3 1.2-2.3 1.2L12 16l-1.2-2.3L8.5 12.5l2.3-1.2z"/></svg><span class="onglet-nom" data-t="ongletBoosters">Boosters</span></button>
-    <button class="onglet" data-vue="collection"><svg class="onglet-icone" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="7" height="9.5" rx="1.3"/><rect x="13.5" y="4" width="7" height="9.5" rx="1.3"/><rect x="3.5" y="16" width="7" height="4.5" rx="1.3"/><rect x="13.5" y="16" width="7" height="4.5" rx="1.3"/></svg><span class="onglet-nom"><span data-t="ongletCollection">Collection</span> <span id="compteur-collection"></span></span></button>
+    <button class="onglet" data-vue="collection"><svg class="onglet-icone" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="7" height="9.5" rx="1.3"/><rect x="13.5" y="4" width="7" height="9.5" rx="1.3"/><rect x="3.5" y="16" width="7" height="4.5" rx="1.3"/><rect x="13.5" y="16" width="7" height="4.5" rx="1.3"/></svg><span class="onglet-nom"><span data-t="ongletCollection">Collection</span> <span id="compteur-collection"></span></span><span class="point-nouveau" id="point-collection" hidden></span></button>
   </nav>
   <!-- Paramètres : petit bouton engrenage, le choix de la langue est dans le panneau -->
   <div class="reglages">
@@ -53,6 +53,8 @@
     </button>
     <div class="panneau-reglages" id="panneau-reglages" role="dialog" aria-labelledby="titre-reglages" hidden>
       <p class="reglages-titre" id="titre-reglages" data-t="parametres">Paramètres</p>
+      <!-- Rubrique « Réglages » : langue et confort -->
+      <p class="reglages-rubrique" data-t="rubriqueReglages">Réglages</p>
       <p class="reglages-libelle" data-t="langue">Langue</p>
       <div class="langues" role="group" aria-label="Langue" data-t-aria="langue">
         <button data-langue="fr" lang="fr">Français</button>
@@ -60,13 +62,16 @@
         <button data-langue="he" lang="he">עברית</button>
       </div>
       <p class="reglages-libelle" data-t="confort">Confort</p>
+      <label class="interrupteur"><span data-t="reglageSons">Sons</span><input type="checkbox" id="reglage-sons" role="switch"></label>
       <label class="interrupteur"><span data-t="reglageVibrations">Vibrations</span><input type="checkbox" id="reglage-vibrations" role="switch"></label>
       <label class="interrupteur"><span data-t="reglageAnimations">Animations réduites</span><input type="checkbox" id="reglage-animations" role="switch"></label>
       <label class="interrupteur"><span data-t="reglageOuverture">Ouverture rapide des boosters</span><input type="checkbox" id="reglage-ouverture" role="switch"></label>
       <label class="interrupteur" id="bloc-notifications" hidden><span data-t="reglageNotifications">Notifications (booster gratuit)</span><input type="checkbox" id="reglage-notifications" role="switch"></label>
+      <!-- Rubrique « Infos » : règles, chances, historique -->
+      <p class="reglages-rubrique" data-t="rubriqueInfos">Infos</p>
       <button class="lien-reglages" id="bouton-regles" data-t="reglesDuJeu">Règles du jeu</button>
-      <button class="lien-reglages lien-reglages-suite" id="bouton-chances" data-t="chancesTirage">Chances de tirage</button>
-      <button class="lien-reglages lien-reglages-suite" id="bouton-historique" data-t="historiqueBoosters">Historique des boosters</button>
+      <button class="lien-reglages" id="bouton-chances" data-t="chancesTirage">Chances de tirage</button>
+      <button class="lien-reglages" id="bouton-historique" data-t="historiqueBoosters">Historique des boosters</button>
       <button class="bouton bouton-or bouton-installer" id="bouton-installer" hidden><img src="images/app/favicon.png" alt=""><span data-t="installerApp">Installer l'application</span></button>
     </div>
   </div>
@@ -138,7 +143,9 @@
       <button data-possession="toutes" data-t="filtreToutes">Toutes</button>
       <button data-possession="obtenues" data-t="filtreObtenues">Obtenues</button>
       <button data-possession="manquantes" data-t="filtreManquantes">Manquantes</button>
+      <button data-possession="doublons" data-t="filtreDoublons">Doublons</button>
     </div>
+    <p class="doublons-info" id="doublons-info" hidden></p>
     <div id="grille-collection" class="grille-collection"></div>
     <p class="collection-vide" id="collection-vide" hidden></p>
   </section>
@@ -152,6 +159,10 @@
 <!-- Agrandissement d'une carte -->
 <div id="modale" class="modale" hidden>
   <div class="modale-contenu" id="modale-contenu"></div>
+  <!-- Carte précédente / suivante (sur téléphone : glisser la carte à gauche ou à droite) -->
+  <button class="modale-fleche precedente" id="modale-precedente" aria-label="Carte précédente" data-t-aria="cartePrecedente" hidden>‹</button>
+  <button class="modale-fleche suivante" id="modale-suivante" aria-label="Carte suivante" data-t-aria="carteSuivante" hidden>›</button>
+  <p class="modale-position" id="modale-position" hidden></p>
   <!-- Versions possédées de la carte (Normale / Animée / Diamant), si plusieurs -->
   <div class="modale-versions" id="modale-versions" role="group" hidden></div>
   <!-- iPhone seulement : autoriser le gyroscope (en haut à gauche, en face de la croix) -->
@@ -228,12 +239,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261016-0329"></script>
-<script src="langue.js?v=20261016-0329"></script>
-<script src="anti-robot.js?v=20261016-0329"></script>
-<script src="carte.js?v=20261016-0329"></script>
-<script src="partage.js?v=20261016-0329"></script>
-<script src="monuments.js?v=20261016-0329"></script>
-<script src="app.js?v=20261016-0329"></script>
+<script src="reglages.js?v=20261016-0900"></script>
+<script src="langue.js?v=20261016-0900"></script>
+<script src="anti-robot.js?v=20261016-0900"></script>
+<script src="carte.js?v=20261016-0900"></script>
+<script src="partage.js?v=20261016-0900"></script>
+<script src="monuments.js?v=20261016-0900"></script>
+<script src="sons.js?v=20261016-0900"></script>
+<script src="app.js?v=20261016-0900"></script>
 </body>
 </html>

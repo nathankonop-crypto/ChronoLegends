@@ -83,7 +83,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .onglet.actif { background: linear-gradient(180deg, #e3c682, #b18d45); color: var(--encre); }
 .onglet span { opacity: .75; font-size: 12px; }
 
-.region-joueur { margin: -12px 0 0; font-family: var(--serif-titre); font-size: 12px; letter-spacing: .08em; color: var(--or); text-align: center; }
+.region-joueur {
+  display: inline-flex; align-items: center; gap: 5px; margin: -12px 0 0; padding: 3px 10px 3px 8px; border-radius: 999px;
+  background: rgba(255, 255, 255, .03); border: 1px solid rgba(212, 178, 106, .15);
+  font-size: 13px; color: var(--texte-doux); opacity: .8; text-align: center;
+}
+.region-joueur::before {
+  content: ""; width: 9px; height: 12px; flex: none; background: var(--or); opacity: .8;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'%3E%3Cpath d='M6 0a6 6 0 0 0-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 0 0-6-6zm0 8.5A2.5 2.5 0 1 1 6 3.5a2.5 2.5 0 0 1 0 5z'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 16'%3E%3Cpath d='M6 0a6 6 0 0 0-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 0 0-6-6zm0 8.5A2.5 2.5 0 1 1 6 3.5a2.5 2.5 0 0 1 0 5z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
 .region-joueur:empty { display: none; }
 .anti-robot { min-height: 65px; display: flex; justify-content: center; }
 .verrou-region { margin: -14px 0 0; max-width: 34ch; text-align: center; font-size: 15px; font-style: italic; color: var(--texte-doux); }
@@ -136,7 +145,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .interrupteur input:checked::after { background: var(--encre); transform: translateX(17px); }
 html[dir="rtl"] .interrupteur input:checked::after { transform: translateX(-17px); }
 .interrupteur input:focus-visible { outline: 2px solid var(--or-clair); outline-offset: 2px; }
-.panneau-reglages .reglages-libelle:not(:first-of-type) { margin-top: 14px; }
+.panneau-reglages .reglages-libelle { margin-top: 10px; }
 .lien-reglages {
   display: block; width: 100%; margin-top: 12px; padding: 9px 0 0; text-align: start; cursor: pointer;
   border: 0; border-top: 1px solid rgba(212, 178, 106, .2); background: none;
@@ -203,7 +212,6 @@ html[dir="rtl"] .dialogue-installer h2 { margin: 8px 0 6px; }
 .chances-liste small { font-weight: 400; color: var(--texte-doux); }
 .pastille-rarete { width: 12px; height: 12px; border-radius: 50%; background: var(--cadre); flex: none; }
 .chances-note { font-size: 14px; font-style: italic; }
-.lien-reglages-suite { margin-top: 2px; border-top: 0; padding-top: 4px; }
 
 /* Règles du jeu */
 .dialogue-regles { width: min(100%, 560px); }
@@ -1097,7 +1105,7 @@ button.case-collection:hover { transform: translateY(-4px); }
 /* ---------- Modale ---------- */
 
 .modale {
-  position: fixed; inset: 0; z-index: 10;
+  position: fixed; inset: 0; z-index: 35;   /* au-dessus de l'engrenage des Paramètres (30), sous les fenêtres (40) */
   display: grid; place-items: center;
   padding: 16px;
   background: rgba(6, 8, 16, .82);
@@ -1210,7 +1218,7 @@ html[dir="rtl"] .savoir-plus-sur { font-size: 13px; }
 /* ---------- Divers ---------- */
 
 .notification {
-  position: fixed; left: 50%; bottom: 24px; z-index: 20;
+  position: fixed; left: 50%; bottom: 24px; z-index: 50;   /* visible aussi par-dessus la carte agrandie et les fenêtres */
   transform: translate(-50%, 30px);
   opacity: 0;
   max-width: calc(100vw - 32px);
@@ -1312,7 +1320,7 @@ html.animations-reduites *, html.animations-reduites *::before, html.animations-
   .entete { padding-block: 10px; }
   .marque-sous { font-size: 13px; }
   .onglets {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 9;   /* sous la carte agrandie (10) */
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 9;   /* sous la carte agrandie (35) */
     justify-content: space-around; gap: 0;
     padding: 6px max(12px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-right));
     border-radius: 0; border: 0; border-top: 1px solid rgba(212, 178, 106, .25);
@@ -1362,3 +1370,69 @@ html.animations-reduites *, html.animations-reduites *::before, html.animations-
   70% { left: 78%; opacity: 1; transform: translateY(0) scale(1); }
   85%, 100% { left: 82%; opacity: 0; transform: translateY(0) scale(1); }
 }
+
+/* ---------- Paramètres rangés en deux rubriques : Réglages / Infos ---------- */
+.reglages-rubrique {
+  display: flex; align-items: center; gap: 8px; margin: 16px 0 4px;
+  font-family: var(--serif-titre); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--or);
+}
+.reglages-rubrique::after { content: ""; flex: 1; height: 1px; background: rgba(212, 178, 106, .22); }
+.reglages-titre + .reglages-rubrique { margin-top: 0; }
+.panneau-reglages .lien-reglages { margin-top: 0; padding: 7px 0; border-top: 0; text-decoration: none; }
+.panneau-reglages .lien-reglages::after { content: " ›"; color: var(--texte-doux); }
+html[dir="rtl"] .panneau-reglages .lien-reglages::after { content: " ‹"; }
+.panneau-reglages .lien-reglages:hover { text-decoration: underline; }
+/* Sur un petit écran, le panneau peut dépasser : on le fait défiler. */
+.panneau-reglages { max-height: calc(100vh - 90px); overflow-y: auto; }
+
+/* ---------- Point rouge : nouvelles cartes dans la collection ---------- */
+.onglet { position: relative; }
+.point-nouveau {
+  position: absolute; top: 5px; inset-inline-end: 8px; width: 9px; height: 9px; border-radius: 50%;
+  background: #ff4d4d; box-shadow: 0 0 0 2px var(--encre-2), 0 0 8px rgba(255, 77, 77, .7);
+  animation: point-battement 1.6s ease-in-out infinite;
+}
+.point-nouveau[hidden] { display: none; }
+@keyframes point-battement { 50% { transform: scale(1.25); } }
+@media (max-width: 640px) {
+  .point-nouveau { top: 4px; inset-inline-end: calc(50% - 20px); box-shadow: 0 0 0 2px #0d101e, 0 0 8px rgba(255, 77, 77, .7); }
+}
+/* Étiquette « Nouvelle » dans la collection : plus petite que dans le booster. */
+/* À gauche : le coin droit porte le médaillon de famille ou de finition. */
+.case-collection .nouvelle { top: -6px; right: auto; left: -4px; font-size: 9px; padding: 3px 6px; animation-delay: .1s; }
+
+/* ---------- Doublons : badge ×N bien visible, pour les futurs échanges ---------- */
+.exemplaires {
+  z-index: 2; background: linear-gradient(180deg, #e3c682, #b18d45); color: var(--encre);
+  border-color: #f1dc9f; box-shadow: 0 3px 8px rgba(0, 0, 0, .55);
+}
+.doublons-info { text-align: center; font-style: italic; color: var(--texte-doux); margin: -12px auto 18px; max-width: 40ch; }
+@media (max-width: 640px) {
+  /* 4 boutons de filtre : plus serrés pour tenir sur la largeur du téléphone. */
+  .filtre-possession button { padding: 6px 9px; font-size: 10.5px; letter-spacing: .05em; }
+}
+
+/* ---------- Carte agrandie : précédente / suivante ---------- */
+.modale-fleche {
+  position: absolute; top: 50%; z-index: 2; width: 44px; height: 44px; margin-top: -22px; border-radius: 50%; cursor: pointer;
+  display: grid; place-items: center; padding: 0 0 4px;
+  border: 1px solid rgba(212, 178, 106, .4); background: var(--encre-2); color: var(--or-clair);
+  font-size: 30px; line-height: 1;
+}
+.modale-fleche[hidden] { display: none; }
+.modale-fleche.precedente { left: 16px; }
+.modale-fleche.suivante { right: 16px; }
+html[dir="rtl"] .modale-fleche.precedente { left: auto; right: 16px; transform: scaleX(-1); }
+html[dir="rtl"] .modale-fleche.suivante { right: auto; left: 16px; transform: scaleX(-1); }
+/* Sur téléphone, on glisse la carte : pas de flèches qui cachent les bords. */
+@media (pointer: coarse) { .modale-fleche { display: none; } }
+.modale-position {
+  position: absolute; top: max(24px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); margin: 0;
+  font-family: var(--serif-titre); font-size: 12px; letter-spacing: .12em; color: var(--texte-doux);
+}
+.modale-contenu.arrivee-suivante > * { animation: arrivee-suivante .28s cubic-bezier(.2, .8, .3, 1); }
+.modale-contenu.arrivee-precedente > * { animation: arrivee-precedente .28s cubic-bezier(.2, .8, .3, 1); }
+@keyframes arrivee-suivante { from { opacity: 0; transform: translateX(28%) rotate(4deg); } }
+@keyframes arrivee-precedente { from { opacity: 0; transform: translateX(-28%) rotate(-4deg); } }
+html[dir="rtl"] .modale-contenu.arrivee-suivante > * { animation-name: arrivee-precedente; }
+html[dir="rtl"] .modale-contenu.arrivee-precedente > * { animation-name: arrivee-suivante; }
