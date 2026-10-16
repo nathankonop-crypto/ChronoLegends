@@ -36,6 +36,12 @@ const REGIONS: Record<string, string> = {
 };
 const EPOQUES = ["antiquite", "moyen-age", "temps-modernes", "epoque-contemporaine"];
 const GAMMES = ["archetype", "personnage"];
+const NOMS_EPOQUES: Record<string, string> = {
+  "antiquite": "Antiquité (jusqu'au Ve siècle)",
+  "moyen-age": "Moyen Âge (Ve – XVe siècle)",
+  "temps-modernes": "Temps modernes (fin XVe siècle – 1789)",
+  "epoque-contemporaine": "Époque contemporaine (après 1789)",
+};
 
 // Style commun à toutes les illustrations (les images de référence montrent ce style).
 const STYLE_IMAGE = "Painterly, realistic and cinematic digital painting for a historical trading card, in the exact art style, " +
@@ -98,7 +104,7 @@ Exemples de cartes existantes :
 - Hatchepsout | règne v. 1479 – 1458 av. J.-C. | Égypte | Femme pharaon de la XVIIIe dynastie. Son règne prospère est marqué par de grands chantiers, dont le temple de Deir el-Bahari, et une expédition vers le pays de Pount.
   (en anglais : Julius Caesar | 100 – 44 BCE | Rome | Roman general and statesman. He conquers Gaul, wins the civil war and becomes dictator. He is assassinated during a session of the Senate.)`;
 
-const SCHEMA_IDEES = {
+const schemaIdees = (epoques: string[]) => ({
   type: "object",
   properties: {
     idees: {
@@ -107,7 +113,7 @@ const SCHEMA_IDEES = {
         type: "object",
         properties: {
           nom: { type: "string" },
-          epoque: { type: "string", enum: EPOQUES },
+          epoque: { type: "string", enum: epoques },
           resume: { type: "string" },
         },
         required: ["nom", "epoque", "resume"],
@@ -117,7 +123,7 @@ const SCHEMA_IDEES = {
   },
   required: ["idees"],
   additionalProperties: false,
-};
+});
 
 const schemaCarte = (familles: string[]) => ({
   type: "object",
@@ -261,6 +267,8 @@ Deno.serve(async (req) => {
   try { corps = await req.json(); } catch { /* corps invalide */ }
   const region = String(corps.region ?? "");
   const gamme = String(corps.gamme ?? "");
+  // Époque choisie dans l'admin ; vide = toutes les époques.
+  const epoque = NOMS_EPOQUES[String(corps.epoque ?? "")] ? String(corps.epoque) : "";
 
   try {
     if (corps.action === "image") {
@@ -278,10 +286,13 @@ Deno.serve(async (req) => {
       if (error) throw new ErreurAgent(`Lecture des cartes impossible : ${error.message}`, 500);
       const liste = (existantes ?? []).map((c) => `- ${c.nom} (${c.gamme}, ${c.region}, ${c.epoque})`).join("\n");
       const exclues = (Array.isArray(corps.exclure) ? corps.exclure : []).map(String).slice(0, 100);
-      const demande = `Région : ${REGIONS[region]}.\nPropose ${nombre} idées de cartes : ${typeTexte}.\n\n` +
+      const consigneEpoque = epoque
+        ? `Toutes les idées doivent appartenir à cette seule époque : ${NOMS_EPOQUES[epoque]}.`
+        : "Toutes les époques sont possibles : varie-les.";
+      const demande = `Région : ${REGIONS[region]}.\nPropose ${nombre} idées de cartes : ${typeTexte}.\n${consigneEpoque}\n\n` +
         `Cartes déjà dans le jeu (toutes régions) :\n${liste || "(aucune)"}` +
         (exclues.length ? `\n\nIdées déjà proposées et écartées, à ne pas reproposer :\n${exclues.map((n) => `- ${n}`).join("\n")}` : "");
-      return reponse(await demanderClaude(CONSIGNES_IDEES, demande, SCHEMA_IDEES, 6000));
+      return reponse(await demanderClaude(CONSIGNES_IDEES, demande, schemaIdees(epoque ? [epoque] : EPOQUES), 6000));
     }
 
     if (corps.action === "carte") {

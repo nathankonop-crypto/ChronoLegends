@@ -660,7 +660,7 @@ async function appelAgent(corps) {
 
 function bloquerAgent(oui) {
   agentEnCours = oui;
-  for (const id of ["#agent-idees", "#agent-autres", "#agent-creer", "#agent-gamme", "#agent-region", "#agent-nombre"]) $(id).disabled = oui;
+  for (const id of ["#agent-idees", "#agent-autres", "#agent-creer", "#agent-gamme", "#agent-region", "#agent-epoque", "#agent-nombre"]) $(id).disabled = oui;
 }
 
 async function chercherIdees(autres = false) {
@@ -670,7 +670,7 @@ async function chercherIdees(autres = false) {
   etatAgent("Claude cherche des idées… (20 à 60 secondes)");
   try {
     const data = await appelAgent({
-      action: "idees", gamme: $("#agent-gamme").value, region: $("#agent-region").value,
+      action: "idees", gamme: $("#agent-gamme").value, region: $("#agent-region").value, epoque: $("#agent-epoque").value,
       nombre: Number($("#agent-nombre").value) || 5, exclure: agentEcartees,
     });
     agentIdees = data.idees || [];
@@ -788,6 +788,7 @@ remplirSelect(form.elements.epoque, nomsEpoque);
 remplirSelect(form.elements.region, REGIONS);
 remplirSelect($("#agent-region"), REGIONS);
 $("#agent-region").value = "moyen-orient";
+remplirSelect($("#agent-epoque"), nomsEpoque, true);
 
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
