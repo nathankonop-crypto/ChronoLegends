@@ -218,8 +218,23 @@ function majConsigne() {
   else if (!etat.region) texte = t("paysInconnu");
   else if (vide) texte = t("regionVide", { region: nomRegion(etat.region) });
   else if (b > 0) texte = t(prefs.ouvertureRapide ? "boostersDispoAppui" : "boostersDispo", { n: b });
-  else texte = t("plusDeBooster", { attente: formatAttente(etat.prochainQuotidien - Date.now()) });
+  else texte = t("plusDeBoosterCourt");
   $("#consigne").textContent = texte;
+  // Plus de booster : grand compte à rebours (mis à jour chaque seconde, voir plus bas).
+  $("#compte-a-rebours").hidden = !(etatJeu.pret && !etatJeu.erreur && etat.region && !vide && b === 0 && etat.prochainQuotidien);
+  majCompteARebours();
+  // Tant que le joueur n'a jamais découpé de paquet : le doigt montre le geste.
+  $("#booster").classList.toggle("tuto", !prefs.tutoDecoupe && !$("#booster").disabled && !prefs.ouvertureRapide);
+}
+
+// « 05:12:33 » jusqu'au prochain booster gratuit.
+function majCompteARebours() {
+  if ($("#compte-a-rebours").hidden) return;
+  const s = Math.max(0, Math.ceil((etat.prochainQuotidien - Date.now()) / 1000));
+  const deux = n => String(n).padStart(2, "0");
+  $("#car-temps").textContent = `${deux(Math.floor(s / 3600))}:${deux(Math.floor(s / 60) % 60)}:${deux(s % 60)}`;
+  // Proposer les notifications, si elles ne sont pas déjà activées.
+  $("#car-prevenir").hidden = !$("#bloc-notifications") || $("#bloc-notifications").hidden || $("#reglage-notifications").checked;
 }
 
 // Région affichée sous le booster (non modifiable : décidée par le serveur).
@@ -627,9 +642,18 @@ function afficherCollection() {
     ? t("progression", { n: possedees, total })
     : t("epoqueVide");
 
+  // Toutes (les obtenues d'abord) / Obtenues / Manquantes.
+  const mode = prefs.possession || "toutes";
+  $("#filtre-possession").querySelectorAll("button").forEach(b => b.classList.toggle("actif", b.dataset.possession === mode));
+  const obtenues = liste.filter(c => etat.collection[c.id]);
+  const manquantes = liste.filter(c => !etat.collection[c.id]);
+  const affichees = mode === "obtenues" ? obtenues : mode === "manquantes" ? manquantes : [...obtenues, ...manquantes];
+  $("#collection-vide").hidden = affichees.length > 0 || total === 0;
+  $("#collection-vide").textContent = t(mode === "obtenues" ? "aucuneObtenue" : "toutObtenu");
+
   const grille = $("#grille-collection");
   grille.innerHTML = "";
-  for (const carte of liste) {
+  for (const carte of affichees) {
     const nb = etat.collection[carte.id] || 0;
     const el = document.createElement(nb ? "button" : "div");
     el.className = "case-collection";
@@ -645,6 +669,12 @@ function afficherCollection() {
     grille.appendChild(el);
   }
 }
+
+$("#filtre-possession").querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+  prefs.possession = b.dataset.possession;
+  sauvegarderPrefs();
+  afficherCollection();
+}));
 
 // --- Agrandissement ---
 
@@ -1093,6 +1123,7 @@ function choisirMonument() {
 // douce s'échappe de l'ouverture, le paquet descend et les cartes en sortent.
 function dechirerBooster(trace) {
   dechirure = null;
+  if (!prefs.tutoDecoupe) { prefs.tutoDecoupe = true; sauvegarderPrefs(); boosterEl.classList.remove("tuto"); }
   boosterEl.dataset.glisse = "1";   // le « clic » qui suit le geste ne doit pas afficher l'aide
   vibrer([25, 40, 45]);
   // Tracé de gauche à droite, prolongé jusqu'aux deux bords du paquet.
@@ -1267,18 +1298,28 @@ document.addEventListener("keydown", e => {
   if (!$("#savoir-plus").hidden) $("#savoir-plus").hidden = true;   // d'abord le texte, puis la carte
   else fermerModale();
 });
-// Toutes les 30 s : met à jour le compte à rebours, et redemande au serveur
-// le cadeau quotidien quand il devrait être dû (c'est lui qui tranche).
+// Chaque seconde : le compte à rebours. Quand il arrive à zéro, on redemande au serveur
+// le cadeau quotidien (c'est lui qui tranche), au plus une fois toutes les 30 s.
+let derniereDemande = 0;
 setInterval(async () => {
   if (!etatJeu.pret) return;
-  if (etat.boosters === 0 && etat.prochainQuotidien && Date.now() >= etat.prochainQuotidien) {
+  majCompteARebours();
+  if (etat.boosters === 0 && etat.prochainQuotidien && Date.now() >= etat.prochainQuotidien && Date.now() - derniereDemande > 30000) {
+    derniereDemande = Date.now();
     try {
       const q = await reclamerQuotidien();
       if (q.accorde) notifier(q.accordes > 1 ? t("quotidienN", { n: q.accordes }) : t("quotidien"));
     } catch (e) { /* on réessaiera au prochain passage */ }
+    majConsigne();
   }
-  majConsigne();
-}, 30000);
+}, 1000);
+// « Me prévenir » sous le compte à rebours : active les notifications.
+$("#car-prevenir").addEventListener("click", () => {
+  const c = $("#reglage-notifications");
+  c.checked = true;
+  c.dispatchEvent(new Event("change"));
+  setTimeout(majCompteARebours, 1500);
+});
 
 // Écran d'ouverture : un appui le passe ; il est retiré une fois effacé.
 const intro = $("#intro");

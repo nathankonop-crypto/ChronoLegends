@@ -1302,3 +1302,63 @@ html.animations-reduites *, html.animations-reduites *::before, html.animations-
   .intro { animation: intro-sortie .4s .9s ease-in forwards; }
   .intro *, .intro-etoile::before, .intro-etoile::after { animation: none !important; }
 }
+
+/* ---------- Icônes des onglets (visibles seulement dans la barre du bas, sur téléphone) ---------- */
+.onglet { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.onglet-icone { display: none; width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
+
+/* ---------- Téléphone : onglets en bas de l'écran, à portée du pouce ; en-tête plus compact ---------- */
+@media (max-width: 640px) {
+  .entete { padding-block: 10px; }
+  .marque-sous { font-size: 13px; }
+  .onglets {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 9;   /* sous la carte agrandie (10) */
+    justify-content: space-around; gap: 0;
+    padding: 6px max(12px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-right));
+    border-radius: 0; border: 0; border-top: 1px solid rgba(212, 178, 106, .25);
+    background: rgba(13, 16, 30, .96);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  }
+  .onglet { flex: 1; max-width: 200px; flex-direction: column; gap: 3px; padding: 6px 4px; border-radius: 14px; font-size: 11px; letter-spacing: .06em; }
+  .onglet.actif { background: rgba(212, 178, 106, .14); color: var(--or-clair); }
+  .onglet-icone { display: block; }
+  .onglet span { opacity: 1; }
+  .onglet #compteur-collection { opacity: .7; font-size: 10px; }
+  body { padding-bottom: calc(66px + env(safe-area-inset-bottom)); }
+  .notification { bottom: calc(80px + env(safe-area-inset-bottom)); }
+}
+
+/* ---------- Collection : Toutes / Obtenues / Manquantes ---------- */
+.filtre-possession { margin: -14px auto 22px; }
+.collection-vide { text-align: center; font-style: italic; color: var(--texte-doux); margin: 10px auto 40px; max-width: 34ch; }
+
+/* ---------- Compte à rebours jusqu'au prochain booster gratuit ---------- */
+.compte-a-rebours {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  margin-top: -8px; padding: 14px 26px; border-radius: 16px;
+  background: var(--encre-2); border: 1px solid rgba(212, 178, 106, .3);
+}
+.car-libelle { font-family: var(--serif-titre); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--texte-doux); }
+.car-temps {
+  font-family: var(--serif-titre); font-weight: 700; font-size: 34px; letter-spacing: .08em;
+  font-variant-numeric: tabular-nums; color: var(--or-clair);
+  text-shadow: 0 0 18px rgba(212, 178, 106, .35);
+}
+.car-prevenir { margin-top: 8px; padding: 8px 16px; font-size: 12px; }
+
+/* ---------- 1er booster : un doigt fait le geste de découpe, en boucle ---------- */
+.tuto-doigt {
+  display: none; position: absolute; top: 8%; left: 10%; z-index: 6;
+  font-size: 44px; line-height: 1; pointer-events: none;
+  transform-origin: 50% 0;
+  filter: drop-shadow(0 0 10px rgba(255, 230, 170, .8)) drop-shadow(0 4px 6px rgba(0, 0, 0, .6));
+  animation: tuto-geste 2.4s ease-in-out infinite;
+}
+.booster.tuto .tuto-doigt { display: block; }
+.booster.tuto.en-dechirure .tuto-doigt, .booster.tuto.dechire .tuto-doigt { display: none; }
+@keyframes tuto-geste {
+  0% { left: 6%; opacity: 0; transform: translateY(8px) scale(1.1); }
+  15% { left: 8%; opacity: 1; transform: translateY(0) scale(1); }
+  70% { left: 78%; opacity: 1; transform: translateY(0) scale(1); }
+  85%, 100% { left: 82%; opacity: 0; transform: translateY(0) scale(1); }
+}

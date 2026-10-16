@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ChronoLegends — Cartes d'histoire du monde</title>
 <meta name="description" content="Collectionnez les grandes figures de l'histoire mondiale.">
 <meta name="theme-color" content="#101320">
@@ -26,7 +26,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261016-0318">
+<link rel="stylesheet" href="style.css?v=20261016-0329">
 </head>
 <body>
 
@@ -42,8 +42,8 @@
     <span class="marque-sous" data-t="sousTitreMarque">Cartes d'histoire du monde</span>
   </div>
   <nav class="onglets" aria-label="Navigation">
-    <button class="onglet actif" data-vue="booster" data-t="ongletBoosters">Boosters</button>
-    <button class="onglet" data-vue="collection"><span data-t="ongletCollection">Collection</span> <span id="compteur-collection"></span></button>
+    <button class="onglet actif" data-vue="booster"><svg class="onglet-icone" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12M6 20.5h12M7 3.5v17M17 3.5v17"/><path d="M12 9l1.2 2.3 2.3 1.2-2.3 1.2L12 16l-1.2-2.3L8.5 12.5l2.3-1.2z"/></svg><span class="onglet-nom" data-t="ongletBoosters">Boosters</span></button>
+    <button class="onglet" data-vue="collection"><svg class="onglet-icone" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="7" height="9.5" rx="1.3"/><rect x="13.5" y="4" width="7" height="9.5" rx="1.3"/><rect x="3.5" y="16" width="7" height="4.5" rx="1.3"/><rect x="13.5" y="16" width="7" height="4.5" rx="1.3"/></svg><span class="onglet-nom"><span data-t="ongletCollection">Collection</span> <span id="compteur-collection"></span></span></button>
   </nav>
   <!-- Paramètres : petit bouton engrenage, le choix de la langue est dans le panneau -->
   <div class="reglages">
@@ -91,8 +91,16 @@
         <span class="guide-dechirure" aria-hidden="true"></span>
         <svg class="ligne-dechirure" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline/></svg>
         <span class="pointe-coupe" aria-hidden="true"></span>
+        <!-- 1er booster : un doigt montre le geste de découpe (une seule fois) -->
+        <span class="tuto-doigt" aria-hidden="true">👆</span>
       </button>
       <p class="consigne" id="consigne"></p>
+      <!-- Plus de booster : compte à rebours jusqu'au prochain booster gratuit -->
+      <div class="compte-a-rebours" id="compte-a-rebours" hidden>
+        <span class="car-libelle" data-t="prochainBooster">Prochain booster gratuit dans</span>
+        <span class="car-temps" id="car-temps">--:--:--</span>
+        <button class="bouton car-prevenir" id="car-prevenir" hidden data-t="mePrevenir">🔔 Me prévenir</button>
+      </div>
       <div class="anti-robot" id="anti-robot" hidden></div>
       <p class="region-joueur" id="region-joueur"></p>
       <p class="verrou-region" id="verrou-region" hidden></p>
@@ -125,7 +133,14 @@
       <div class="progression"><div id="barre-progression"></div></div>
       <p id="texte-progression" class="texte-progression"></p>
     </div>
+    <!-- Toutes / Obtenues / Manquantes (par défaut : toutes, les cartes obtenues en premier) -->
+    <div class="bascule-collection filtre-possession" id="filtre-possession" role="group" aria-label="Cartes" data-t-aria="cartes">
+      <button data-possession="toutes" data-t="filtreToutes">Toutes</button>
+      <button data-possession="obtenues" data-t="filtreObtenues">Obtenues</button>
+      <button data-possession="manquantes" data-t="filtreManquantes">Manquantes</button>
+    </div>
     <div id="grille-collection" class="grille-collection"></div>
+    <p class="collection-vide" id="collection-vide" hidden></p>
   </section>
 </main>
 
@@ -213,12 +228,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261016-0318"></script>
-<script src="langue.js?v=20261016-0318"></script>
-<script src="anti-robot.js?v=20261016-0318"></script>
-<script src="carte.js?v=20261016-0318"></script>
-<script src="partage.js?v=20261016-0318"></script>
-<script src="monuments.js?v=20261016-0318"></script>
-<script src="app.js?v=20261016-0318"></script>
+<script src="reglages.js?v=20261016-0329"></script>
+<script src="langue.js?v=20261016-0329"></script>
+<script src="anti-robot.js?v=20261016-0329"></script>
+<script src="carte.js?v=20261016-0329"></script>
+<script src="partage.js?v=20261016-0329"></script>
+<script src="monuments.js?v=20261016-0329"></script>
+<script src="app.js?v=20261016-0329"></script>
 </body>
 </html>
