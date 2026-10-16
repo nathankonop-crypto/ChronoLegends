@@ -1593,7 +1593,11 @@ function construireRoue() {
     <div class="roue-place" style="--i:${i}">
       <div class="roue-tourne">
         <button class="booster paquet-roue" data-index="${i}" aria-label="${echapper(t("ouvrirLeBooster"))} — ${echapper(MONUMENTS[cle].nom)}">${contenuPaquet(cle)}</button>
-        <div class="paquet-dos" aria-hidden="true"><img src="images/logo-etoile.webp" alt="" draggable="false"><span class="paquet-ombre"></span></div>
+        <div class="booster paquet-dos" aria-hidden="true">
+          <span class="booster-sachet"><span class="dos-languette"></span>
+            <span class="dos-mentions"><b>ChronoLegends</b>${echapper(t("cinqCartes"))}<i class="dos-code"></i></span>
+            <span class="paquet-ombre"></span></span>
+        </div>
       </div>
     </div>`).join("");
   majAspectRoue();
@@ -1602,11 +1606,11 @@ function construireRoue() {
 
 // Couleur de la région, booster doré : comme le grand paquet.
 function majAspectRoue() {
-  document.querySelectorAll(".paquet-roue").forEach(p => {
+  document.querySelectorAll(".paquet-roue, .paquet-dos").forEach(p => {
     if (etat.region) p.dataset.region = etat.region;
     p.classList.toggle("dore", !!etat.boosterDore);
-    p.querySelector(".booster-info").textContent = t(etat.boosterDore ? "boosterDore" : "cinqCartes");
   });
+  document.querySelectorAll(".paquet-roue .booster-info").forEach(i => { i.textContent = t(etat.boosterDore ? "boosterDore" : "cinqCartes"); });
 }
 
 // Rayon du manège selon la taille des paquets (ils ne se chevauchent pas sur le devant).

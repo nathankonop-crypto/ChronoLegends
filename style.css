@@ -1766,18 +1766,36 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
 .booster.paquet-roue:hover { scale: 1; filter: none; }
 .booster.paquet-roue .booster-info { font-size: 9px; letter-spacing: .22em; }
 .booster.paquet-roue.dore::after { display: none; }
-/* Dos du paquet (visible quand il pivote, ou pour les paquets du fond) */
-.paquet-dos {
-  position: absolute; inset: 0; border-radius: 10px; display: grid; place-items: center;
+/* Dos du paquet (visible quand il pivote, ou pour les paquets du fond) : le dos d'un vrai sachet,
+   même forme et même couleur que la face, avec la languette de fermeture verticale au milieu. */
+.booster.paquet-dos {
+  position: absolute; inset: 0; width: 100%;
+  animation: none; filter: none; transition: none;
   transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden;
-  background:
-    repeating-linear-gradient(60deg, rgba(212, 178, 106, .07) 0 1px, transparent 1px 9px),
-    repeating-linear-gradient(-60deg, rgba(212, 178, 106, .07) 0 1px, transparent 1px 9px),
-    linear-gradient(160deg, #283055, #11152a);
-  box-shadow: 0 0 0 1px rgba(212, 178, 106, .5) inset;
   -webkit-box-reflect: below 12px linear-gradient(transparent 60%, rgba(255, 255, 255, .15));
 }
-.paquet-dos img { width: 34%; opacity: .85; }
+.booster.paquet-dos.dore::after { display: none; }
+/* Languette : bande soudée qui descend au milieu, légèrement rabattue (ombre d'un côté, reflet de l'autre) */
+.dos-languette {
+  position: absolute; top: 6.5%; bottom: 6.5%; left: 50%; width: 15%; translate: -40% 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 240, 200, .1) 0 1px, rgba(0, 0, 0, .14) 1px 3px),
+    linear-gradient(90deg, rgba(255, 255, 255, .14), rgba(255, 255, 255, .03) 40%, rgba(0, 0, 0, .18));
+  box-shadow: -3px 0 6px -2px rgba(0, 0, 0, .55), inset 1px 0 0 rgba(255, 240, 200, .28), inset -1px 0 0 rgba(0, 0, 0, .35);
+}
+/* Mentions imprimées en petit et code-barres, en bas à gauche de la languette */
+.dos-mentions {
+  position: absolute; left: 9%; bottom: 10%; width: 30%;
+  display: flex; flex-direction: column; gap: .8cqw;
+  font-family: var(--serif-titre); font-size: 3.1cqw; letter-spacing: .04em; line-height: 1.15; text-transform: uppercase;
+  color: rgba(241, 220, 159, .55);
+}
+.dos-mentions b { font-weight: 700; color: rgba(241, 220, 159, .75); }
+.dos-code {
+  display: block; height: 9cqw; margin-top: 1.5cqw; border-radius: 1px;
+  background: repeating-linear-gradient(90deg, #1a1a1a 0 1px, #fff 1px 2px, #1a1a1a 2px 4px, #fff 4px 5px, #1a1a1a 5px 6px, #fff 6px 8px) #fff;
+  box-shadow: 0 0 0 1.5cqw #f4efe2; opacity: .85;
+}
 /* Assombrissement selon la profondeur (--ombre, réglé par app.js : placerRoue) */
 .paquet-ombre { position: absolute; inset: 0; border-radius: inherit; background: #05060d; opacity: var(--ombre, 0); pointer-events: none; }
 /* Sol : une lueur douce sous le manège */
