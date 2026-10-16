@@ -141,6 +141,7 @@ async function reclamerQuotidien() {
 function appliquerBoosterDore() {
   const b = $("#booster"), info = b.querySelector(".booster-info");
   const avant = b.classList.contains("dore");
+  if (DEMO === "dore") etat.boosterDore = true;   // mode démo : tous les paquets sont dorés
   b.classList.toggle("dore", etat.boosterDore);
   info.dataset.t = etat.boosterDore ? "boosterDore" : "cinqCartes";
   info.textContent = t(info.dataset.t);
@@ -399,19 +400,23 @@ const MESSAGES_SERVEUR = {
 };
 
 // ---------- Mode démo (boutons « 🎬 » de l'administration) ----------
-// index.html?demo=legendaire ou ?demo=mythique, dans un navigateur connecté à l'admin :
+// index.html?demo=legendaire, ?demo=mythique ou ?demo=dore, dans un navigateur connecté à l'admin :
 // le paquet s'ouvre sans booster, les cartes sont tirées ici (pas par le serveur), la dernière
-// est de la rareté demandée. Rien n'est ajouté à la collection, aucun booster n'est consommé.
+// est de la rareté demandée (doré : paquet doré, sa musique, et une 5ᵉ carte Rare ou mieux au hasard).
+// Rien n'est ajouté à la collection, aucun booster n'est consommé.
 const DEMO = (() => {
   try {
     const r = new URLSearchParams(location.search).get("demo");
-    return ["legendaire", "mythique"].includes(r) && localStorage.getItem("chronolegends-admin") ? r : null;
+    return ["legendaire", "mythique", "dore"].includes(r) && localStorage.getItem("chronolegends-admin") ? r : null;
   } catch (e) { return null; }
 })();
 
 function tirageDemo() {
   const prises = new Set();
-  return ["ordinaire", "ordinaire", "notable", "rare", DEMO].map(rarete => {
+  // Doré : la 5ᵉ carte est tirée au hasard parmi les meilleures raretés.
+  const derniere = DEMO !== "dore" ? DEMO
+    : (r => r < .4 ? "rare" : r < .75 ? "epique" : r < .95 ? "legendaire" : "mythique")(Math.random());
+  return ["ordinaire", "ordinaire", "notable", "rare", derniere].map(rarete => {
     const libres = CARTES.filter(c => !prises.has(c.id));
     const choix = libres.filter(c => c.rarete === rarete);
     // Pas de carte de cette rareté : une autre carte, habillée de la rareté voulue.
