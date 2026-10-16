@@ -402,28 +402,31 @@ const MESSAGES_SERVEUR = {
 // ---------- Mode démo (boutons « 🎬 » de l'administration) ----------
 // index.html?demo=legendaire, ?demo=mythique ou ?demo=dore, dans un navigateur connecté à l'admin :
 // le paquet s'ouvre sans booster, les cartes sont tirées ici (pas par le serveur), la dernière
-// est de la rareté demandée (doré : paquet doré, sa musique, et une 5ᵉ carte Rare ou mieux au hasard).
+// est de la rareté demandée (doré : paquet doré, sa musique, et une 5ᵉ carte Rare ou mieux au hasard ;
+// emeraude / diamant : la 5ᵉ carte porte cette finition).
 // Rien n'est ajouté à la collection, aucun booster n'est consommé.
 const DEMO = (() => {
   try {
     const r = new URLSearchParams(location.search).get("demo");
-    return ["legendaire", "mythique", "dore"].includes(r) && localStorage.getItem("chronolegends-admin") ? r : null;
+    return ["legendaire", "mythique", "dore", "emeraude", "diamant"].includes(r) && localStorage.getItem("chronolegends-admin") ? r : null;
   } catch (e) { return null; }
 })();
 
 function tirageDemo() {
   const prises = new Set();
   // Doré : la 5ᵉ carte est tirée au hasard parmi les meilleures raretés.
-  const derniere = DEMO !== "dore" ? DEMO
-    : (r => r < .4 ? "rare" : r < .75 ? "epique" : r < .95 ? "legendaire" : "mythique")(Math.random());
-  return ["ordinaire", "ordinaire", "notable", "rare", derniere].map(rarete => {
+  // Émeraude / Diamant : la 5ᵉ carte (Rare ou Épique) porte cette finition.
+  const finition = DEMO === "emeraude" || DEMO === "diamant" ? DEMO : "normale";
+  const derniere = DEMO === "dore" ? (r => r < .4 ? "rare" : r < .75 ? "epique" : r < .95 ? "legendaire" : "mythique")(Math.random())
+    : finition !== "normale" ? (Math.random() < .5 ? "rare" : "epique") : DEMO;
+  return ["ordinaire", "ordinaire", "notable", "rare", derniere].map((rarete, i) => {
     const libres = CARTES.filter(c => !prises.has(c.id));
     const choix = libres.filter(c => c.rarete === rarete);
     // Pas de carte de cette rareté : une autre carte, habillée de la rareté voulue.
     const carte = choix.length ? choix[Math.floor(Math.random() * choix.length)]
       : { ...libres[Math.floor(Math.random() * libres.length)], rarete };
     prises.add(carte.id);
-    return { ...carte, finition: "normale" };
+    return { ...carte, finition: i === 4 ? finition : "normale" };
   });
 }
 
@@ -646,6 +649,12 @@ function reveler(emplacement, carte) {
   emplacement.setAttribute("aria-label", `${carte.nom}, ${nomRarete(carte.rarete)}`);
   if (pileNouvelles[Number(emplacement.dataset.index)] && !emplacement.querySelector(".nouvelle")) {
     emplacement.insertAdjacentHTML("beforeend", `<span class="nouvelle">${t("nouvelle")}</span>`);
+  }
+  // Émeraude / Diamant : une comète de lumière fait le tour de la carte (style.css : .serpent-lumiere).
+  if ((carte.finition === "emeraude" || carte.finition === "diamant") && !emplacement.querySelector(".serpent-lumiere")) {
+    emplacement.insertAdjacentHTML("beforeend", `<span class="serpent-lumiere ${carte.finition}" aria-hidden="true"></span>`);
+    const serpent = emplacement.lastElementChild;
+    serpent.addEventListener("animationend", e => { if (e.animationName === "serpent-fin") serpent.remove(); });
   }
   // Son : la carte se retourne, puis un carillon pour les cartes exceptionnelles.
   jouerSon("retournement");

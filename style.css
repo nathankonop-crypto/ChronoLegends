@@ -608,12 +608,11 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 /* Finitions : l'éclat de la révélation prend le pas sur celui de la rareté. */
 .emplacement.revelee[data-finition="emeraude"] .face-avant { animation: halo-emeraude 2.2s .4s ease-out; }
 .emplacement.revelee[data-finition="diamant"] .face-avant { animation: halo-diamant 2.6s .4s ease-out; }
-@keyframes halo-emeraude { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 48px #3fe39a) brightness(1.2); } }
+/* Halos plus discrets : la comète de lumière (plus bas) fait l'essentiel. */
+@keyframes halo-emeraude { 0% { filter: drop-shadow(0 0 0 transparent); } 45% { filter: drop-shadow(0 0 26px rgba(63, 227, 154, .8)) brightness(1.1); } }
 @keyframes halo-diamant {
   0% { filter: drop-shadow(0 0 0 transparent); }
-  20% { filter: drop-shadow(0 0 60px #d8f1ff) brightness(1.45); }
-  40% { filter: drop-shadow(0 0 40px #9fd3ff) brightness(1.1); }
-  55% { filter: drop-shadow(0 0 56px #ffffff) brightness(1.3); }
+  45% { filter: drop-shadow(0 0 30px rgba(190, 230, 255, .85)) brightness(1.15); }
 }
 @keyframes halo-mythique { 0% { filter: drop-shadow(0 0 0 transparent); } 30% { filter: drop-shadow(0 0 52px #ff5fb0) brightness(1.2); } }
 
@@ -1678,3 +1677,43 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
 /* Fin : la scène s'efface doucement */
 .revelation.fin { animation: rev-sortie .5s ease-in forwards; }
 @keyframes rev-sortie { to { opacity: 0; } }
+
+/* ---------- Émeraude / Diamant : une comète de lumière fait le tour de la carte à la révélation ----------
+   Un liseré en dégradé conique (tête brillante + traînée qui s'estompe) dont l'angle tourne
+   (--angle animé grâce à @property). Le masque ne garde que le bord : le centre de la carte reste net.
+   Ajoutée par app.js (reveler) sur l'emplacement, au-dessus de la carte, puis retirée. */
+@property --angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.serpent-lumiere {
+  --angle: 0deg; --epaisseur: 4px;
+  /* Juste à l'extérieur du bord de la carte, sur le fond sombre : bien visible sans couvrir la carte */
+  position: absolute; inset: calc(var(--epaisseur) * -1 + .5px); z-index: 3; pointer-events: none;
+  border-radius: calc(4.5cqw + var(--epaisseur)); padding: var(--epaisseur);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: 0;
+  animation: serpent-tour 1.25s .55s cubic-bezier(.45, .05, .4, 1) forwards, serpent-fin .9s 1.8s ease-out forwards;
+}
+.serpent-lumiere.emeraude {
+  background: conic-gradient(from var(--angle), transparent 0deg 230deg, rgba(40, 210, 130, .2) 265deg,
+    rgba(63, 227, 154, .85) 320deg, #b9ffdc 348deg, #ffffff 356deg, transparent 360deg);
+  filter: drop-shadow(0 0 3px #7dffc0) drop-shadow(0 0 10px rgba(63, 227, 154, .9)) drop-shadow(0 0 22px rgba(63, 227, 154, .5));
+}
+.serpent-lumiere.diamant {
+  background: conic-gradient(from var(--angle), transparent 0deg 225deg, rgba(150, 200, 255, .2) 260deg,
+    rgba(200, 170, 255, .7) 300deg, rgba(160, 225, 255, .95) 332deg, #ffffff 355deg, transparent 360deg);
+  filter: drop-shadow(0 0 3px #ffffff) drop-shadow(0 0 10px rgba(170, 220, 255, .95)) drop-shadow(0 0 24px rgba(160, 200, 255, .55));
+}
+/* Un tour complet, puis tout le contour s'allume un instant avant de s'éteindre */
+@keyframes serpent-tour {
+  0% { --angle: 0deg; opacity: 0; }
+  8% { opacity: 1; }
+  100% { --angle: 360deg; opacity: 1; }
+}
+@keyframes serpent-fin {
+  0% { opacity: 1; background: var(--contour); }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.serpent-lumiere.emeraude { --contour: linear-gradient(rgba(140, 255, 200, .85), rgba(63, 227, 154, .85)); }
+.serpent-lumiere.diamant { --contour: linear-gradient(135deg, rgba(255, 255, 255, .9), rgba(170, 220, 255, .85), rgba(210, 190, 255, .85)); }
