@@ -407,7 +407,14 @@ async function ouvrirBooster(dechire = false) {
 
   const booster = $("#booster");
   if (!dechire) booster.classList.add("ouverture");
-  const animation = new Promise(r => setTimeout(r, dechire ? 950 : 900));
+  // Découpé : les cartes sortent du paquet, puis le paquet tombe (style.css, environ 1,5 s).
+  // On attend la vraie fin de sa chute (un téléphone lent peut prendre du retard), 3 s au plus.
+  const animation = new Promise(r => {
+    const bas = booster.querySelector(".moitie.bas");
+    if (!dechire || !bas) return setTimeout(r, 900);
+    bas.addEventListener("animationend", e => { if (e.target === bas) r(); });
+    setTimeout(r, 3000);
+  });
 
   // C'est le SERVEUR qui vérifie le stock, tire les cartes et les ajoute à la collection.
   // Aucune région envoyée : le serveur la déduit lui-même de l'adresse IP.
@@ -443,15 +450,18 @@ async function ouvrirBooster(dechire = false) {
   majPointCollection();
 
   await animation;
+  // Position des cartes sorties du paquet : la pile à révéler part de là.
+  const depart = booster.querySelector(".cartes-sortantes > span:last-child")?.getBoundingClientRect();
   $("#zone-booster").hidden = true;
   booster.classList.remove("ouverture");
   reinitialiserBooster();
-  afficherPile(tirage, data.cartes.map(c => c.nouvelle));
+  afficherPile(tirage, data.cartes.map(c => c.nouvelle), depart);
   enCours = false;
 }
 
 // Empile les cartes : la 1re à révéler sur le dessus, la plus rare tout au fond.
-function afficherPile(tirage, nouvelles) {
+// depart : rectangle des cartes sorties du paquet ; la pile glisse de là jusqu'à sa place.
+function afficherPile(tirage, nouvelles, depart = null) {
   pileTirage = tirage;
   pileNouvelles = nouvelles;
   indexPile = 0;
@@ -489,7 +499,19 @@ function afficherPile(tirage, nouvelles) {
 
   majPositions();
   majConsignePile();
-  // Les cartes sortent du paquet, puis l'animation s'efface (pour ne pas gêner les suivantes).
+  if (depart) {
+    // La pile commence exactement là où sont les cartes sorties du paquet (même taille),
+    // puis glisse et grandit jusqu'à sa place : on ne voit aucun saut.
+    const arrivee = zone.getBoundingClientRect();
+    zone.style.translate = `${depart.left + depart.width / 2 - (arrivee.left + arrivee.width / 2)}px ${depart.top + depart.height / 2 - (arrivee.top + arrivee.height / 2)}px`;
+    zone.style.scale = depart.width / arrivee.width;
+    void zone.offsetWidth;
+    zone.classList.add("arrivee");
+    zone.style.translate = zone.style.scale = "";
+    setTimeout(() => zone.classList.remove("arrivee"), 600);
+    return;
+  }
+  // Cas de secours : les cartes apparaissent une à une, puis l'animation s'efface (pour ne pas gêner les suivantes).
   zone.classList.add("sortie");
   setTimeout(() => zone.classList.remove("sortie"), 1200);
 }
@@ -1204,7 +1226,7 @@ function majDechirure(p) {
 
 function reinitialiserBooster() {
   boosterEl.classList.remove("dechire", "en-dechirure", "indice");
-  boosterEl.querySelectorAll(".moitie").forEach(m => m.remove());
+  boosterEl.querySelectorAll(".moitie, .cartes-sortantes").forEach(m => m.remove());
   boosterEl.style.setProperty("--dechirure", 0);
   boosterEl.dataset.glisse = "";
   ligneCoupe.setAttribute("points", "");
@@ -1235,6 +1257,8 @@ function dechirerBooster(trace) {
   t.push([100, t[t.length - 1][1]]);
   const points = l => l.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(", ");
   boosterEl.style.setProperty("--coupe-y", (t.reduce((s, [, y]) => s + y, 0) / t.length).toFixed(1) + "%");
+  // Les cartes, face cachée, attendent dans le paquet : elles vont sortir par l'ouverture.
+  boosterEl.insertAdjacentHTML("beforeend", `<span class="cartes-sortantes" aria-hidden="true">${`<span>${HTML_DOS}</span>`.repeat(3)}</span>`);
   const contenu = [...boosterEl.querySelectorAll(".booster-sachet, .booster-bord, .booster-titre, .booster-logo, .booster-info")];
   for (const [cote, forme] of [["haut", `0% 0%, 100% 0%, ${points([...t].reverse())}`], ["bas", `${points(t)}, 100% 100%, 0% 100%`]]) {
     const moitie = document.createElement("span");
