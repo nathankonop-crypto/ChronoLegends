@@ -856,8 +856,19 @@ function afficherPyramide() {
   const total = liste.length;
   const brouillons = $("#pyramide-statut").value === "validee"
     ? cartes.filter(c => c.statut === "brouillon") : [];
+  // Objectif : chaque étage contient « facteur » fois plus de cartes que celui du dessus.
+  // Le sommet est calculé à partir des Mythiques ET des Légendaires (le plus grand des deux),
+  // pour que les deux étages du haut soient respectés ; on en déduit les étages du dessous.
+  const facteur = Math.max(1.1, Math.min(4, Number($("#pyramide-facteur").value) || 1.6));
+  const nb = r => liste.filter(c => c.rarete === r).length;
+  const sommet = Math.max(nb("mythique"), nb("legendaire") / facteur);
+  const objectif = i => Math.round(sommet * facteur ** i);
+  const totalObjectif = RARETES_PYRAMIDE.reduce((s, _, i) => s + objectif(i), 0);
   $("#pyramide").innerHTML = RARETES_PYRAMIDE.map((r, i) => {
-    const n = liste.filter(c => c.rarete === r).length;
+    const n = nb(r);
+    const ecart = n - objectif(i);
+    const lignObjectif = !sommet ? "" : `<span class="etage-objectif">Objectif ≈ ${objectif(i)} · ${
+      ecart < 0 ? `<b class="manque">il en manque ${-ecart}</b>` : ecart > 0 ? `${ecart} en plus` : "✓ juste"}</span>`;
     const enAttente = brouillons.filter(c => c.rarete === r && (!$("#pyramide-region").value || c.region === $("#pyramide-region").value)
       && (!$("#pyramide-epoque").value || c.epoque === $("#pyramide-epoque").value)
       && (!$("#pyramide-gamme").value || c.gamme === $("#pyramide-gamme").value)).length;
@@ -866,8 +877,10 @@ function afficherPyramide() {
     return `<div class="etage rarete-${r}" style="width:${largeur}%">
       <span class="etage-nom">${RARETES[r].nom}</span>
       <span class="etage-nombre">${n} carte${n > 1 ? "s" : ""} · ${pourcent} %${enAttente ? ` <em>(+${enAttente} brouillon${enAttente > 1 ? "s" : ""})</em>` : ""}</span>
+      ${lignObjectif}
     </div>`;
-  }).join("") + `<p class="pyramide-total">${total} carte${total > 1 ? "s" : ""} au total</p>`;
+  }).join("") + `<p class="pyramide-total">${total} carte${total > 1 ? "s" : ""} au total${
+    sommet ? ` · objectif ≈ ${totalObjectif} cartes pour une pyramide équilibrée` : ""}</p>`;
 
   // Tableau par région : une ligne par région, une colonne par rareté.
   const toutes = cartesPyramide({ sansRegion: true });
@@ -883,6 +896,7 @@ function afficherPyramide() {
 $("#bouton-pyramide").addEventListener("click", afficherPyramide);
 $("#pyramide-retour").addEventListener("click", afficherListe);
 for (const id of ["#pyramide-region", "#pyramide-epoque", "#pyramide-gamme", "#pyramide-statut"]) $(id).addEventListener("change", afficherPyramide);
+$("#pyramide-facteur").addEventListener("input", afficherPyramide);
 
 // Menu « Tester un booster » : se referme après un choix ou un clic ailleurs.
 document.addEventListener("click", e => {

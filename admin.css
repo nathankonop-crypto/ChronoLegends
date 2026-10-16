@@ -206,3 +206,7 @@ body.admin { font-size: 16px; }
 .tableau-repartition td.total, .tableau-repartition .ligne-total td, .tableau-repartition .ligne-total th { font-weight: 700; }
 .tableau-repartition tr.choisie { background: rgba(212, 178, 106, .1); }
 @media (max-width: 700px) { .filtres-pyramide { grid-template-columns: 1fr 1fr; } }
+.pyramide-facteur { display: flex !important; flex-direction: row !important; align-items: center; flex-wrap: wrap; gap: 8px; margin: -4px 0 6px; font-size: 14px; }
+.pyramide-facteur input { width: 72px; padding: 6px 8px; }
+.etage-objectif { font-family: system-ui, sans-serif; font-size: 12px; opacity: .95; }
+.etage-objectif .manque { color: #fff; background: rgba(160, 30, 30, .75); padding: 1px 6px; border-radius: 6px; text-shadow: none; }
