@@ -1251,6 +1251,7 @@ function dechirerBooster(trace) {
   boosterEl.dataset.glisse = "1";   // le « clic » qui suit le geste ne doit pas afficher l'aide
   vibrer([25, 40, 45]);
   jouerSon("decoupe");
+  setTimeout(() => jouerSon("glissement"), 150);   // les cartes sortent du paquet (style.css : cartes-montent)
   // Tracé de gauche à droite, prolongé jusqu'aux deux bords du paquet.
   const t = trace[0][0] > trace[trace.length - 1][0] ? [...trace].reverse() : [...trace];
   t.unshift([0, t[0][1]]);

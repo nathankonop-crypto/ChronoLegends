@@ -189,6 +189,14 @@ const SONS = {
     bruit(ctx, t, 0.3, 1500, 4000, 0.5, 1.2);
     bruit(ctx, t + 0.04, 0.2, 4000, 7000, 0.18, 2);
   },
+  // Les cartes glissent hors du paquet : un frottement de carton qui monte, quelques
+  // petits « tic » de cartes qui se frôlent, et un léger « toc » quand la pile est sortie.
+  glissement(ctx, t) {
+    bruit(ctx, t, 0.75, 500, 1500, 0.32, 0.9, 0.18);
+    bruit(ctx, t + 0.05, 0.6, 2500, 4500, 0.08, 1.2, 0.2);
+    [0.12, 0.24, 0.38, 0.5].forEach((d, i) => bruit(ctx, t + d, 0.035, 3200 + i * 300, 3800 + i * 300, 0.1, 2, 0.003));
+    bruit(ctx, t + 0.78, 0.09, 260, 180, 0.3, 1, 0.005);
+  },
   // Une carte se retourne : un petit souffle de carton.
   retournement(ctx, t) {
     bruit(ctx, t, 0.14, 700, 1800, 0.35, 0.8, 0.01);
