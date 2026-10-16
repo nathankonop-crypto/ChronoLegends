@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261016-1356">
-<link rel="stylesheet" href="admin.css?v=20261016-1356">
+<link rel="stylesheet" href="style.css?v=20261016-1407">
+<link rel="stylesheet" href="admin.css?v=20261016-1407">
 </head>
 <body class="admin">
 
@@ -66,6 +66,7 @@
       <div class="barre-liste">
         <h1>Les cartes <span id="nb-cartes"></span></h1>
         <div class="barre-boutons">
+          <button class="bouton" id="bouton-agent">🤖 Agent</button>
           <button class="bouton" id="bouton-familles">Familles</button>
           <button class="bouton bouton-or" id="bouton-nouvelle">+ Nouvelle carte</button>
         </div>
@@ -109,6 +110,31 @@
           </thead>
           <tbody id="lignes-familles"></tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- Agent IA : propose des cartes pour une région, les rédige (Claude) et les illustre (Nano Banana),
+         puis les enregistre en brouillon (admin.js : agent… ; Edge Function agent-cartes) -->
+    <section id="vue-agent" hidden>
+      <div class="barre-liste">
+        <h1>🤖 Agent de cartes</h1>
+        <button class="bouton" id="agent-retour">← Retour à la liste</button>
+      </div>
+      <p class="aide-familles">L'agent propose des cartes absentes du jeu, puis pour chaque idée cochée : il rédige la carte (français, anglais, hébreu), peint l'illustration dans le style des cartes existantes et l'enregistre en <b>Brouillon</b>. Rien n'arrive dans le jeu tant que vous ne l'avez pas relue et passée en « Validée ». Compter environ 1 minute par carte.</p>
+      <div class="agent-reglages">
+        <label><span>Type de cartes</span>
+          <select id="agent-gamme"><option value="archetype">Archétypes</option><option value="personnage">Personnages historiques</option></select></label>
+        <label><span>Région</span><select id="agent-region"></select></label>
+        <label><span>Nombre d'idées</span><input type="number" id="agent-nombre" min="1" max="10" value="5"></label>
+        <button class="bouton bouton-or" id="agent-idees">Chercher des idées</button>
+      </div>
+      <p class="agent-etat" id="agent-etat" hidden></p>
+      <div id="agent-propositions" hidden>
+        <ul class="agent-liste" id="agent-liste"></ul>
+        <div class="actions-form">
+          <button class="bouton" id="agent-autres">Autres idées</button>
+          <button class="bouton bouton-or" id="agent-creer">Créer les cartes cochées</button>
+        </div>
       </div>
     </section>
 
@@ -242,10 +268,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261016-1356"></script>
-<script src="langue.js?v=20261016-1356"></script>
-<script src="anti-robot.js?v=20261016-1356"></script>
-<script src="carte.js?v=20261016-1356"></script>
-<script src="admin.js?v=20261016-1356"></script>
+<script src="reglages.js?v=20261016-1407"></script>
+<script src="langue.js?v=20261016-1407"></script>
+<script src="anti-robot.js?v=20261016-1407"></script>
+<script src="carte.js?v=20261016-1407"></script>
+<script src="admin.js?v=20261016-1407"></script>
 </body>
 </html>

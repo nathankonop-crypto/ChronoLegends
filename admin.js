@@ -165,6 +165,7 @@ function afficherListe() {
   $("#vue-liste").hidden = false;
   $("#vue-formulaire").hidden = true;
   $("#vue-familles").hidden = true;
+  $("#vue-agent").hidden = true;
 
   const texte = $("#recherche").value.trim().toLowerCase();
   const filtres = { rarete: $("#filtre-rarete").value, gamme: $("#filtre-gamme").value,
@@ -626,6 +627,155 @@ $("#famille-nouvelle").addEventListener("click", () => {
   tr.querySelector('[name="nom"]').focus();
 });
 
+// ---------- Agent de cartes (Edge Function « agent-cartes ») ----------
+// 1. Claude propose des idées pour une région ; 2. pour chaque idée cochée, il rédige la carte,
+// Nano Banana la peint, et la carte est enregistrée en BROUILLON (à relire puis valider).
+
+let agentIdees = [];          // { nom, epoque, resume } proposées
+let agentEcartees = [];       // noms déjà proposés, pour que « Autres idées » en trouve de nouvelles
+let agentEnCours = false;
+
+function afficherAgent() {
+  $("#vue-liste").hidden = true;
+  $("#vue-formulaire").hidden = true;
+  $("#vue-familles").hidden = true;
+  $("#vue-agent").hidden = false;
+}
+
+function etatAgent(texte, alerte = false) {
+  $("#agent-etat").hidden = !texte;
+  $("#agent-etat").textContent = texte;
+  $("#agent-etat").classList.toggle("alerte", alerte);
+}
+
+async function appelAgent(corps) {
+  const { data, error } = await sb.functions.invoke("agent-cartes", { body: corps });
+  if (error) {
+    let message = "L'agent n'a pas pu répondre. Réessayez.";
+    try { message = (await error.context.json()).erreur || message; } catch (e) { /* réponse sans détail */ }
+    throw new Error(message);
+  }
+  return data;
+}
+
+function bloquerAgent(oui) {
+  agentEnCours = oui;
+  for (const id of ["#agent-idees", "#agent-autres", "#agent-creer", "#agent-gamme", "#agent-region", "#agent-nombre"]) $(id).disabled = oui;
+}
+
+async function chercherIdees(autres = false) {
+  if (agentEnCours) return;
+  agentEcartees = autres ? [...agentEcartees, ...agentIdees.map(i => i.nom)] : [];
+  bloquerAgent(true);
+  etatAgent("Claude cherche des idées… (20 à 60 secondes)");
+  try {
+    const data = await appelAgent({
+      action: "idees", gamme: $("#agent-gamme").value, region: $("#agent-region").value,
+      nombre: Number($("#agent-nombre").value) || 5, exclure: agentEcartees,
+    });
+    agentIdees = data.idees || [];
+    $("#agent-liste").innerHTML = agentIdees.map((idee, i) => `
+      <li data-index="${i}">
+        <input type="checkbox" checked aria-label="Créer ${echapper(idee.nom)}">
+        <span class="agent-texte"><b>${echapper(idee.nom)}</b><small>${echapper(nomsEpoque[idee.epoque] || idee.epoque)} — ${echapper(idee.resume)}</small></span>
+        <span class="agent-statut"></span>
+      </li>`).join("");
+    $("#agent-propositions").hidden = agentIdees.length === 0;
+    etatAgent(agentIdees.length ? "Décochez les idées qui ne vous plaisent pas, puis « Créer les cartes cochées »." : "Aucune idée trouvée.");
+  } catch (err) {
+    etatAgent(err.message, true);
+  } finally {
+    bloquerAgent(false);
+  }
+}
+
+// Identifiant libre : « scribe-sumerien », sinon « scribe-sumerien-2 »…
+function identifiantLibre(nom) {
+  const base = versIdentifiant(nom) || "carte";
+  let id = base, n = 2;
+  while (cartes.some(c => c.id === id)) id = `${base}-${n++}`;
+  return id;
+}
+
+async function creerCarteAgent(idee, gamme, region, statut) {
+  statut.className = "agent-statut";
+  statut.textContent = "✍️ Rédaction…";
+  const c = await appelAgent({ action: "carte", gamme, region, nom: idee.nom, resume: idee.resume });
+
+  // L'illustration : si elle échoue, la carte est quand même enregistrée (image à ajouter à la main).
+  statut.textContent = "🎨 Illustration…";
+  let image = null, fichierEnvoye = null, noteImage = "";
+  const id = identifiantLibre(c.nom);
+  try {
+    const peinte = await appelAgent({ action: "image", prompt: c.prompt_image });
+    const brute = await (await fetch(`data:${peinte.mime};base64,${peinte.data}`)).blob();
+    const { blob } = await preparerImage(brute);
+    fichierEnvoye = `${id}-${Date.now()}.webp`;
+    const { error } = await sb.storage.from(BUCKET).upload(fichierEnvoye, blob, { contentType: "image/webp", upsert: false });
+    if (error) throw new Error(`envoi refusé : ${error.message}`);
+    image = sb.storage.from(BUCKET).getPublicUrl(fichierEnvoye).data.publicUrl;
+  } catch (err) {
+    fichierEnvoye = null;
+    noteImage = ` (sans image : ${err.message})`;
+  }
+
+  statut.textContent = "💾 Enregistrement…";
+  const personnage = gamme === "personnage";
+  const ligne = {
+    id, nom: c.nom, gamme, region, epoque: c.epoque, rarete: c.rarete, statut: "brouillon",
+    famille: (personnage && FAMILLES[c.famille] && c.famille) || null,
+    dates: c.dates, lieu: c.lieu, description: c.description,
+    nom_en: c.nom_en || null, dates_en: c.dates_en || null, lieu_en: c.lieu_en || null, description_en: c.description_en || null,
+    en_savoir_plus: (personnage && c.en_savoir_plus) || null,
+    en_savoir_plus_en: (personnage && c.en_savoir_plus_en) || null,
+    en_savoir_plus_he: (personnage && c.en_savoir_plus_he) || null,
+    image, ordre: Math.max(0, ...cartesEpoque(c.epoque).map(x => x.ordre)) + 1,
+  };
+  const { data, error } = await sb.from("cartes").insert(ligne).select();
+  if (error || !data?.length) {
+    if (image) await sb.storage.from(BUCKET).remove([cheminStockage(image)]);   // pas d'image orpheline
+    throw new Error(`Enregistrement refusé : ${error?.message || "droits administrateur ?"}`);
+  }
+  cartes.push(data[0]);   // pour les numéros et identifiants des cartes suivantes
+  statut.classList.add(noteImage ? "erreur" : "ok");
+  statut.textContent = `✓ Brouillon créé${noteImage}${c.probleme ? ` ⚠️ ${c.probleme}` : ""}`;
+}
+
+async function creerCartesCochees() {
+  if (agentEnCours) return;
+  const choisies = [...$("#agent-liste").children].filter(li => li.querySelector("input").checked && !li.dataset.fait);
+  if (!choisies.length) return etatAgent("Cochez au moins une idée.", true);
+  const gamme = $("#agent-gamme").value, region = $("#agent-region").value;
+  bloquerAgent(true);
+  let reussies = 0;
+  for (const [n, li] of choisies.entries()) {
+    etatAgent(`Carte ${n + 1} sur ${choisies.length}… (environ 1 minute chacune, gardez cette page ouverte)`);
+    const statut = li.querySelector(".agent-statut");
+    try {
+      await creerCarteAgent(agentIdees[li.dataset.index], gamme, region, statut);
+      li.dataset.fait = "1";
+      li.querySelector("input").disabled = true;
+      reussies++;
+    } catch (err) {
+      statut.className = "agent-statut erreur";
+      statut.textContent = `✗ ${err.message}`;
+    }
+  }
+  bloquerAgent(false);
+  etatAgent(`${reussies} brouillon${reussies > 1 ? "s" : ""} créé${reussies > 1 ? "s" : ""} sur ${choisies.length}. Retrouvez-les dans la liste avec le filtre « Brouillons » pour les relire et les valider.`);
+}
+
+$("#bouton-agent").addEventListener("click", afficherAgent);
+$("#agent-retour").addEventListener("click", () => {
+  if (agentEnCours) return notifier("L'agent travaille encore : attendez la fin.");
+  $("#filtre-statut").value = "brouillon";
+  afficherListe();
+});
+$("#agent-idees").addEventListener("click", () => chercherIdees(false));
+$("#agent-autres").addEventListener("click", () => chercherIdees(true));
+$("#agent-creer").addEventListener("click", creerCartesCochees);
+addEventListener("beforeunload", e => { if (agentEnCours) e.preventDefault(); });
+
 // ---------- Démarrage ----------
 
 remplirSelect($("#filtre-rarete"), nomsRarete, true);
@@ -636,6 +786,8 @@ remplirSelect(form.elements.gamme, GAMMES);
 remplirSelect(form.elements.rarete, nomsRarete);
 remplirSelect(form.elements.epoque, nomsEpoque);
 remplirSelect(form.elements.region, REGIONS);
+remplirSelect($("#agent-region"), REGIONS);
+$("#agent-region").value = "moyen-orient";
 
 (async () => {
   const { data: { session } } = await sb.auth.getSession();
