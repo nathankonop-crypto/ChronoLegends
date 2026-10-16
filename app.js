@@ -1452,7 +1452,7 @@ function majDechirure(p) {
 
 function reinitialiserBooster() {
   boosterEl.classList.remove("dechire", "en-dechirure", "indice");
-  boosterEl.querySelectorAll(".moitie, .cartes-sortantes").forEach(m => m.remove());
+  boosterEl.querySelectorAll(".moitie, .cartes-sortantes, .interieur-paquet").forEach(m => m.remove());
   boosterEl.style.setProperty("--dechirure", 0);
   boosterEl.dataset.glisse = "";
   ligneCoupe.setAttribute("points", "");
@@ -1485,6 +1485,8 @@ function dechirerBooster(trace) {
   t.push([100, t[t.length - 1][1]]);
   const points = l => l.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(", ");
   boosterEl.style.setProperty("--coupe-y", (t.reduce((s, [, y]) => s + y, 0) / t.length).toFixed(1) + "%");
+  // L'intérieur argenté du paquet, visible par l'ouverture (derrière les cartes).
+  boosterEl.insertAdjacentHTML("beforeend", '<span class="interieur-paquet" aria-hidden="true"><span class="bouche-paquet"></span></span>');
   // Les cartes, face cachée, attendent dans le paquet : elles vont sortir par l'ouverture.
   boosterEl.insertAdjacentHTML("beforeend", `<span class="cartes-sortantes" aria-hidden="true">${`<span>${HTML_DOS}</span>`.repeat(3)}</span>`);
   const contenu = [...boosterEl.querySelectorAll(".booster-sachet, .booster-bord, .booster-titre, .booster-logo, .booster-info")];
@@ -1493,6 +1495,11 @@ function dechirerBooster(trace) {
     moitie.className = `moitie ${cote}`;
     moitie.style.clipPath = `polygon(${forme})`;
     contenu.forEach(el => moitie.appendChild(el.cloneNode(true)));
+    // Bord de la face avant : un fin liseré argenté irisé (l'intérieur du film), qui suit exactement la coupe.
+    if (cote === "bas") {
+      const decale = t.map(([x, y]) => [x, y + 1.2]).reverse();
+      moitie.insertAdjacentHTML("beforeend", `<span class="levre-paquet" style="clip-path: polygon(${points(t)}, ${points(decale)})"></span>`);
+    }
     boosterEl.appendChild(moitie);
   }
   boosterEl.classList.remove("en-dechirure");
