@@ -552,17 +552,6 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 
 .consigne { font-style: italic; color: var(--texte-doux); text-align: center; margin: 0; max-width: 32ch; }
 
-.slogan {
-  font-family: var(--serif-titre);
-  font-style: italic;
-  letter-spacing: .08em;
-  text-align: center;
-  margin: 6px 0 0;
-  background: linear-gradient(180deg, var(--or-clair), var(--or) 60%, var(--or-sombre));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
 
 /* ---------- Tirage ---------- */
 
@@ -1412,7 +1401,7 @@ html:not(.intro-lancee) .intro-etoile img { animation: intro-respire 2.6s ease-i
   .car-libelle { font-size: 10px; letter-spacing: .14em; }
   .car-temps { font-size: 20px; letter-spacing: .06em; }
   .car-prevenir { flex-basis: 100%; max-width: max-content; margin-top: 4px; padding: 6px 14px; font-size: 11px; }
-  .zone-booster.mode-roue { gap: 16px; padding-top: 0; min-height: calc(100svh - 190px - env(safe-area-inset-bottom)); justify-content: center; }
+  .zone-booster.mode-roue { gap: 16px; padding-top: 9svh; min-height: calc(100svh - 190px - env(safe-area-inset-bottom)); justify-content: center; }
 }
 
 /* ---------- 1er booster : un doigt fait le geste de découpe, en boucle ---------- */
