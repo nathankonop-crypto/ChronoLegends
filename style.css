@@ -1742,7 +1742,8 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
   position: relative; width: calc(100% + 32px); max-width: 900px; margin: -6px -16px 0;
   height: calc(var(--lp) * 98 / 63 + 100px);
   overflow: hidden; perspective: 620px; perspective-origin: 50% 32%;
-  touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab;
+  /* Le doigt fait tourner la roue ou penche un paquet : la page ne doit pas défiler à la place. */
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: grab;
 }
 .roue:active { cursor: grabbing; }
 .roue-scene {
@@ -1753,13 +1754,15 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
   position: absolute; inset: 0; transform-style: preserve-3d;
   transform: rotateY(calc(var(--i) * 45deg)) translateZ(var(--r, 320px));
 }
-.roue-tourne { position: absolute; inset: 0; transform-style: preserve-3d; }
+.roue-tourne { position: absolute; inset: 0; transform-style: preserve-3d; transition: transform .45s cubic-bezier(.2, .8, .3, 1.15); }
+/* Paquet penché au doigt (app.js : entrerPenche) : il suit le doigt sans retard */
+.roue-place.penche .roue-tourne { transition: transform .12s ease-out; }
 .roue-tourne.pivote { animation: pivoter 1.4s cubic-bezier(.45, 0, .2, 1); }
 @keyframes pivoter { to { transform: rotateY(360deg); } }
 /* Paquet de la roue : le même dessin que le grand booster, sans ses animations ni son inclinaison */
 .booster.paquet-roue {
   position: absolute; inset: 0; width: 100%;
-  animation: none; transform: none; filter: none; transition: none; touch-action: pan-y;
+  animation: none; transform: none; filter: none; transition: none; touch-action: none;
   backface-visibility: hidden; -webkit-backface-visibility: hidden;
   -webkit-box-reflect: below 12px linear-gradient(transparent 60%, rgba(255, 255, 255, .2));
 }

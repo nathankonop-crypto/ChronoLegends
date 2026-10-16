@@ -1641,16 +1641,26 @@ function animerRoue() {
   placerRoue();
 }
 
-// Le doigt fait tourner la roue ; un simple appui sur un paquet l'ouvre.
+// Le doigt fait tourner la roue ; un simple appui sur un paquet l'ouvre ;
+// le doigt posé et gardé un instant sur un paquet le fait pencher (pour le regarder sous tous les angles).
+const DELAI_PENCHE = 220;   // ms sans bouger avant que le paquet se penche
+const INCLINAISON_PAQUET = 26;   // degrés, au maximum
 $("#roue").addEventListener("pointerdown", e => {
   roue.glisse = { x: e.clientX, angle: roue.angle, dernierX: e.clientX, dernierT: performance.now(), vitesse: 0, bouge: false };
+  const place = e.target.closest(".roue-place");
+  if (place && !$("#roue").classList.contains("inactive")) {
+    clearTimeout(roue.attentePenche);
+    roue.attentePenche = setTimeout(() => entrerPenche(place, e), DELAI_PENCHE);
+  }
 });
 $("#roue").addEventListener("pointermove", e => {
+  if (roue.penche) return pencherPaquet(e);
   const g = roue.glisse;
   if (!g) return;
   const dx = e.clientX - g.x;
   if (!g.bouge && Math.abs(dx) > 8) {
     g.bouge = true;
+    clearTimeout(roue.attentePenche);   // on fait tourner la roue : pas de penché
     try { $("#roue").setPointerCapture(e.pointerId); } catch (err) { /* pointeur déjà relâché */ }
   }
   if (!g.bouge) return;
@@ -1660,15 +1670,50 @@ $("#roue").addEventListener("pointermove", e => {
   g.dernierX = e.clientX; g.dernierT = maintenant;
 });
 const lacherRoue = () => {
+  clearTimeout(roue.attentePenche);
+  if (roue.penche) return sortirPenche();
   const g = roue.glisse;
   roue.glisse = null;
   if (!g || !g.bouge) return;
   roue.vitesse = Math.max(-12, Math.min(12, g.vitesse));
-  roue.ignorerClic = true;               // le « clic » qui suit le glissement ne doit pas ouvrir un paquet
-  setTimeout(() => { roue.ignorerClic = false; }, 50);
+  ignorerProchainClic();                 // le « clic » qui suit le glissement ne doit pas ouvrir un paquet
 };
 $("#roue").addEventListener("pointerup", lacherRoue);
 $("#roue").addEventListener("pointercancel", lacherRoue);
+function ignorerProchainClic() {
+  roue.ignorerClic = true;
+  setTimeout(() => { roue.ignorerClic = false; }, 50);
+}
+
+// Penché : la roue s'arrête, le paquet avance un peu et suit le doigt (avec son reflet métallisé).
+function entrerPenche(place, e) {
+  const tourne = place.querySelector(".roue-tourne");
+  if (!roue.glisse || roue.glisse.bouge || tourne.classList.contains("pivote")) return;
+  roue.penche = { place, tourne, face: place.querySelector(".paquet-roue") };
+  place.classList.add("penche");
+  try { $("#roue").setPointerCapture(e.pointerId); } catch (err) { /* pointeur déjà relâché */ }
+  vibrer(10);
+  pencherPaquet(e);
+}
+function pencherPaquet(e) {
+  const { tourne, face } = roue.penche;
+  const z = face.getBoundingClientRect();
+  const borne = v => Math.max(-0.5, Math.min(0.5, v));
+  const x = borne((e.clientX - z.left) / z.width - 0.5), y = borne((e.clientY - z.top) / z.height - 0.5);
+  tourne.style.transform = `translateZ(40px) rotateX(${(-y * 2 * INCLINAISON_PAQUET).toFixed(1)}deg) rotateY(${(x * 2 * INCLINAISON_PAQUET).toFixed(1)}deg)`;
+  face.style.setProperty("--mx", `${(50 + x * 100).toFixed(1)}%`);   // le reflet suit le doigt
+  face.style.setProperty("--my", `${(50 + y * 100).toFixed(1)}%`);
+  face.style.setProperty("--brillance", Math.min(1, Math.hypot(x, y) * 2.5).toFixed(2));
+}
+function sortirPenche() {
+  const { place, tourne, face } = roue.penche;
+  roue.penche = null;
+  roue.glisse = null;
+  tourne.style.transform = "";
+  face.style.setProperty("--brillance", 0);
+  setTimeout(() => place.classList.remove("penche"), 450);
+  ignorerProchainClic();                 // lâcher un paquet penché ne l'ouvre pas
+}
 $("#roue").addEventListener("click", e => {
   const paquet = e.target.closest(".paquet-roue");
   if (!paquet || roue.ignorerClic) return;
@@ -1677,7 +1722,7 @@ $("#roue").addEventListener("click", e => {
 
 // De temps en temps, un paquet proche du devant pivote sur lui-même (on aperçoit son dos).
 setInterval(() => {
-  if (!enModeRoue() || animationsReduites() || roue.glisse) return;
+  if (!enModeRoue() || animationsReduites() || roue.glisse || roue.penche) return;
   const devant = roue.monuments.map((_, i) => i).filter(i => {
     const ecart = ((i * 360 / NB_ROUE - roue.angle) % 360 + 540) % 360 - 180;
     return Math.abs(ecart) < 70;
