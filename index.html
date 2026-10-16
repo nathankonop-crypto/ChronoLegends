@@ -40,7 +40,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261016-1232">
+<link rel="stylesheet" href="style.css?v=20261016-1243">
 </head>
 <body>
 
@@ -97,7 +97,14 @@
 <main>
   <!-- Vue : ouverture de booster -->
   <section id="vue-booster" class="vue">
-    <div id="zone-booster" class="zone-booster">
+    <div id="zone-booster" class="zone-booster mode-roue">
+      <!-- Roue des boosters (à la Pokémon TCG Pocket) : un manège 3D de paquets, chacun avec son
+           monument ; on le fait tourner du doigt, on touche un paquet pour l'ouvrir (app.js) -->
+      <div class="roue" id="roue" role="group" aria-label="Choisir un booster" data-t-aria="choisirBooster">
+        <div class="roue-sol" aria-hidden="true"></div>
+        <div class="roue-scene" id="roue-scene"></div>
+      </div>
+      <button class="retour-roue" id="retour-roue" data-t="autreBooster">‹ Choisir un autre booster</button>
       <button id="booster" class="booster" aria-label="Ouvrir le booster" data-t-aria="ouvrirLeBooster">
         <!-- Sachet : fond aux couleurs de la région, soudures dentelées, monument en filigrane (monuments.js) -->
         <span class="booster-sachet" aria-hidden="true">
@@ -273,13 +280,13 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261016-1232"></script>
-<script src="langue.js?v=20261016-1232"></script>
-<script src="anti-robot.js?v=20261016-1232"></script>
-<script src="carte.js?v=20261016-1232"></script>
-<script src="partage.js?v=20261016-1232"></script>
-<script src="monuments.js?v=20261016-1232"></script>
-<script src="sons.js?v=20261016-1232"></script>
-<script src="app.js?v=20261016-1232"></script>
+<script src="reglages.js?v=20261016-1243"></script>
+<script src="langue.js?v=20261016-1243"></script>
+<script src="anti-robot.js?v=20261016-1243"></script>
+<script src="carte.js?v=20261016-1243"></script>
+<script src="partage.js?v=20261016-1243"></script>
+<script src="monuments.js?v=20261016-1243"></script>
+<script src="sons.js?v=20261016-1243"></script>
+<script src="app.js?v=20261016-1243"></script>
 </body>
 </html>

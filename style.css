@@ -373,7 +373,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .booster-sachet::before { left: 0; clip-path: polygon(0 0, 100% 50%, 0 100%); }
 .booster-sachet::after { right: 0; clip-path: polygon(100% 0, 0 50%, 100% 100%); }
 /* Monument en filigrane, à peine visible : un différent à chaque paquet */
-.booster-filigrane { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--or); opacity: .3; }
+.booster-filigrane { position: absolute; inset: 0; width: 100%; height: 100%; fill: var(--or); opacity: .45; }
 .booster-bord { inset: 8.5% 10px; }
 
 /* Une couleur par région */
@@ -403,7 +403,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
     radial-gradient(ellipse at 50% 45%, #3d3119 0%, #18130a 60%, #070604 100%);
 }
 .booster.dore .booster-sachet { box-shadow: 0 0 0 1.5px rgba(241, 220, 159, .9) inset, 0 0 30px rgba(212, 178, 106, .25) inset; }
-.booster.dore .booster-filigrane { opacity: .38; }
+.booster.dore .booster-filigrane { opacity: .55; }
 .booster.dore .booster-info { color: var(--or-clair); }
 .booster.dore .booster-reflet { animation-duration: 3.5s; animation-delay: .5s; }
 /* Halo doré qui respire derrière le paquet */
@@ -1731,3 +1731,67 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
 .bouton-whatsapp { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; background: #25d366; border-color: #25d366; color: #06301a; }
 .bouton-whatsapp svg { width: 18px; height: 18px; fill: currentColor; }
 .inviter-image { display: block; width: 100%; height: auto; margin: 12px 0 0; border-radius: 10px; box-shadow: 0 10px 24px rgba(0, 0, 0, .5); }
+
+/* ---------- Roue des boosters (à la Pokémon TCG Pocket ; app.js : construireRoue, animerRoue) ----------
+   Un manège 3D : chaque paquet est tourné de 360/8 = 45° autour du centre, puis reculé de --r.
+   La scène entière tourne (rotateY) ; elle est reculée de --r pour que le paquet de devant ait sa taille normale. */
+.zone-booster:not(.mode-roue) .roue, .zone-booster.mode-roue #booster,
+.zone-booster.mode-roue .retour-roue { display: none; }
+.roue {
+  --lp: min(40vw, 168px);
+  position: relative; width: calc(100% + 32px); max-width: 900px; margin: -6px -16px 0;
+  height: calc(var(--lp) * 98 / 63 + 100px);
+  overflow: hidden; perspective: 620px; perspective-origin: 50% 32%;
+  touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab;
+}
+.roue:active { cursor: grabbing; }
+.roue-scene {
+  position: absolute; left: 50%; top: 18px; width: var(--lp); aspect-ratio: 63 / 98; margin-left: calc(var(--lp) / -2);
+  transform-style: preserve-3d;
+}
+.roue-place {
+  position: absolute; inset: 0; transform-style: preserve-3d;
+  transform: rotateY(calc(var(--i) * 45deg)) translateZ(var(--r, 320px));
+}
+.roue-tourne { position: absolute; inset: 0; transform-style: preserve-3d; }
+.roue-tourne.pivote { animation: pivoter 1.4s cubic-bezier(.45, 0, .2, 1); }
+@keyframes pivoter { to { transform: rotateY(360deg); } }
+/* Paquet de la roue : le même dessin que le grand booster, sans ses animations ni son inclinaison */
+.booster.paquet-roue {
+  position: absolute; inset: 0; width: 100%;
+  animation: none; transform: none; filter: none; transition: none; touch-action: pan-y;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  -webkit-box-reflect: below 12px linear-gradient(transparent 60%, rgba(255, 255, 255, .2));
+}
+.booster.paquet-roue:hover { scale: 1; filter: none; }
+.booster.paquet-roue .booster-info { font-size: 9px; letter-spacing: .22em; }
+.booster.paquet-roue.dore::after { display: none; }
+/* Dos du paquet (visible quand il pivote, ou pour les paquets du fond) */
+.paquet-dos {
+  position: absolute; inset: 0; border-radius: 10px; display: grid; place-items: center;
+  transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background:
+    repeating-linear-gradient(60deg, rgba(212, 178, 106, .07) 0 1px, transparent 1px 9px),
+    repeating-linear-gradient(-60deg, rgba(212, 178, 106, .07) 0 1px, transparent 1px 9px),
+    linear-gradient(160deg, #283055, #11152a);
+  box-shadow: 0 0 0 1px rgba(212, 178, 106, .5) inset;
+  -webkit-box-reflect: below 12px linear-gradient(transparent 60%, rgba(255, 255, 255, .15));
+}
+.paquet-dos img { width: 34%; opacity: .85; }
+/* Assombrissement selon la profondeur (--ombre, réglé par app.js : placerRoue) */
+.paquet-ombre { position: absolute; inset: 0; border-radius: inherit; background: #05060d; opacity: var(--ombre, 0); pointer-events: none; }
+/* Sol : une lueur douce sous le manège */
+.roue-sol {
+  position: absolute; left: 50%; bottom: 18px; width: min(110%, 820px); height: 120px; translate: -50% 0;
+  background: radial-gradient(ellipse at 50% 40%, rgba(212, 178, 106, .16), transparent 65%);
+  pointer-events: none;
+}
+/* Pas de booster disponible : la roue est grisée et ne réagit plus */
+.roue.inactive .roue-scene { filter: grayscale(.85) brightness(.55); }
+.roue.inactive { cursor: default; }
+/* Revenir à la roue sans ouvrir le paquet */
+.retour-roue {
+  align-self: center; margin-bottom: -10px; padding: 6px 10px; border: 0; background: none; cursor: pointer;
+  font-family: var(--serif); font-size: 15px; font-style: italic; color: var(--texte-doux);
+}
+.retour-roue:hover { color: var(--or-clair); }

@@ -145,6 +145,7 @@ function appliquerBoosterDore() {
   b.classList.toggle("dore", etat.boosterDore);
   info.dataset.t = etat.boosterDore ? "boosterDore" : "cinqCartes";
   info.textContent = t(info.dataset.t);
+  majAspectRoue();
   if (etat.boosterDore && !avant && etat.boosters > 0) { notifier(t("boosterDoreArrive")); vibrer(40); jouerSon("dore"); }
 }
 
@@ -157,6 +158,7 @@ function appliquerRegion(data) {
   const change = etat.region && etat.region !== data.region;
   etat.region = data.region;
   $("#booster").dataset.region = data.region;   // couleur du paquet selon la région
+  majAspectRoue();
   if (data.pays) etat.pays = data.pays;
   // Verrou de région : changement en attente (null s'il n'y en a pas).
   if ("verrou" in data) etat.verrou = data.verrou;
@@ -217,15 +219,19 @@ function majConsigne() {
   else if (etatJeu.erreur) texte = t("erreurServeur");
   else if (etatJeu.verification) texte = t("verification");
   else if (!etatJeu.pret) texte = t("chargement");
-  else if (DEMO) texte = t("modeDemo");
+  else if (DEMO && !enModeRoue()) texte = t("modeDemo");
+  else if (DEMO) texte = t("touchezUnBooster", { n: "∞" });
   else if (!etat.region) texte = t("paysInconnu");
   else if (vide) texte = t("regionVide", { region: nomRegion(etat.region) });
+  else if (b > 0 && enModeRoue()) texte = t("touchezUnBooster", { n: b });
   else if (b > 0) texte = t(prefs.ouvertureRapide ? "boostersDispoAppui" : "boostersDispo", { n: b });
   else texte = t("plusDeBoosterCourt");
   $("#consigne").textContent = texte;
   // Plus de booster : grand compte à rebours (mis à jour chaque seconde, voir plus bas).
   $("#compte-a-rebours").hidden = !!DEMO || !(etatJeu.pret && !etatJeu.erreur && etat.region && !vide && b === 0 && etat.prochainQuotidien);
   majCompteARebours();
+  // Roue grisée tant qu'aucun booster ne peut être ouvert.
+  $("#roue").classList.toggle("inactive", $("#booster").disabled);
   // Tant que le joueur n'a jamais découpé de paquet : le doigt montre le geste.
   $("#booster").classList.toggle("tuto", !prefs.tutoDecoupe && !$("#booster").disabled && !prefs.ouvertureRapide);
 }
@@ -847,7 +853,8 @@ function revenirAuBooster() {
   $("#tirage").hidden = true;
   $("#actions-tirage").hidden = true;
   $("#zone-booster").hidden = false;
-  majConsigne();   // le joueur déchire lui-même le paquet suivant
+  remplacerPaquetOuvert();   // un nouveau paquet prend la place de celui qu'on vient d'ouvrir
+  afficherRoue();
 }
 
 // --- Collection ---
@@ -1433,14 +1440,14 @@ function reinitialiserBooster() {
   ligneCoupe.setAttribute("points", "");
   pencherBooster(0, 0);
   appliquerBoosterDore();
-  choisirMonument();
 }
 
-// Un monument différent sur chaque paquet (monuments.js), jamais deux fois de suite le même.
+// Un monument différent sur chaque paquet (monuments.js), jamais deux fois de suite le même ;
+// ou celui du paquet choisi dans la roue.
 let monumentActuel = null;
-function choisirMonument() {
+function choisirMonument(cle = null) {
   const cles = Object.keys(MONUMENTS).filter(c => c !== monumentActuel);
-  monumentActuel = cles[Math.floor(Math.random() * cles.length)];
+  monumentActuel = cle || cles[Math.floor(Math.random() * cles.length)];
   boosterEl.querySelector(".booster-filigrane").innerHTML = dessinMonument(monumentActuel);
 }
 
@@ -1552,6 +1559,182 @@ boosterEl.addEventListener("click", e => {
   boosterEl.classList.add("indice");
   notifier(t("glisserPourOuvrir"));
 });
+// ---------- Roue des boosters (à la Pokémon TCG Pocket) ----------
+//  Un manège 3D de NB_ROUE paquets, chacun avec son monument (monuments.js). Il tourne doucement
+//  tout seul ; on le fait tourner du doigt (avec de l'élan) ; un paquet pivote de temps en temps sur
+//  lui-même. On touche un paquet : il avance jusqu'au centre et devient le booster à découper.
+//  Les paquets de la roue sont purement décoratifs : c'est toujours le serveur qui tire les cartes.
+const NB_ROUE = 8;
+const VITESSE_ROUE = 0.1;            // degrés par image quand personne n'y touche (environ 6° par seconde)
+const roue = { angle: 0, vitesse: VITESSE_ROUE, glisse: null, monuments: [], choisi: null, ignorerClic: false };
+const enModeRoue = () => $("#zone-booster").classList.contains("mode-roue");
+
+// Monuments mélangés, sans deux paquets voisins identiques.
+function monumentsRoue() {
+  const liste = [];
+  while (liste.length < NB_ROUE) {
+    const cles = Object.keys(MONUMENTS).sort(() => Math.random() - 0.5);
+    for (const c of cles) if (liste.length < NB_ROUE && c !== liste[liste.length - 1] && !(liste.length === NB_ROUE - 1 && c === liste[0])) liste.push(c);
+  }
+  return liste;
+}
+
+const contenuPaquet = cle => `
+  <span class="booster-sachet"><svg class="booster-filigrane" viewBox="0 0 63 98">${dessinMonument(cle)}</svg><span class="paquet-ombre"></span></span>
+  <span class="booster-bord"></span>
+  <span class="booster-titre"><span class="titre-chrono">Chrono</span><span class="titre-legends">LEGENDS</span></span>
+  <img class="booster-logo" src="images/logo-etoile.webp" alt="" draggable="false">
+  <span class="booster-info"></span>
+  <span class="booster-reflet"></span>`;
+
+function construireRoue() {
+  roue.monuments = monumentsRoue();
+  $("#roue-scene").innerHTML = roue.monuments.map((cle, i) => `
+    <div class="roue-place" style="--i:${i}">
+      <div class="roue-tourne">
+        <button class="booster paquet-roue" data-index="${i}" aria-label="${echapper(t("ouvrirLeBooster"))} — ${echapper(MONUMENTS[cle].nom)}">${contenuPaquet(cle)}</button>
+        <div class="paquet-dos" aria-hidden="true"><img src="images/logo-etoile.webp" alt="" draggable="false"><span class="paquet-ombre"></span></div>
+      </div>
+    </div>`).join("");
+  majAspectRoue();
+  dimensionnerRoue();
+}
+
+// Couleur de la région, booster doré : comme le grand paquet.
+function majAspectRoue() {
+  document.querySelectorAll(".paquet-roue").forEach(p => {
+    if (etat.region) p.dataset.region = etat.region;
+    p.classList.toggle("dore", !!etat.boosterDore);
+    p.querySelector(".booster-info").textContent = t(etat.boosterDore ? "boosterDore" : "cinqCartes");
+  });
+}
+
+// Rayon du manège selon la taille des paquets (ils ne se chevauchent pas sur le devant).
+function dimensionnerRoue() {
+  const largeur = $("#roue-scene").offsetWidth || 160;
+  $("#roue").style.setProperty("--r", `${(largeur * 2.25).toFixed(0)}px`);
+}
+addEventListener("resize", dimensionnerRoue);
+
+function placerRoue() {
+  $("#roue-scene").style.transform = `translateZ(calc(var(--r) * -1)) rotateY(${(-roue.angle).toFixed(2)}deg)`;
+  // Plus un paquet est loin derrière, plus il est sombre (comme dans une salle éclairée par devant).
+  document.querySelectorAll(".roue-place").forEach((place, i) => {
+    const proximite = (Math.cos((i * 360 / NB_ROUE - roue.angle) * Math.PI / 180) + 1) / 2;   // 1 devant, 0 derrière
+    place.style.setProperty("--ombre", (0.72 * (1 - proximite) ** 1.3).toFixed(3));
+  });
+}
+
+// Animation : la roue tourne toute seule, ou garde l'élan donné par le doigt (qui s'amortit).
+function animerRoue() {
+  requestAnimationFrame(animerRoue);
+  if (!enModeRoue() || $("#vue-booster").hidden || $("#zone-booster").hidden || document.hidden) return;
+  if (!roue.glisse) {
+    const vitesseRepos = animationsReduites() ? 0 : VITESSE_ROUE;
+    roue.vitesse += (vitesseRepos - roue.vitesse) * 0.03;
+    roue.angle += roue.vitesse;
+  }
+  placerRoue();
+}
+
+// Le doigt fait tourner la roue ; un simple appui sur un paquet l'ouvre.
+$("#roue").addEventListener("pointerdown", e => {
+  roue.glisse = { x: e.clientX, angle: roue.angle, dernierX: e.clientX, dernierT: performance.now(), vitesse: 0, bouge: false };
+});
+$("#roue").addEventListener("pointermove", e => {
+  const g = roue.glisse;
+  if (!g) return;
+  const dx = e.clientX - g.x;
+  if (!g.bouge && Math.abs(dx) > 8) {
+    g.bouge = true;
+    try { $("#roue").setPointerCapture(e.pointerId); } catch (err) { /* pointeur déjà relâché */ }
+  }
+  if (!g.bouge) return;
+  roue.angle = g.angle - dx * 0.28;
+  const maintenant = performance.now();
+  g.vitesse = -(e.clientX - g.dernierX) * 0.28 / Math.max(1, maintenant - g.dernierT) * 16;   // degrés par image
+  g.dernierX = e.clientX; g.dernierT = maintenant;
+});
+const lacherRoue = () => {
+  const g = roue.glisse;
+  roue.glisse = null;
+  if (!g || !g.bouge) return;
+  roue.vitesse = Math.max(-12, Math.min(12, g.vitesse));
+  roue.ignorerClic = true;               // le « clic » qui suit le glissement ne doit pas ouvrir un paquet
+  setTimeout(() => { roue.ignorerClic = false; }, 50);
+};
+$("#roue").addEventListener("pointerup", lacherRoue);
+$("#roue").addEventListener("pointercancel", lacherRoue);
+$("#roue").addEventListener("click", e => {
+  const paquet = e.target.closest(".paquet-roue");
+  if (!paquet || roue.ignorerClic) return;
+  choisirPaquet(Number(paquet.dataset.index));
+});
+
+// De temps en temps, un paquet proche du devant pivote sur lui-même (on aperçoit son dos).
+setInterval(() => {
+  if (!enModeRoue() || animationsReduites() || roue.glisse) return;
+  const devant = roue.monuments.map((_, i) => i).filter(i => {
+    const ecart = ((i * 360 / NB_ROUE - roue.angle) % 360 + 540) % 360 - 180;
+    return Math.abs(ecart) < 70;
+  });
+  const i = devant[Math.floor(Math.random() * devant.length)];
+  const tourne = document.querySelectorAll(".roue-tourne")[i];
+  if (!tourne || tourne.classList.contains("pivote")) return;
+  tourne.classList.add("pivote");
+  setTimeout(() => tourne.classList.remove("pivote"), 1500);
+}, 3800);
+
+// Un paquet touché : il avance jusqu'au centre et devient le grand booster à découper.
+function choisirPaquet(i) {
+  if ($("#booster").disabled) {
+    notifier($("#consigne").textContent);
+    return;
+  }
+  const face = document.querySelectorAll(".paquet-roue")[i];
+  const depart = face.getBoundingClientRect();
+  roue.choisi = i;
+  choisirMonument(roue.monuments[i]);
+  $("#zone-booster").classList.remove("mode-roue");
+  majConsigne();
+  const arrivee = boosterEl.getBoundingClientRect();
+  if (!animationsReduites()) {
+    boosterEl.animate([
+      { translate: `${depart.left + depart.width / 2 - (arrivee.left + arrivee.width / 2)}px ${depart.top + depart.height / 2 - (arrivee.top + arrivee.height / 2)}px`, scale: depart.width / arrivee.width },
+      { translate: "0 0", scale: 1 },
+    ], { duration: 480, easing: "cubic-bezier(.2, .8, .2, 1)" });
+  }
+  jouerSon("retournement");
+  vibrer(15);
+  if (prefs.ouvertureRapide) setTimeout(decouperAuto, 520);
+}
+
+function afficherRoue() {
+  $("#zone-booster").classList.add("mode-roue");
+  majConsigne();
+}
+
+// Le paquet ouvert est remplacé par un autre monument (différent de ses voisins).
+function remplacerPaquetOuvert() {
+  const i = roue.choisi;
+  if (i === null) return;
+  roue.choisi = null;
+  const voisins = [roue.monuments[(i + NB_ROUE - 1) % NB_ROUE], roue.monuments[(i + 1) % NB_ROUE], roue.monuments[i]];
+  const libres = Object.keys(MONUMENTS).filter(c => !voisins.includes(c));
+  const cle = libres[Math.floor(Math.random() * libres.length)] || roue.monuments[i];
+  roue.monuments[i] = cle;
+  const paquet = document.querySelectorAll(".paquet-roue")[i];
+  paquet.querySelector(".booster-filigrane").innerHTML = dessinMonument(cle);
+  paquet.setAttribute("aria-label", `${t("ouvrirLeBooster")} — ${MONUMENTS[cle].nom}`);
+}
+
+$("#retour-roue").addEventListener("click", () => {
+  if (enCours || boosterEl.classList.contains("dechire")) return;
+  afficherRoue();
+});
+
+queueMicrotask(() => { construireRoue(); placerRoue(); requestAnimationFrame(animerRoue); });
+
 // ---------- Le paquet penche : vers la souris, ou quand on incline le téléphone ----------
 
 const INCLINAISON_BOOSTER = 16;   // degrés, au maximum
