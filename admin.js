@@ -166,6 +166,7 @@ function afficherListe() {
   $("#vue-formulaire").hidden = true;
   $("#vue-familles").hidden = true;
   $("#vue-agent").hidden = true;
+  $("#vue-pyramide").hidden = true;
 
   const texte = $("#recherche").value.trim().toLowerCase();
   const filtres = { rarete: $("#filtre-rarete").value, gamme: $("#filtre-gamme").value,
@@ -601,6 +602,8 @@ $("#confirmer-suppression").addEventListener("click", async () => {
 // ---------- Familles : créer, renommer, changer d'emblème, supprimer ----------
 
 function afficherFamillesAdmin() {
+  $("#vue-pyramide").hidden = true;
+  $("#vue-agent").hidden = true;
   $("#vue-liste").hidden = true;
   $("#vue-formulaire").hidden = true;
   $("#vue-familles").hidden = false;
@@ -701,6 +704,7 @@ let agentEcartees = [];       // noms déjà proposés, pour que « Autres idée
 let agentEnCours = false;
 
 function afficherAgent() {
+  $("#vue-pyramide").hidden = true;
   $("#vue-liste").hidden = true;
   $("#vue-formulaire").hidden = true;
   $("#vue-familles").hidden = true;
@@ -830,6 +834,56 @@ async function creerCartesCochees() {
   etatAgent(`${reussies} brouillon${reussies > 1 ? "s" : ""} créé${reussies > 1 ? "s" : ""} sur ${choisies.length}. Retrouvez-les dans la liste avec le filtre « Brouillons » pour les relire et les valider.`);
 }
 
+// ---------- Pyramide des raretés ----------
+// Combien de cartes à chaque rareté (de Mythique en haut à Ordinaire en bas), selon les filtres,
+// et le détail par région : pour voir où il manque des cartes.
+
+const RARETES_PYRAMIDE = Object.keys(RARETES).sort((a, b) => RARETES[b].ordre - RARETES[a].ordre);   // mythique → ordinaire
+
+function cartesPyramide({ sansRegion = false } = {}) {
+  const region = $("#pyramide-region").value, epoque = $("#pyramide-epoque").value;
+  const gamme = $("#pyramide-gamme").value, statut = $("#pyramide-statut").value;
+  return cartes.filter(c =>
+    (sansRegion || !region || c.region === region) && (!epoque || c.epoque === epoque) &&
+    (!gamme || c.gamme === gamme) && (!statut || (c.statut ?? "validee") === statut));
+}
+
+function afficherPyramide() {
+  for (const v of ["#vue-liste", "#vue-formulaire", "#vue-familles", "#vue-agent"]) $(v).hidden = true;
+  $("#vue-pyramide").hidden = false;
+
+  const liste = cartesPyramide();
+  const total = liste.length;
+  const brouillons = $("#pyramide-statut").value === "validee"
+    ? cartes.filter(c => c.statut === "brouillon") : [];
+  $("#pyramide").innerHTML = RARETES_PYRAMIDE.map((r, i) => {
+    const n = liste.filter(c => c.rarete === r).length;
+    const enAttente = brouillons.filter(c => c.rarete === r && (!$("#pyramide-region").value || c.region === $("#pyramide-region").value)
+      && (!$("#pyramide-epoque").value || c.epoque === $("#pyramide-epoque").value)
+      && (!$("#pyramide-gamme").value || c.gamme === $("#pyramide-gamme").value)).length;
+    const largeur = 28 + (72 * i) / (RARETES_PYRAMIDE.length - 1);
+    const pourcent = total ? Math.round((n / total) * 100) : 0;
+    return `<div class="etage rarete-${r}" style="width:${largeur}%">
+      <span class="etage-nom">${RARETES[r].nom}</span>
+      <span class="etage-nombre">${n} carte${n > 1 ? "s" : ""} · ${pourcent} %${enAttente ? ` <em>(+${enAttente} brouillon${enAttente > 1 ? "s" : ""})</em>` : ""}</span>
+    </div>`;
+  }).join("") + `<p class="pyramide-total">${total} carte${total > 1 ? "s" : ""} au total</p>`;
+
+  // Tableau par région : une ligne par région, une colonne par rareté.
+  const toutes = cartesPyramide({ sansRegion: true });
+  const ligne = (nom, cartesLigne, classe = "") => `<tr class="${classe}"><th>${nom}</th>${RARETES_PYRAMIDE.map(r => {
+    const n = cartesLigne.filter(c => c.rarete === r).length;
+    return `<td class="${n ? "" : "zero"}">${n}</td>`;
+  }).join("")}<td class="total">${cartesLigne.length}</td></tr>`;
+  $("#repartition").innerHTML = `<thead><tr><th></th>${RARETES_PYRAMIDE.map(r => `<th>${RARETES[r].nom}</th>`).join("")}<th>Total</th></tr></thead>
+    <tbody>${Object.entries(REGIONS).map(([cle, nom]) => ligne(nom, toutes.filter(c => c.region === cle),
+      cle === $("#pyramide-region").value ? "choisie" : "")).join("")}${ligne("Total", toutes, "ligne-total")}</tbody>`;
+}
+
+$("#bouton-pyramide").addEventListener("click", afficherPyramide);
+$("#pyramide-retour").addEventListener("click", afficherListe);
+for (const id of ["#pyramide-region", "#pyramide-epoque", "#pyramide-gamme", "#pyramide-statut"]) $(id).addEventListener("change", afficherPyramide);
+
 // Menu « Tester un booster » : se referme après un choix ou un clic ailleurs.
 document.addEventListener("click", e => {
   const menu = $("#menu-demo");
@@ -857,6 +911,9 @@ remplirSelect(form.elements.gamme, GAMMES);
 remplirSelect(form.elements.rarete, nomsRarete);
 remplirSelect(form.elements.epoque, nomsEpoque);
 remplirSelect(form.elements.region, REGIONS);
+remplirSelect($("#pyramide-region"), REGIONS, true);
+remplirSelect($("#pyramide-epoque"), nomsEpoque, true);
+remplirSelect($("#pyramide-gamme"), GAMMES, true);
 remplirSelect($("#agent-region"), REGIONS);
 $("#agent-region").value = "moyen-orient";
 remplirSelect($("#agent-epoque"), nomsEpoque, true);

@@ -185,3 +185,24 @@ body.admin { font-size: 16px; }
 .retouche { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border: 1px dashed rgba(212, 178, 106, .3); border-radius: 10px; }
 .retouche textarea { resize: vertical; }
 .ligne-retouche { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+/* ---------- Pyramide des raretés ---------- */
+.filtres-pyramide { grid-template-columns: repeat(4, 1fr); max-width: 900px; }
+.pyramide { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 760px; margin: 10px auto 28px; }
+.etage {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  min-height: 58px; padding: 6px 10px; border-radius: 8px; text-align: center;
+  background: var(--cadre); color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, .75);
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, .8), inset 0 0 0 1px rgba(255, 255, 255, .25);
+}
+.etage-nom { font-family: var(--serif-titre); font-size: 15px; letter-spacing: .14em; text-transform: uppercase; }
+.etage-nombre { font-family: system-ui, sans-serif; font-size: 14px; font-weight: 600; }
+.etage-nombre em { font-weight: 400; font-style: normal; opacity: .85; }
+.pyramide-total { margin: 8px 0 0; color: var(--texte-doux); font-style: italic; }
+.titre-repartition { font-family: var(--serif-titre); font-size: 18px; letter-spacing: .08em; color: var(--or-clair); margin: 0 0 12px; }
+.tableau-repartition th, .tableau-repartition td { text-align: center; }
+.tableau-repartition tbody th { text-align: left; font-weight: 600; color: var(--texte); }
+.tableau-repartition td.zero { color: #f1b3ab; opacity: .7; }
+.tableau-repartition td.total, .tableau-repartition .ligne-total td, .tableau-repartition .ligne-total th { font-weight: 700; }
+.tableau-repartition tr.choisie { background: rgba(212, 178, 106, .1); }
+@media (max-width: 700px) { .filtres-pyramide { grid-template-columns: 1fr 1fr; } }
