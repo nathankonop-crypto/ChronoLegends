@@ -302,51 +302,104 @@ async function jouerSon(nom) {
   } catch (e) { /* pas de son : le jeu marche quand même */ }
 }
 
-// ---------- Musique d'ambiance : celle de la région du joueur ----------
+// ---------- Musique : ambiance de la région du joueur, ou musique d'ouverture des boosters ----------
 const VOLUME_MUSIQUE = 0.3;   // en fond, sous les bruitages et les fanfares
-const PAUSE_BOUCLE = 1500;    // silence (ms) entre deux passages
-const musique = { el: null, gain: null, region: null, attente: null };
+// Ambiances (une par région, sons/ambiance-<région>.mp3) : lues en continu, elles finissent par un
+// fondu, puis 1,5 s de silence avant de reprendre.
+const PAUSE_AMBIANCE = 1500;
+// Musiques d'ouverture des boosters : boucles continues, sans aucune pause. La boucle va de
+// « debut » à « fin » (en secondes dans le fichier) : la fin retombe sur la même mesure que le
+// début (découpage fait sur le tempo du morceau).
+const BOUCLES = {
+  booster: { fichier: "sons/booster.mp3", debut: 0.2, fin: 30.1741 },              // booster ordinaire : 14 mesures à 112 bpm
+  "booster-dore": { fichier: "sons/booster-dore.mp3", debut: 0.2, fin: 38.095 },  // booster doré : 16 mesures à 101 bpm
+};
+// Téléchargées à l'avance (pour partir dès la découpe du paquet) ; absentes → l'ambiance continue.
+const tamponsBoucles = {};
+for (const [piste, b] of Object.entries(BOUCLES)) {
+  tamponsBoucles[piste] = fetch(b.fichier).then(r => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+}
+const musique = { piste: null, gain: null, el: null, source: null, attente: null };
 
-// Lance (ou change) la musique de la région ; ne fait rien si elle joue déjà.
-function demarrerMusique(region) {
-  if (prefs.musique === false || !region) return;
+// La musique d'ouverture de ce booster existe-t-elle ? (doré : sinon celle des boosters ordinaires)
+async function pisteOuverture(dore) {
+  if (dore && await tamponsBoucles["booster-dore"]) return "booster-dore";
+  return (await tamponsBoucles.booster) ? "booster" : null;
+}
+
+function nouveauGain(ctx) {
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(VOLUME_MUSIQUE, ctx.currentTime + 2.5);
+  gain.connect(ctx.destination);
+  return gain;
+}
+
+// Lance (ou change, en fondu enchaîné) une piste ; ne fait rien si elle joue déjà.
+function demarrerMusique(piste) {
+  if (prefs.musique === false || !piste) return;
   if (!contexteAudio && navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
-  if (musique.region === region && musique.el) {
-    if (musique.el.paused && !musique.attente && !document.hidden) musique.el.play().catch(() => {});
+  if (musique.piste === piste) {
+    if (musique.el?.paused && !musique.attente && !document.hidden) musique.el.play().catch(() => {});
     return;
   }
   const ctx = audio();
   if (!ctx) return;
   arreterMusique(1.5);
-  const el = new Audio(`sons/ambiance-${region}.mp3`);
+  const gain = nouveauGain(ctx);
+  Object.assign(musique, { piste, gain });
+  if (BOUCLES[piste]) return lancerBoucle(ctx, piste, gain);
+
+  const el = new Audio(`sons/ambiance-${piste}.mp3`);
   el.preload = "auto";
   // Le volume passe par Web Audio : sur iPhone, le volume d'un lecteur audio ne se règle pas autrement.
-  const gain = ctx.createGain();
-  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(VOLUME_MUSIQUE, ctx.currentTime + 2.5);
-  ctx.createMediaElementSource(el).connect(gain).connect(ctx.destination);
+  ctx.createMediaElementSource(el).connect(gain);
   el.addEventListener("ended", () => {
     musique.attente = setTimeout(() => {
       musique.attente = null;
       if (musique.el !== el || prefs.musique === false) return;
       el.currentTime = 0;
       if (!document.hidden) el.play().catch(() => {});
-    }, PAUSE_BOUCLE);
+    }, PAUSE_AMBIANCE);
   });
-  Object.assign(musique, { el, gain, region });
+  musique.el = el;
   if (!document.hidden) el.play().catch(() => {});
 }
 
+// Boucle continue (Web Audio) : décodée une fois, puis rejouée sans aucun blanc.
+async function lancerBoucle(ctx, piste, gain) {
+  let tampon = await tamponsBoucles[piste];
+  if (!tampon) return;
+  if (!(tampon instanceof AudioBuffer)) {
+    tampon = await ctx.decodeAudioData(tampon.slice(0));
+    tamponsBoucles[piste] = Promise.resolve(tampon);
+  }
+  if (musique.piste !== piste || musique.gain !== gain) return;   // on a changé de musique entre-temps
+  const { debut, fin } = BOUCLES[piste];
+  const source = ctx.createBufferSource();
+  source.buffer = tampon;
+  source.loop = true;
+  source.loopStart = debut;
+  source.loopEnd = fin || tampon.duration;
+  source.connect(gain);
+  source.start(0, debut);
+  musique.source = source;
+}
+
 function arreterMusique(fondu = 1) {
-  const { el, gain } = musique;
+  const { el, source, gain } = musique;
   clearTimeout(musique.attente);
-  Object.assign(musique, { el: null, gain: null, region: null, attente: null });
-  if (!el) return;
+  Object.assign(musique, { piste: null, gain: null, el: null, source: null, attente: null });
+  if (!gain) return;
   const t = contexteAudio.currentTime;
   gain.gain.cancelScheduledValues(t);
   gain.gain.setValueAtTime(Math.max(gain.gain.value, 0.0001), t);
   gain.gain.exponentialRampToValueAtTime(0.0001, t + fondu);
-  setTimeout(() => { el.pause(); el.removeAttribute("src"); el.load(); }, fondu * 1000 + 100);
+  setTimeout(() => {
+    if (el) { el.pause(); el.removeAttribute("src"); el.load(); }
+    try { source?.stop(); } catch (e) { /* déjà arrêtée */ }
+    gain.disconnect();
+  }, fondu * 1000 + 100);
 }
 
 // Baisse la musique pendant une fanfare, puis la remonte doucement.
@@ -363,7 +416,12 @@ function etoufferMusique(duree) {
 
 // Application en arrière-plan ou écran éteint : la musique se met en pause.
 document.addEventListener("visibilitychange", () => {
-  if (!musique.el) return;
-  if (document.hidden) musique.el.pause();
-  else if (!musique.attente && prefs.musique !== false) musique.el.play().catch(() => {});
+  if (!contexteAudio) return;
+  if (document.hidden) {
+    musique.el?.pause();
+    contexteAudio.suspend();   // les boucles (Web Audio) s'arrêtent avec le son du jeu
+  } else {
+    contexteAudio.resume();
+    if (musique.el && !musique.attente && prefs.musique !== false) musique.el.play().catch(() => {});
+  }
 });

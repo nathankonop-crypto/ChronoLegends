@@ -770,6 +770,7 @@ function ecarter(emplacement) {
 
 // Fin de la pile : on étale les 5 cartes pour les admirer / agrandir.
 function terminerPile() {
+  musiqueOuverture(false);
   const zone = $("#tirage");
   zone.className = "tirage etalement";
   zone.innerHTML = "";
@@ -1393,6 +1394,7 @@ function dechirerBooster(trace) {
   boosterEl.dataset.glisse = "1";   // le « clic » qui suit le geste ne doit pas afficher l'aide
   vibrer([25, 40, 45]);
   jouerSon("decoupe");
+  musiqueOuverture(true, boosterEl.classList.contains("dore"));
   setTimeout(() => jouerSon("glissement"), 150);   // les cartes sortent du paquet (style.css : cartes-montent)
   // Tracé de gauche à droite, prolongé jusqu'aux deux bords du paquet.
   const t = trace[0][0] > trace[trace.length - 1][0] ? [...trace].reverse() : [...trace];
@@ -1595,7 +1597,20 @@ $("#car-prevenir").addEventListener("click", () => {
 // Elle ne démarre qu'après un appui du joueur (règle des navigateurs) :
 // après le jingle de « Touchez pour jouer », sinon au premier appui sur l'écran.
 let musiqueAutorisee = false;
-const lancerMusique = () => { if (musiqueAutorisee) demarrerMusique(etat.region); };
+let musiqueOuvertureActive = null;   // piste du booster en cours d'ouverture (« booster » ou « booster-dore »), sinon null
+let finMusiqueOuverture = null;
+const lancerMusique = () => { if (musiqueAutorisee) demarrerMusique(musiqueOuvertureActive || etat.region); };
+// Paquet découpé : sa musique (ordinaire ou dorée) prend le relais. Cartes étalées : l'ambiance revient
+// après quelques secondes (si le joueur enchaîne un autre booster, la musique continue sans couper).
+async function musiqueOuverture(active, dore = false) {
+  clearTimeout(finMusiqueOuverture);
+  if (active) {
+    musiqueOuvertureActive = await pisteOuverture(dore);
+    lancerMusique();
+  } else {
+    finMusiqueOuverture = setTimeout(() => { musiqueOuvertureActive = null; lancerMusique(); }, 8000);
+  }
+}
 function autoriserMusique() {
   musiqueAutorisee = true;
   lancerMusique();
