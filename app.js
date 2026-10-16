@@ -210,19 +210,20 @@ function notifier(message) {
 function majConsigne() {
   const b = etat.boosters;
   const vide = cartesRegion().length === 0;
-  $("#booster").disabled = b === 0 || !etatJeu.pret || !etat.region || vide;
+  $("#booster").disabled = DEMO ? !etatJeu.pret : b === 0 || !etatJeu.pret || !etat.region || vide;
   let texte;
   if (etatJeu.erreur === "anti_robot") texte = t("erreurAntiRobot");
   else if (etatJeu.erreur) texte = t("erreurServeur");
   else if (etatJeu.verification) texte = t("verification");
   else if (!etatJeu.pret) texte = t("chargement");
+  else if (DEMO) texte = t("modeDemo");
   else if (!etat.region) texte = t("paysInconnu");
   else if (vide) texte = t("regionVide", { region: nomRegion(etat.region) });
   else if (b > 0) texte = t(prefs.ouvertureRapide ? "boostersDispoAppui" : "boostersDispo", { n: b });
   else texte = t("plusDeBoosterCourt");
   $("#consigne").textContent = texte;
   // Plus de booster : grand compte à rebours (mis à jour chaque seconde, voir plus bas).
-  $("#compte-a-rebours").hidden = !(etatJeu.pret && !etatJeu.erreur && etat.region && !vide && b === 0 && etat.prochainQuotidien);
+  $("#compte-a-rebours").hidden = !!DEMO || !(etatJeu.pret && !etatJeu.erreur && etat.region && !vide && b === 0 && etat.prochainQuotidien);
   majCompteARebours();
   // Tant que le joueur n'a jamais découpé de paquet : le doigt montre le geste.
   $("#booster").classList.toggle("tuto", !prefs.tutoDecoupe && !$("#booster").disabled && !prefs.ouvertureRapide);
@@ -397,9 +398,33 @@ const MESSAGES_SERVEUR = {
   region_inconnue: "serveurRegionInconnue",
 };
 
+// ---------- Mode démo (boutons « 🎬 » de l'administration) ----------
+// index.html?demo=legendaire ou ?demo=mythique, dans un navigateur connecté à l'admin :
+// le paquet s'ouvre sans booster, les cartes sont tirées ici (pas par le serveur), la dernière
+// est de la rareté demandée. Rien n'est ajouté à la collection, aucun booster n'est consommé.
+const DEMO = (() => {
+  try {
+    const r = new URLSearchParams(location.search).get("demo");
+    return ["legendaire", "mythique"].includes(r) && localStorage.getItem("chronolegends-admin") ? r : null;
+  } catch (e) { return null; }
+})();
+
+function tirageDemo() {
+  const prises = new Set();
+  return ["ordinaire", "ordinaire", "notable", "rare", DEMO].map(rarete => {
+    const libres = CARTES.filter(c => !prises.has(c.id));
+    const choix = libres.filter(c => c.rarete === rarete);
+    // Pas de carte de cette rareté : une autre carte, habillée de la rareté voulue.
+    const carte = choix.length ? choix[Math.floor(Math.random() * choix.length)]
+      : { ...libres[Math.floor(Math.random() * libres.length)], rarete };
+    prises.add(carte.id);
+    return { ...carte, finition: "normale" };
+  });
+}
+
 // dechire : le joueur vient de déchirer le paquet (les deux moitiés s'envolent déjà).
 async function ouvrirBooster(dechire = false) {
-  if (enCours || etat.boosters <= 0 || !etatJeu.pret || !etat.region || cartesRegion().length === 0) {
+  if (enCours || !etatJeu.pret || (!DEMO && (etat.boosters <= 0 || !etat.region || cartesRegion().length === 0))) {
     reinitialiserBooster();
     return;
   }
@@ -415,6 +440,8 @@ async function ouvrirBooster(dechire = false) {
     bas.addEventListener("animationend", e => { if (e.target === bas) r(); });
     setTimeout(r, 3000);
   });
+
+  if (DEMO) return sortirCartes(animation, tirageDemo(), [false, false, false, false, false]);
 
   // C'est le SERVEUR qui vérifie le stock, tire les cartes et les ajoute à la collection.
   // Aucune région envoyée : le serveur la déduit lui-même de l'adresse IP.
@@ -448,14 +475,19 @@ async function ouvrirBooster(dechire = false) {
   }
   majCompteur();
   majPointCollection();
+  sortirCartes(animation, tirage, data.cartes.map(c => c.nouvelle));
+}
 
+// Une fois le paquet tombé, la pile de cartes prend le relais.
+async function sortirCartes(animation, tirage, nouvelles) {
+  const booster = $("#booster");
   await animation;
   // Position des cartes sorties du paquet : la pile à révéler part de là.
   const depart = booster.querySelector(".cartes-sortantes > span:last-child")?.getBoundingClientRect();
   $("#zone-booster").hidden = true;
   booster.classList.remove("ouverture");
   reinitialiserBooster();
-  afficherPile(tirage, data.cartes.map(c => c.nouvelle), depart);
+  afficherPile(tirage, nouvelles, depart);
   enCours = false;
 }
 
@@ -1375,7 +1407,7 @@ function dechirerBooster(trace) {
 // Clavier ou « Ouverture rapide » : le paquet se découpe tout seul, d'un trait légèrement ondulé.
 function decouperAuto() {
   if (boosterEl.disabled || enCours || boosterEl.classList.contains("dechire")) return;
-  if (etat.boosters <= 0 || !etatJeu.pret || !etat.region) return ouvrirBooster();   // affiche le bon message
+  if (!DEMO && (etat.boosters <= 0 || !etatJeu.pret || !etat.region)) return ouvrirBooster();   // affiche le bon message
   const y0 = 7 + Math.random() * 3, onde = Math.random() * Math.PI;
   const point = p => [p * 100, y0 + Math.sin(onde + p * 4) * .8 + p * 1.5];
   if (animationsReduites()) return dechirerBooster([point(0), point(1)]);
