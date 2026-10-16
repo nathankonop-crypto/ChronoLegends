@@ -1662,7 +1662,9 @@ function animerRoue() {
 // Le doigt fait tourner la roue ; un simple appui sur un paquet l'ouvre ;
 // le doigt posé et gardé un instant sur un paquet le fait pencher (pour le regarder sous tous les angles).
 const DELAI_PENCHE = 220;   // ms sans bouger avant que le paquet se penche
-const INCLINAISON_PAQUET = 26;   // degrés, au maximum
+const INCLINAISON_PAQUET = 165;      // degrés, au maximum, de gauche à droite : presque retourné (on voit le dos)
+const INCLINAISON_HAUT_BAS = 50;     // degrés, au maximum, de haut en bas
+const COURSE_RETOURNEMENT = 130;     // px de glissement du doigt pour aller jusqu'à l'angle maximum
 $("#roue").addEventListener("pointerdown", e => {
   roue.glisse = { x: e.clientX, angle: roue.angle, dernierX: e.clientX, dernierT: performance.now(), vitesse: 0, bouge: false };
   const place = e.target.closest(".roue-place");
@@ -1707,18 +1709,19 @@ function ignorerProchainClic() {
 function entrerPenche(place, e) {
   const tourne = place.querySelector(".roue-tourne");
   if (!roue.glisse || roue.glisse.bouge || tourne.classList.contains("pivote")) return;
-  roue.penche = { place, tourne, face: place.querySelector(".paquet-roue") };
+  roue.penche = { place, tourne, face: place.querySelector(".paquet-roue"), x0: e.clientX, y0: e.clientY };
   place.classList.add("penche");
   try { $("#roue").setPointerCapture(e.pointerId); } catch (err) { /* pointeur déjà relâché */ }
   vibrer(10);
   pencherPaquet(e);
 }
+// L'angle suit le chemin parcouru par le doigt depuis qu'il s'est posé (pas sa place sur le paquet,
+// qui rétrécit quand il tourne) : en glissant de côté, on peut presque le retourner et voir son dos.
 function pencherPaquet(e) {
-  const { tourne, face } = roue.penche;
-  const z = face.getBoundingClientRect();
+  const { tourne, face, x0, y0 } = roue.penche;
   const borne = v => Math.max(-0.5, Math.min(0.5, v));
-  const x = borne((e.clientX - z.left) / z.width - 0.5), y = borne((e.clientY - z.top) / z.height - 0.5);
-  tourne.style.transform = `translateZ(40px) rotateX(${(-y * 2 * INCLINAISON_PAQUET).toFixed(1)}deg) rotateY(${(x * 2 * INCLINAISON_PAQUET).toFixed(1)}deg)`;
+  const x = borne((e.clientX - x0) / (2 * COURSE_RETOURNEMENT)), y = borne((e.clientY - y0) / (2 * COURSE_RETOURNEMENT));
+  tourne.style.transform = `translateZ(40px) rotateX(${(-y * 2 * INCLINAISON_HAUT_BAS).toFixed(1)}deg) rotateY(${(x * 2 * INCLINAISON_PAQUET).toFixed(1)}deg)`;
   face.style.setProperty("--mx", `${(50 + x * 100).toFixed(1)}%`);   // le reflet suit le doigt
   face.style.setProperty("--my", `${(50 + y * 100).toFixed(1)}%`);
   face.style.setProperty("--brillance", Math.min(1, Math.hypot(x, y) * 2.5).toFixed(2));
