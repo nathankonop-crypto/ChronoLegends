@@ -1,7 +1,7 @@
 // =============================================================
 //  CHRONOLEGENDS — Edge Function « agent-cartes »
 //  L'agent qui crée des cartes tout seul, pour une région :
-//    1. « idees »  : Claude propose des archétypes ou des personnages
+//    1. « idees »  : Claude propose des archétypes, personnages, objets, événements ou lieux
 //                    historiques absents du jeu ;
 //    2. « carte »  : Claude rédige la carte complète (français, anglais,
 //                    hébreu) et décrit son illustration ;
@@ -37,7 +37,16 @@ const REGIONS: Record<string, string> = {
   "oceanie": "Océanie",
 };
 const EPOQUES = ["antiquite", "moyen-age", "temps-modernes", "epoque-contemporaine"];
-const GAMMES = ["archetype", "personnage"];
+const GAMMES = ["archetype", "personnage", "objet", "evenement", "lieu"];
+// Pour les demandes à Claude : « Propose 5 idées de cartes : … » et « Type : … ».
+const TYPES_PLURIEL: Record<string, string> = {
+  archetype: "des archétypes", personnage: "des personnages historiques",
+  objet: "des objets historiques", evenement: "des événements historiques", lieu: "des lieux et monuments",
+};
+const TYPES_SINGULIER: Record<string, string> = {
+  archetype: "archétype", personnage: "personnage historique",
+  objet: "objet historique", evenement: "événement historique", lieu: "lieu ou monument",
+};
 const NOMS_EPOQUES: Record<string, string> = {
   "antiquite": "Antiquité (jusqu'au Ve siècle)",
   "moyen-age": "Moyen Âge (Ve – XVe siècle)",
@@ -65,6 +74,9 @@ Ligne éditoriale du jeu :
 - Seuls les personnages décédés entrent dans le jeu.
 - Jamais le prophète Mahomet (ni sa famille proche) : sa représentation en image est interdite pour beaucoup de croyants. Évite de même toute figure dont l'image est religieusement interdite.
 - Archétype = une figure type d'une époque (légionnaire, moine copiste, samouraï…), jamais un individu réel.
+- Objet = un objet réel et célèbre, conservé ou attesté (Code de Hammurabi, Cylindre de Cyrus, Étendard d'Ur…), ou une invention marquante de la région (astrolabe, écriture cunéiforme…).
+- Événement = un fait historique daté et attesté (bataille, traité, fondation, découverte, chute d'une cité…). Pas de conflits contemporains encore vifs ni d'événements postérieurs à 1945 ; pour une guerre ou un massacre, un récit factuel, sans détail sanglant.
+- Lieu = une cité, un monument, un site ou un édifice historique (Pétra, Persépolis, Porte d'Ishtar…), montré à son époque de gloire. Pour un lieu saint encore fréquenté, reste respectueux et descriptif.
 
 Époques : antiquite (jusqu'au Ve siècle), moyen-age (Ve – XVe siècle), temps-modernes (fin XVe siècle – 1789), epoque-contemporaine (après 1789).`;
 
@@ -73,6 +85,7 @@ const CONSIGNES_IDEES = `${LIGNE_EDITORIALE}
 Ta tâche : proposer de NOUVELLES cartes pour une région, absentes du jeu (la liste des cartes existantes t'est donnée ; pas de doublon, ni de quasi-doublon : pour les archétypes, pas deux fois le même métier à la même époque).
 - Varie les époques (les quatre si possible), les métiers ou rôles, les peuples et les lieux de la région, et pense aux femmes.
 - Archétypes : des métiers ou rôles typiques, concrets et visuels (« Scribe sumérien », « Marchand caravanier nabatéen », « Janissaire ottoman »), avec le peuple ou l'empire dans le nom pour le situer.
+- Objets, événements, lieux : des sujets réels, importants et très visuels (qui feront une belle illustration), en variant les civilisations de la région.
 - Personnages historiques : des figures réelles et importantes de la région, dont l'existence est attestée ; mélange les très célèbres et des figures moins connues mais marquantes (souverains, savants, poètes, bâtisseurs, voyageurs, femmes de pouvoir…).
 - resume : une phrase qui dit pourquoi cette carte est intéressante.`;
 
@@ -81,15 +94,15 @@ const CONSIGNES_CARTE = `${LIGNE_EDITORIALE}
 Ta tâche : rédiger une carte complète, à partir du nom et de l'idée proposés.
 
 Format des champs (respecte exactement le style des exemples) :
-- nom : le nom de la carte, court (au plus 40 caractères). Pour un archétype : le rôle et le peuple (« Scribe sumérien »).
-- dates : pour un personnage, années de naissance et de mort, avec un tiret demi-cadratin entouré d'espaces ; « v. » devant une date approximative, « av. J.-C. » ou « apr. J.-C. » si utile, ou un règne (« règne v. 1479 – 1458 av. J.-C. »). Pour un archétype : la période où il existe (« v. 3000 – 2000 av. J.-C. », « XIVe – XVIIe s. »).
+- nom : le nom de la carte, court (au plus 40 caractères). Pour un archétype : le rôle et le peuple (« Scribe sumérien »). Pour un objet, un événement ou un lieu : son nom usuel (« Cylindre de Cyrus », « Bataille de Qadesh », « Pétra »).
+- dates : pour un personnage, années de naissance et de mort, avec un tiret demi-cadratin entouré d'espaces ; « v. » devant une date approximative, « av. J.-C. » ou « apr. J.-C. » si utile, ou un règne (« règne v. 1479 – 1458 av. J.-C. »). Pour un archétype : la période où il existe (« v. 3000 – 2000 av. J.-C. », « XIVe – XVIIe s. »). Pour un objet : sa date de création (« v. 1754 av. J.-C. »). Pour un événement : sa date (« 1274 av. J.-C. », « 1453 »). Pour un lieu : sa période de construction ou d'apogée (« Ier s. av. J.-C. – IIe s. apr. J.-C. »).
 - lieu : le lieu principal associé, court (« Ur, Mésopotamie », « Empire ottoman »).
-- description : 2 ou 3 phrases, 140 à 230 caractères en tout, au présent de narration, sans répéter le nom en premier mot. Pour un archétype : son rôle, son quotidien, ce qui le rend typique de son époque.
+- description : 2 ou 3 phrases, 140 à 230 caractères en tout, au présent de narration, sans répéter le nom en premier mot. Pour un archétype : son rôle, son quotidien, ce qui le rend typique de son époque. Pour un objet : ce qu'il est, qui l'a fait, pourquoi il compte. Pour un événement : ce qui s'est passé et ce que ça a changé. Pour un lieu : ce que c'était, qui l'a bâti, ce qui le rend célèbre.
 - epoque : l'époque du jeu.
-- rarete : pour un archétype, ordinaire (figure du quotidien : paysan, artisan…), notable (métier qualifié ou recherché : scribe, marchand, soldat d'élite…) ou rare (figure prestigieuse ou d'élite : Immortel perse, grand vizir…), jamais plus. Pour un personnage : de ordinaire à legendaire selon sa célébrité et son importance historique (legendaire = les plus grandes figures de l'histoire mondiale) ; jamais mythique. L'administrateur choisira au final.
-- famille : pour un personnage, l'identifiant de la famille qui lui correspond le mieux dans la liste fournie (chaîne vide si aucune ne convient) ; pour un archétype, chaîne vide.
+- rarete : pour un archétype, ordinaire (figure du quotidien : paysan, artisan…), notable (métier qualifié ou recherché : scribe, marchand, soldat d'élite…) ou rare (figure prestigieuse ou d'élite : Immortel perse, grand vizir…), jamais plus. Pour un personnage, un objet, un événement ou un lieu : de ordinaire à legendaire selon sa célébrité et son importance historique (legendaire = ce qui a le plus marqué l'histoire mondiale) ; jamais mythique. L'administrateur choisira au final.
+- famille : pour un personnage, l'identifiant de la famille qui lui correspond le mieux dans la liste fournie (chaîne vide si aucune ne convient) ; pour tout autre type, chaîne vide.
 - probleme : chaîne vide si tout va bien ; sinon une phrase courte (dates très débattues, existence incertaine, sujet sensible…).
-- en_savoir_plus : seulement pour un personnage (chaîne vide pour un archétype). Il PROLONGE la description sans la répéter : origines, épisodes marquants, œuvres, fin de vie, héritage, traces aujourd'hui. 4 à 6 phrases, 400 à 600 caractères, au présent de narration, même neutralité. Signale ce qui relève de la tradition ou reste débattu.
+- en_savoir_plus : seulement pour un personnage (chaîne vide pour tous les autres types). Il PROLONGE la description sans la répéter : origines, épisodes marquants, œuvres, fin de vie, héritage, traces aujourd'hui. 4 à 6 phrases, 400 à 600 caractères, au présent de narration, même neutralité. Signale ce qui relève de la tradition ou reste débattu.
 
 Version anglaise (champs *_en), pour les joueurs anglophones :
 - nom_en : le nom usuel en anglais (« Sumerian Scribe », « Julius Caesar »).
@@ -99,7 +112,7 @@ Version anglaise (champs *_en), pour les joueurs anglophones :
 - en_savoir_plus_he : le même texte en hébreu moderne naturel, au passé, avec les noms propres dans leur forme hébraïque usuelle (chaîne vide si en_savoir_plus l'est).
 
 Illustration :
-- prompt_image : en ANGLAIS, 60 à 120 mots, la description de l'image à peindre : le sujet (âge, allure, vêtements, coiffure, objets exacts de l'époque et du lieu), ce qu'il fait, le décor, la lumière et l'ambiance. Un seul sujet principal, en plan américain ou en pied, sans texte dans l'image. Pour un personnage réel, appuie-toi sur ses représentations historiques connues (statues, monnaies, portraits) quand elles existent. Ne décris PAS le style artistique (il est ajouté automatiquement).
+- prompt_image : en ANGLAIS, 60 à 120 mots, la description de l'image à peindre : le sujet (âge, allure, vêtements, coiffure, objets exacts de l'époque et du lieu), ce qu'il fait, le décor, la lumière et l'ambiance. Sans texte dans l'image. Pour un archétype ou un personnage : un seul sujet principal, en plan américain ou en pied. Pour un personnage réel, appuie-toi sur ses représentations historiques connues (statues, monnaies, portraits) quand elles existent. Pour un objet : l'objet lui-même, en gros plan, tel qu'il était à l'origine (couleurs, matériaux), mis en valeur dans un décor de son époque. Pour un événement : la scène à son moment le plus marquant, avec des personnages en action. Pour un lieu : le site à son époque de gloire, animé (quelques personnages pour l'échelle), sous une belle lumière. Ne décris PAS le style artistique (il est ajouté automatiquement).
 
 Exemples de cartes existantes :
 - Jules César | 100 – 44 av. J.-C. | Rome | Général et homme politique romain. Il conquiert la Gaule, remporte la guerre civile et devient dictateur. Il est assassiné lors d'une séance du Sénat.
@@ -306,7 +319,7 @@ Deno.serve(async (req) => {
     }
 
     if (!REGIONS[region] || !GAMMES.includes(gamme)) return reponse({ erreur: "Région ou type de carte inconnu." }, 400);
-    const typeTexte = gamme === "archetype" ? "des archétypes" : "des personnages historiques";
+    const typeTexte = TYPES_PLURIEL[gamme];
 
     if (corps.action === "idees") {
       const nombre = Math.max(1, Math.min(10, Number(corps.nombre) || 5));
@@ -329,7 +342,7 @@ Deno.serve(async (req) => {
       if (!nom || nom.length > 80) return reponse({ erreur: "Nom manquant ou trop long." }, 400);
       const { data: familles } = await sb.from("familles").select("id, nom");
       const listeFamilles = (familles ?? []).map((f) => `- ${f.id} : ${f.nom}`).join("\n");
-      const demande = `Type : ${gamme === "archetype" ? "archétype" : "personnage historique"}.\nRégion : ${REGIONS[region]}.\n` +
+      const demande = `Type : ${TYPES_SINGULIER[gamme]}.\nRégion : ${REGIONS[region]}.\n` +
         `Carte à rédiger : ${nom}${resume ? ` (idée : ${resume})` : ""}.\n\nFamilles disponibles :\n${listeFamilles || "(aucune)"}`;
       return reponse(await demanderClaude(CONSIGNES_CARTE, demande, schemaCarte((familles ?? []).map((f) => f.id)), 12000));
     }
