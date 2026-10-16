@@ -151,7 +151,19 @@ body.admin { font-size: 16px; }
 }
 
 /* Boutons « 🎬 » : revoir les animations de révélation (mode démo du jeu) */
-.bouton-demo { text-decoration: none; font-size: 12px; padding: 8px 12px; }
+.menu-demo { position: relative; }
+.menu-demo > summary { list-style: none; font-size: 12px; padding: 8px 12px; user-select: none; }
+.menu-demo > summary::-webkit-details-marker { display: none; }
+.menu-demo > summary::after { content: " ▾"; }
+.menu-demo[open] > summary::after { content: " ▴"; }
+.menu-demo-liste {
+  position: absolute; top: calc(100% + 6px); right: 0; z-index: 20; width: 250px; max-height: 60vh; overflow-y: auto;
+  display: flex; flex-direction: column; padding: 6px; border-radius: 12px;
+  background: var(--encre-2, #1a1e30); border: 1px solid rgba(212, 178, 106, .3); box-shadow: 0 12px 30px rgba(0, 0, 0, .5);
+}
+.menu-demo-liste a { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border-radius: 8px; color: var(--texte); text-decoration: none; font-size: 14px; }
+.menu-demo-liste a:hover { background: rgba(212, 178, 106, .12); }
+.menu-demo-liste small { font-size: 12px; }
 
 /* ---------- Agent de cartes ---------- */
 .agent-reglages { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 18px; }

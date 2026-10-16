@@ -830,6 +830,12 @@ async function creerCartesCochees() {
   etatAgent(`${reussies} brouillon${reussies > 1 ? "s" : ""} créé${reussies > 1 ? "s" : ""} sur ${choisies.length}. Retrouvez-les dans la liste avec le filtre « Brouillons » pour les relire et les valider.`);
 }
 
+// Menu « Tester un booster » : se referme après un choix ou un clic ailleurs.
+document.addEventListener("click", e => {
+  const menu = $("#menu-demo");
+  if (menu.open && (!menu.contains(e.target) || e.target.closest("a"))) menu.open = false;
+});
+
 $("#bouton-agent").addEventListener("click", afficherAgent);
 $("#agent-retour").addEventListener("click", () => {
   if (agentEnCours) return notifier("L'agent travaille encore : attendez la fin.");
