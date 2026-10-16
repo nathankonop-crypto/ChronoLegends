@@ -1274,7 +1274,7 @@ setInterval(async () => {
   if (etat.boosters === 0 && etat.prochainQuotidien && Date.now() >= etat.prochainQuotidien) {
     try {
       const q = await reclamerQuotidien();
-      if (q.accorde) notifier(t("quotidien"));
+      if (q.accorde) notifier(q.accordes > 1 ? t("quotidienN", { n: q.accordes }) : t("quotidien"));
     } catch (e) { /* on réessaiera au prochain passage */ }
   }
   majConsigne();
@@ -1303,7 +1303,7 @@ async function demarrer() {
     majConsigne();
     if (!$("#vue-collection").hidden) afficherCollection();
     if (q.nouveau) notifier(t("bienvenue", { n: q.boosters }));
-    else if (q.accorde) notifier(t("quotidien"));
+    else if (q.accorde) notifier(q.accordes > 1 ? t("quotidienN", { n: q.accordes }) : t("quotidien"));
   } catch (err) {
     console.error(err);
     etatJeu.verification = false;
