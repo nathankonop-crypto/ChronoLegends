@@ -996,6 +996,7 @@ $("#modale-contenu").addEventListener("pointerup", e => {
   if (!departGlisseModale) return;
   const dx = e.clientX - departGlisseModale.x, dy = e.clientY - departGlisseModale.y;
   departGlisseModale = null;
+  if (doigtPose) return;   // carte verrouillée sous le doigt : on l'inclinait, on ne change pas de carte
   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) changerCarteModale((dx < 0 ? 1 : -1) * sensLecture());
 });
 $("#modale-contenu").addEventListener("pointercancel", () => { departGlisseModale = null; });
@@ -1022,21 +1023,51 @@ function incliner(x, y, amplitude) {
   $("#modale-contenu").style.transform = `rotateY(${borne(x) * amplitude}deg) rotateX(${-borne(y) * amplitude}deg)`;
 }
 
-// 1. En suivant la souris, ou le doigt posé sur la carte
-//    (touch-action: none dans style.css empêche la page de défiler à la place).
-//    Tant que le doigt est posé, c'est lui qui commande, pas le gyroscope.
-let doigtPose = false;
+// 1. À la souris : la carte suit le pointeur.
+//    Au doigt : le gyroscope garde la main ; le doigt ne la prend que s'il reste posé
+//    un instant sans bouger (comme pour pencher un paquet de la roue) : la carte se
+//    « verrouille » sous le doigt et suit son glissement, jusqu'à ce qu'il se lève.
+//    Un simple glissement rapide passe toujours à la carte voisine.
+//    (touch-action: none dans style.css empêche la page de défiler à la place.)
+const DELAI_VERROU_CARTE = 260;     // ms sans bouger avant que le doigt prenne la main
+const COURSE_DOIGT_CARTE = 110;     // px de glissement pour l'inclinaison maximale
+let doigtPose = false;              // vrai quand la carte est verrouillée sous le doigt
+let toucherCarte = null;            // { x, y, id, attente } : doigt posé, pas encore verrouillé
+
 function suivrePointeur(e) {
-  const zone = e.currentTarget.getBoundingClientRect();
-  const tactile = e.pointerType !== "mouse";
-  if (tactile) doigtPose = true;
-  incliner((e.clientX - zone.left) / zone.width - 0.5, (e.clientY - zone.top) / zone.height - 0.5,
-    tactile ? INCLINAISON_DOIGT : INCLINAISON_SOURIS);
+  if (e.pointerType === "mouse") {
+    const zone = e.currentTarget.getBoundingClientRect();
+    return incliner((e.clientX - zone.left) / zone.width - 0.5, (e.clientY - zone.top) / zone.height - 0.5, INCLINAISON_SOURIS);
+  }
+  if (!doigtPose || !toucherCarte || e.pointerId !== toucherCarte.id) return;
+  incliner((e.clientX - toucherCarte.x) / (2 * COURSE_DOIGT_CARTE), (e.clientY - toucherCarte.y) / (2 * COURSE_DOIGT_CARTE), INCLINAISON_DOIGT);
 }
-$("#modale-contenu").addEventListener("pointerdown", suivrePointeur);
-$("#modale-contenu").addEventListener("pointermove", suivrePointeur);
-for (const fin of ["pointerup", "pointerleave", "pointercancel"]) {
+
+$("#modale-contenu").addEventListener("pointerdown", e => {
+  if (e.pointerType === "mouse") return suivrePointeur(e);
+  clearTimeout(toucherCarte?.attente);
+  const contenu = e.currentTarget;
+  toucherCarte = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  toucherCarte.attente = setTimeout(() => {
+    doigtPose = true;
+    try { contenu.setPointerCapture(e.pointerId); } catch (err) { /* doigt déjà levé */ }
+    vibrer(10);
+    incliner(0, 0, INCLINAISON_DOIGT);   // la carte revient de face, puis suit le doigt
+  }, DELAI_VERROU_CARTE);
+});
+$("#modale-contenu").addEventListener("pointermove", e => {
+  // Le doigt bouge avant d'être verrouillé : c'est un glissement (carte suivante), pas un verrou.
+  if (toucherCarte && !doigtPose && e.pointerId === toucherCarte.id
+      && Math.hypot(e.clientX - toucherCarte.x, e.clientY - toucherCarte.y) > 10) clearTimeout(toucherCarte.attente);
+  suivrePointeur(e);
+});
+for (const fin of ["pointerup", "pointerleave", "pointercancel", "lostpointercapture"]) {
   $("#modale-contenu").addEventListener(fin, e => {
+    if (e.pointerType === "mouse") { e.currentTarget.style.transform = ""; return; }
+    if (fin === "pointerleave" && doigtPose) return;   // verrouillé (doigt capturé) : seul le lever du doigt compte
+    clearTimeout(toucherCarte?.attente);
+    toucherCarte = null;
+    if (!doigtPose) return;                            // le gyroscope n'a jamais lâché la main
     doigtPose = false;
     positionDeDepart = null;   // le gyroscope repart de la position actuelle du téléphone
     e.currentTarget.style.transform = "";
