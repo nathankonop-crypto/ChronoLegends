@@ -142,3 +142,19 @@ async function partagerCarte(carte) {
   try { await navigator.clipboard.writeText(texte); } catch { /* copie refusée : tant pis */ }
   notifier(t(fichier ? "partageTelecharge" : "partageCopie"));
 }
+
+// ---------- Inviter un ami (bouton des Paramètres) ----------
+// Téléphone : menu de partage du téléphone (WhatsApp, SMS, Messenger…) avec un message tout prêt.
+// Ordinateur : petite fenêtre « WhatsApp » ou « Copier le lien ».
+const texteInvitation = () => `${t("invitationTexte")} ${ADRESSE_SITE}`;
+
+async function inviterUnAmi() {
+  if (navigator.share && matchMedia("(pointer: coarse)").matches) {
+    try { await navigator.share({ title: "ChronoLegends", text: t("invitationTexte"), url: ADRESSE_SITE }); return; }
+    catch (e) { if (e.name === "AbortError") return; }   // menu fermé par le joueur
+  }
+  $("#inviter-message").textContent = texteInvitation();
+  $("#inviter-whatsapp").href = `https://wa.me/?text=${encodeURIComponent(texteInvitation())}`;
+  $("#dialogue-inviter").hidden = false;
+  $("#fermer-inviter").focus();
+}

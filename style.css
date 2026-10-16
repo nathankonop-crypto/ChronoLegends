@@ -1717,3 +1717,16 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
 }
 .serpent-lumiere.emeraude { --contour: linear-gradient(rgba(140, 255, 200, .85), rgba(63, 227, 154, .85)); }
 .serpent-lumiere.diamant { --contour: linear-gradient(135deg, rgba(255, 255, 255, .9), rgba(170, 220, 255, .85), rgba(210, 190, 255, .85)); }
+
+/* ---------- Inviter un ami ---------- */
+.bouton-inviter { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 16px; padding: 10px 14px; font-size: 13px; }
+.panneau-reglages .bouton-installer { margin-top: 8px; }
+.dialogue-inviter { width: min(100%, 420px); text-align: center; }
+.inviter-message {
+  margin: 12px 0 18px; padding: 12px 14px; border-radius: 12px; text-align: start;
+  background: rgba(255, 255, 255, .04); border: 1px solid rgba(212, 178, 106, .2);
+  color: var(--texte); line-height: 1.45; user-select: all; -webkit-user-select: all; overflow-wrap: anywhere;
+}
+.inviter-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.bouton-whatsapp { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; background: #25d366; border-color: #25d366; color: #06301a; }
+.bouton-whatsapp svg { width: 18px; height: 18px; fill: currentColor; }

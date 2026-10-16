@@ -1194,6 +1194,17 @@ $("#dialogue-regles").addEventListener("click", e => { if (e.target.id === "dial
 document.addEventListener("keydown", e => { if (e.key === "Escape") fermerRegles(); });
 $("#bouton-chances").addEventListener("click", afficherChances);
 
+// ---------- Inviter un ami (partage.js : inviterUnAmi) ----------
+const fermerInviter = () => { $("#dialogue-inviter").hidden = true; };
+$("#bouton-inviter").addEventListener("click", () => { basculerReglages(false); inviterUnAmi(); });
+$("#fermer-inviter").addEventListener("click", fermerInviter);
+$("#dialogue-inviter").addEventListener("click", e => { if (e.target.id === "dialogue-inviter") fermerInviter(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#dialogue-inviter").hidden) fermerInviter(); });
+$("#inviter-copier").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(texteInvitation()); notifier(t("invitationCopiee")); }
+  catch { notifier(t("invitationCopieImpossible")); }
+});
+
 // ---------- Application installable : icône sur l'écran d'accueil ----------
 // Android / ordinateur : le navigateur propose l'installation, on la garde pour notre bouton.
 // iPhone / iPad : Apple ne le permet pas en un clic, on montre comment faire.
