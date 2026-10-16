@@ -160,6 +160,29 @@ function cuivre(ctx, debut, frequence, duree, volume) {
   vibrato.stop(debut + duree);
 }
 
+// Montée de tension : bruit qui s'ouvre vers l'aigu + note qui glisse vers le haut en vibrant.
+function montee(ctx, t, duree, force) {
+  bruit(ctx, t, duree, 200, 6000, 0.35 * force, 1.4, duree * 0.95);
+  const osc = ctx.createOscillator(), filtre = ctx.createBiquadFilter();
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(110, t);
+  osc.frequency.exponentialRampToValueAtTime(880, t + duree);
+  const tremolo = ctx.createOscillator(), profondeur = ctx.createGain();
+  tremolo.frequency.setValueAtTime(6, t);
+  tremolo.frequency.linearRampToValueAtTime(18, t + duree);
+  profondeur.gain.value = 25;
+  tremolo.connect(profondeur).connect(osc.frequency);
+  filtre.type = "lowpass";
+  filtre.frequency.setValueAtTime(300, t);
+  filtre.frequency.exponentialRampToValueAtTime(3500, t + duree);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.12 * force, t + duree * 0.95);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + duree + 0.05);
+  osc.connect(filtre).connect(g).connect(sortieAudio);
+  [osc, tremolo].forEach(o => { o.start(t); o.stop(t + duree + 0.1); });
+}
+
 // Notes (Hz)
 const SOL3 = 196, DO4 = 262, MI4 = 330, SOL4 = 392, DO5 = 523, MI5 = 659, SOL5 = 784, SI5 = 988, DO6 = 1047, MI6 = 1319, SOL6 = 1568, DO7 = 2093;
 
@@ -196,6 +219,13 @@ const SONS = {
     bruit(ctx, t + 0.05, 0.6, 2500, 4500, 0.08, 1.2, 0.2);
     [0.12, 0.24, 0.38, 0.5].forEach((d, i) => bruit(ctx, t + d, 0.035, 3200 + i * 300, 3800 + i * 300, 0.1, 2, 0.003));
     bruit(ctx, t + 0.78, 0.09, 260, 180, 0.3, 1, 0.005);
+  },
+  // Suspense avant une Légendaire : souffle qui monte et note qui grimpe en tremblant (1,1 s).
+  suspense(ctx, t) { montee(ctx, t, 1.1, 1); },
+  // Suspense avant une Mythique : plus long, avec des battements de cœur de plus en plus rapprochés (1,7 s).
+  suspenseMythique(ctx, t) {
+    montee(ctx, t, 1.7, 1.3);
+    [0, 0.55, 0.95, 1.25, 1.48].forEach((d, i) => boum(ctx, t + d, 0.3 + i * 0.08));
   },
   // Une carte se retourne : un petit souffle de carton.
   retournement(ctx, t) {

@@ -542,10 +542,11 @@ function majConsignePile() {
 // Clic sur la carte du dessus : d'abord on la révèle, puis on l'écarte.
 function actionPile(emplacement) {
   const i = Number(emplacement.dataset.index);
-  if (i !== indexPile) return;                 // seule la carte du dessus réagit
+  if (i !== indexPile || spectacleEnCours) return;   // seule la carte du dessus réagit
   const carte = pileTirage[i];
 
   if (!emplacement.classList.contains("revelee")) {
+    if (estSpectaculaire(i)) return revelationSpectaculaire(emplacement, carte);
     reveler(emplacement, carte);
     if (i === pileTirage.length - 1) {
       majConsignePile();
@@ -615,11 +616,105 @@ function reveler(emplacement, carte) {
     : carte.finition === "emeraude" || carte.rarete === "legendaire" ? "legendaire"
     : carte.rarete === "epique" ? "epique" : null;
   if (carillon) setTimeout(() => jouerSon(carillon), 180);
+  if (spectacleEnCours && carte.finition === "normale") return;   // la grande révélation affiche déjà le nom
   if (carte.finition === "diamant") notifier(t("notifDiamant", { nom: carte.nom }));
   else if (carte.finition === "emeraude") notifier(t("notifEmeraude", { nom: carte.nom }));
   else if (carte.rarete === "mythique") notifier(t("notifMythique", { nom: carte.nom }));
   else if (carte.rarete === "legendaire") notifier(t("notifLegendaire", { nom: carte.nom }));
   else if (carte.rarete === "epique") notifier(t("notifEpique", { nom: carte.nom }));
+}
+
+// ---------- Grande révélation : Légendaire et Mythique en dernière carte ----------
+//  1. Suspense : la carte tremble et s'illumine, l'écran s'assombrit, un son monte.
+//  2. Explosion : flash, onde de choc, la carte se retourne et grandit, gerbe d'étincelles.
+//  3. Gloire : rayons qui tournent, paillettes, nom de la rareté lettre par lettre.
+//  La Mythique en fait plus (battements de cœur, double flash, secousse, arc-en-ciel).
+//  Le décor est dans style.css (.revelation) ; un appui pendant la gloire passe à la suite.
+let spectacleEnCours = false;
+const COULEURS_SPECTACLE = {
+  legendaire: ["#fff1b8", "#ffd772", "#e8a92c", "#ffffff", "#f7da84"],
+  mythique: ["#ff6fd8", "#7c3bd4", "#43e0e0", "#ffd36e", "#ffffff", "#c86ad0"],
+};
+const estSpectaculaire = i => i === pileTirage.length - 1 && !animationsReduites()
+  && (pileTirage[i].rarete === "legendaire" || pileTirage[i].rarete === "mythique");
+const attendre = ms => new Promise(r => setTimeout(r, ms));
+
+// Étincelles qui partent du centre de la carte dans toutes les directions.
+function gerbeEtincelles(scene, nombre, couleurs, force) {
+  let html = "";
+  for (let n = 0; n < nombre; n++) {
+    const angle = Math.random() * Math.PI * 2, distance = force * (0.35 + Math.random() * 0.65);
+    html += `<span class="rev-etincelle" style="--x:${(Math.cos(angle) * distance).toFixed(0)}px;--y:${(Math.sin(angle) * distance).toFixed(0)}px;`
+      + `--c:${couleurs[n % couleurs.length]};--t:${(3 + Math.random() * 6).toFixed(1)}px;--d:${(Math.random() * 0.25).toFixed(2)}s"></span>`;
+  }
+  scene.insertAdjacentHTML("beforeend", html);
+}
+
+// Paillettes qui tombent doucement pendant la gloire.
+function pluiePaillettes(scene, nombre, couleurs) {
+  let html = "";
+  for (let n = 0; n < nombre; n++) {
+    html += `<span class="rev-paillette" style="left:${(Math.random() * 100).toFixed(1)}%;--c:${couleurs[n % couleurs.length]};`
+      + `--d:${(Math.random() * 2.5).toFixed(2)}s;--duree:${(2.2 + Math.random() * 2).toFixed(2)}s;--t:${(10 + Math.random() * 12).toFixed(0)}px">✦</span>`;
+  }
+  scene.insertAdjacentHTML("beforeend", html);
+}
+
+async function revelationSpectaculaire(emplacement, carte) {
+  spectacleEnCours = true;
+  const mythique = carte.rarete === "mythique";
+  const couleurs = COULEURS_SPECTACLE[carte.rarete];
+  const scene = $("#revelation");
+  const r = emplacement.getBoundingClientRect();
+  scene.style.setProperty("--cx", `${r.left + r.width / 2}px`);
+  scene.style.setProperty("--cy", `${r.top + r.height / 2}px`);
+  scene.style.setProperty("--h", `${r.height}px`);
+  const titre = [...nomRarete(carte.rarete).toUpperCase()]
+    .map((l, i) => `<span style="--i:${i}">${l === " " ? "&nbsp;" : echapper(l)}</span>`).join("");
+  scene.innerHTML = `
+    <div class="rev-fond"></div>
+    <div class="rev-rayons"></div>
+    <div class="rev-halo"></div>
+    ${[1, 2, 3].slice(0, mythique ? 3 : 1).map(n => `<div class="rev-onde onde-${n}"></div>`).join("")}
+    <div class="rev-flash"></div>
+    <p class="rev-titre">${titre}</p>
+    <p class="rev-nom">${echapper(carte.nom)}</p>`;
+  scene.className = `revelation ${carte.rarete}`;
+  scene.hidden = false;
+  document.body.classList.add("en-revelation");
+
+  // 1. Suspense
+  emplacement.classList.add("suspense", `suspense-${carte.rarete}`);
+  jouerSon(mythique ? "suspenseMythique" : "suspense");
+  vibrer(mythique ? [30, 220, 30, 180, 40, 140, 50, 100, 60] : [20, 200, 30, 150, 40, 100]);
+  await attendre(mythique ? 1700 : 1150);
+
+  // 2. Explosion
+  emplacement.classList.remove("suspense", `suspense-${carte.rarete}`);
+  emplacement.classList.add("apotheose");
+  scene.classList.add("explosion");
+  reveler(emplacement, carte);
+  gerbeEtincelles(scene, mythique ? 90 : 50, couleurs, Math.max(innerWidth, innerHeight) * (mythique ? 0.75 : 0.55));
+  vibrer(mythique ? [80, 40, 160, 60, 200] : [70, 40, 140]);
+  majConsignePile();
+  await attendre(700);
+
+  // 3. Gloire (un appui la raccourcit)
+  scene.classList.add("gloire");
+  pluiePaillettes(scene, mythique ? 40 : 24, couleurs);
+  await Promise.race([
+    attendre(mythique ? 3600 : 2800),
+    new Promise(r => document.addEventListener("click", r, { once: true })),   // sur la carte ou à côté
+  ]);
+
+  scene.classList.add("fin");
+  await attendre(450);
+  scene.hidden = true;
+  scene.innerHTML = "";
+  document.body.classList.remove("en-revelation");
+  emplacement.classList.remove("apotheose");
+  spectacleEnCours = false;
+  terminerPile();
 }
 
 function ecarter(emplacement) {
@@ -666,6 +761,10 @@ function toutReveler() {
     const el = $(`.emplacement[data-index="${indexPile}"]`);
     if (!el) { toutReveler.enCours = false; return; }
     if (!el.classList.contains("revelee")) {
+      if (estSpectaculaire(indexPile)) {
+        toutReveler.enCours = false;
+        return revelationSpectaculaire(el, pileTirage[indexPile]);
+      }
       reveler(el, pileTirage[indexPile]);
       if (indexPile === pileTirage.length - 1) {
         setTimeout(terminerPile, 900);
