@@ -1405,6 +1405,15 @@ html:not(.intro-lancee) .intro-etoile img { animation: intro-respire 2.6s ease-i
   text-shadow: 0 0 18px rgba(212, 178, 106, .35);
 }
 .car-prevenir { margin-top: 8px; padding: 8px 16px; font-size: 12px; }
+/* Téléphone : compte à rebours plus compact (libellé et temps sur une ligne), et la roue au milieu de l'écran
+   (la zone occupe la hauteur libre entre l'en-tête et les onglets du bas, son contenu y est centré). */
+@media (max-width: 640px) {
+  .compte-a-rebours { flex-direction: row; flex-wrap: wrap; justify-content: center; column-gap: 10px; row-gap: 2px; padding: 8px 16px; border-radius: 12px; }
+  .car-libelle { font-size: 10px; letter-spacing: .14em; }
+  .car-temps { font-size: 20px; letter-spacing: .06em; }
+  .car-prevenir { flex-basis: 100%; max-width: max-content; margin-top: 4px; padding: 6px 14px; font-size: 11px; }
+  .zone-booster.mode-roue { gap: 16px; padding-top: 0; min-height: calc(100svh - 190px - env(safe-area-inset-bottom)); justify-content: center; }
+}
 
 /* ---------- 1er booster : un doigt fait le geste de découpe, en boucle ---------- */
 .tuto-doigt {
@@ -1746,6 +1755,9 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
   touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: grab;
 }
 .roue:active { cursor: grabbing; }
+/* Pas de surbrillance bleue d'Android quand le doigt touche ou penche un paquet (le contour clavier reste) */
+.roue, .roue * { -webkit-tap-highlight-color: transparent; }
+.paquet-roue:focus:not(:focus-visible) { outline: none; }
 .roue-scene {
   position: absolute; left: 50%; top: 18px; width: var(--lp); aspect-ratio: 63 / 98; margin-left: calc(var(--lp) / -2);
   transform-style: preserve-3d;
