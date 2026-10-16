@@ -39,9 +39,11 @@ self.addEventListener("notificationclick", e => {
   }));
 });
 
-// Pages du site uniquement : si le réseau ne répond pas, page « hors ligne ».
+// Pages du site uniquement : toujours la toute dernière version publiée (jamais la copie gardée
+// par le téléphone, sinon l'application restait jusqu'à 10 min en retard sur le site) ;
+// si le réseau ne répond pas, page « hors ligne ».
 self.addEventListener("fetch", e => {
   if (e.request.mode !== "navigate") return;
-  e.respondWith(fetch(e.request).catch(() =>
+  e.respondWith(fetch(e.request, { cache: "no-store" }).catch(() =>
     new Response(HORS_LIGNE, { headers: { "Content-Type": "text/html; charset=utf-8" } })));
 });

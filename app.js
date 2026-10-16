@@ -1278,6 +1278,24 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#dialo
 majBoutonInstaller();
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => { /* le jeu marche aussi sans */ });
 
+// ---------- Mise à jour de l'application installée ----------
+// Le téléphone ne relance presque jamais une application installée : il la remet juste au premier plan,
+// avec l'ancienne version. À chaque retour dans le jeu, on regarde donc si une nouvelle version est
+// publiée (numéro ?v=… de app.js dans index.html) et on recharge — jamais pendant l'ouverture d'un booster.
+const versionActuelle = document.querySelector('script[src^="app.js"]')?.src.match(/[?&]v=([\w-]+)/)?.[1];
+let derniereVerification = Date.now();
+async function verifierMiseAJour() {
+  if (!versionActuelle || Date.now() - derniereVerification < 60_000) return;
+  derniereVerification = Date.now();
+  try {
+    const page = await (await fetch("./", { cache: "no-store" })).text();
+    const enLigne = page.match(/src="app\.js\?v=([\w-]+)"/)?.[1];
+    const tranquille = !enCours && $("#zone-booster")?.classList.contains("mode-roue") && $("#revelation")?.hidden;
+    if (enLigne && enLigne !== versionActuelle && tranquille) location.reload();
+  } catch { /* pas de connexion : on réessaiera au prochain retour */ }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) verifierMiseAJour(); });
+
 // ---------- Notifications : « Votre booster gratuit est arrivé ! » ----------
 // Le navigateur fournit une adresse d'envoi, enregistrée par le serveur (supabase/16_notifications.sql) ;
 // l'Edge Function envoyer-notifications écrit à minuit (heure d'Israël) à tous les abonnés.
