@@ -14,7 +14,7 @@
 
 // Tant que l'envoi des e-mails n'est pas configuré et testé, les comptes ne sont visibles que
 // sur l'appareil de l'administrateur (celui où l'admin est ouvert). Passer à true pour tout le monde.
-const COMPTES_OUVERTS = false;
+const COMPTES_OUVERTS = true;
 const compteVisible = COMPTES_OUVERTS || (() => { try { return !!localStorage.getItem("chronolegends-admin"); } catch { return false; } })();
 $("#rubrique-compte").hidden = $("#bloc-compte").hidden = !compteVisible;
 
