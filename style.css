@@ -21,7 +21,13 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+/* Pas de reflet bleuté au toucher sur Android (hérité par toute la page) ; le contour de focus
+   reste pour le clavier seulement. */
+html { -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+:focus:not(:focus-visible) { outline: none; }
+/* Pas de sélection bleue en touchant longtemps (comme une appli) ; les champs restent sélectionnables. */
+body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-user-select: text; user-select: text; }
 
 body {
   margin: 0;
@@ -1560,7 +1566,6 @@ html[dir="rtl"] .modale-contenu.arrivee-precedente > * { animation-name: arrivee
 .revelation {
   --c1: #ffd77a; --c2: #f0a83a; --c3: #fff6dc;
   position: fixed; inset: 0; z-index: 31; overflow: hidden; cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
 }
 .revelation.mythique { --c1: #ff8ade; --c2: #8e5cf0; --c3: #f4fbff; }
 .revelation[hidden] { display: none; }
@@ -1810,8 +1815,6 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
 }
 .roue:active { cursor: grabbing; }
 /* Pas de surbrillance bleue d'Android quand le doigt touche ou penche un paquet (le contour clavier reste) */
-.roue, .roue * { -webkit-tap-highlight-color: transparent; }
-.paquet-roue:focus:not(:focus-visible) { outline: none; }
 .roue-scene {
   position: absolute; left: 50%; top: 18px; width: var(--lp); aspect-ratio: 63 / 98; margin-left: calc(var(--lp) / -2);
   transform-style: preserve-3d;

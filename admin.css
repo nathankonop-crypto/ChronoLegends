@@ -214,3 +214,6 @@ body.admin { font-size: 16px; }
 .pyramide-facteur small { color: var(--texte-doux); }
 .etage-objectif { font-family: system-ui, sans-serif; font-size: 12px; opacity: .95; }
 .etage-objectif .manque { color: #fff; background: rgba(160, 30, 30, .75); padding: 1px 6px; border-radius: 6px; text-shadow: none; }
+
+/* L'admin garde la sélection de texte (désactivée dans le jeu par style.css). */
+body.admin { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
