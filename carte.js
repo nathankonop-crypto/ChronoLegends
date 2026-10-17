@@ -94,20 +94,22 @@ document.fonts?.ready.then(() => document.querySelectorAll(".carte-corps").forEa
 // Liste chargée depuis la base par le jeu et l'admin : { id: { nom, nom_en, nom_he, embleme } }.
 let FAMILLES = {};
 
-// Emblèmes au choix (dessins au trait, 24 × 24). Le nom sert dans l'admin.
+// Emblèmes au choix (24 × 24). Le nom sert dans l'admin.
+// d : dessin au trait ; svg : silhouette pleine, plus lisible en petit
+// (classes p = plein, t = trait épais, fin = trait fin, c / c-trait = découpe couleur du fond, voir style.css).
 const EMBLEMES = {
-  epees:     { nom: "Épées croisées",  d: "M4 4l12 12m-3 3 6-6m-1.5 4.5L21 21M20 4 8 16m3 3-6-6m1.5 4.5L3 21" },
-  couronne:  { nom: "Couronne",        d: "M4 18h16M5 18 3.5 7.5l5 3.5L12 5l3.5 6 5-3.5L19 18M5 21h14" },
-  parchemin: { nom: "Parchemin",       d: "M8 4h10a2 2 0 0 1 2 2v1.5h-3.5M8 4a2 2 0 0 0-2 2v12a2 2 0 0 1-2 2h11a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2M9 9h5M9 12.5h5M9 16h3" },
+  epees:     { nom: "Épées croisées",  svg: `<g transform="rotate(40 12 12)"><path class="p" d="M12 .4l1.15 2.3V15.4h-2.3V2.7z"/><rect class="p" x="8.3" y="15.4" width="7.4" height="1.7" rx=".85"/><rect class="p" x="11.2" y="17.1" width="1.6" height="3.4"/><circle class="p" cx="12" cy="21.5" r="1.25"/></g><g transform="rotate(-40 12 12)"><path class="p" d="M12 .4l1.15 2.3V15.4h-2.3V2.7z"/><rect class="p" x="8.3" y="15.4" width="7.4" height="1.7" rx=".85"/><rect class="p" x="11.2" y="17.1" width="1.6" height="3.4"/><circle class="p" cx="12" cy="21.5" r="1.25"/></g>` },
+  couronne:  { nom: "Couronne",        svg: `<path class="p" fill-rule="evenodd" d="M2.6 8.2l5 4L12 5.2l4.4 7 5-4-1.9 9.6H4.5zM12 11.3a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/><rect class="p" x="4.5" y="18.6" width="15" height="2.4" rx=".6"/><circle class="p" cx="2.6" cy="7.4" r="1.6"/><circle class="p" cx="12" cy="3.9" r="1.6"/><circle class="p" cx="21.4" cy="7.4" r="1.6"/>` },
+  parchemin: { nom: "Parchemin",       svg: `<path class="p" d="M7 3.5h11.5a2.5 2.5 0 0 1 0 5H17v10a2.5 2.5 0 0 1-2.5 2.5H5a2.5 2.5 0 0 1 0-5h1.5V6A2.5 2.5 0 0 1 7 3.5z"/><path class="c-trait" d="M9.5 8.5h4.5M9.5 11.5h4.5M9.5 14.5h3M5 18.5h7.5"/>` },
   lunette:   { nom: "Lunette",         d: "M3.5 14.5 15 8.5l2 4-11.5 6zM15 8.5l3.5-1.8 2 4L17 12.5M9.5 16.5 7.5 21M11.5 15.5l2.5 5.5" },
-  colonne:   { nom: "Colonne",         d: "M4 21h16M5.5 18h13M5.5 6h13M4 3.5h16M8 6v12M11 6v12M13 6v12M16 6v12" },
-  flamme:    { nom: "Flamme",          d: "M12 21c-3.9 0-6.5-2.6-6.5-6.2 0-4.3 4.2-6.3 4.2-11 3.4 2 5.7 5.2 5.7 8 .9-.8 1.4-1.9 1.5-3.2 1.7 1.8 2.6 4 2.6 6.2 0 3.6-3 6.2-7.5 6.2zM12 21c-1.7 0-2.8-1.2-2.8-2.8 0-2 2.8-3.7 2.8-3.7s2.8 1.7 2.8 3.7c0 1.6-1.1 2.8-2.8 2.8z" },
-  chaine:    { nom: "Chaîne brisée",   d: "M9.5 14.5 7.3 16.7a3 3 0 0 1-4.2-4.2l3-3a3 3 0 0 1 4.2 0M14.5 9.5l2.2-2.2a3 3 0 0 1 4.2 4.2l-3 3a3 3 0 0 1-4.2 0M8 3.5l1 2.5M3.5 8 6 9M16 20.5 15 18M20.5 16 18 15" },
-  boussole:  { nom: "Boussole",        d: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM15.8 8.2l-2.2 5.4-5.4 2.2 2.2-5.4z" },
-  plume:     { nom: "Plume",           d: "M20 3.5C13.5 4 8.5 8.5 7 15.5L5 20.5M20 3.5c-.5 6.5-5 11.5-12 12.5M10 14l5-5" },
+  colonne:   { nom: "Colonne",         svg: `<rect class="p" x="3.5" y="2.5" width="17" height="2.6" rx=".5"/><path class="p" d="M5.5 5.1h13l-2 2.4h-9z"/><rect class="p" x="7" y="8.2" width="10" height="9.6"/><path class="c-trait" d="M9.6 9v8M12 9v8M14.4 9v8"/><rect class="p" x="5.5" y="18.4" width="13" height="1.6"/><rect class="p" x="3.5" y="20.4" width="17" height="1.9" rx=".5"/>` },
+  flamme:    { nom: "Flamme",          svg: `<path class="p" fill-rule="evenodd" d="M12 1.8c.8 3.7 6.6 6.3 6.6 12.3a6.6 6.6 0 0 1-13.2 0c0-3.1 1.7-4.9 3-6.4.2 2 1 3.1 2.2 3.5C10.2 8.2 10.6 5 12 1.8zM12 20.4a2.7 2.7 0 0 0 2.7-2.7c0-1.9-2.7-4.3-2.7-4.3s-2.7 2.4-2.7 4.3a2.7 2.7 0 0 0 2.7 2.7z"/>` },
+  chaine:    { nom: "Chaîne brisée",   svg: `<rect class="t" x="2.2" y="12.2" width="10" height="5.6" rx="2.8" transform="rotate(-45 7.2 15)"/><rect class="t" x="11.8" y="6.2" width="10" height="5.6" rx="2.8" transform="rotate(-45 16.8 9)"/><path class="t fin" d="M10.6 6.2 9.6 3.6M7.4 8.6 4.8 7.6M13.4 17.8l1 2.6M16.6 15.4l2.6 1"/>` },
+  boussole:  { nom: "Boussole",        svg: `<circle class="t fin" cx="12" cy="12" r="8.6"/><path class="p" d="M12 1.3l2.2 8.5 8.5 2.2-8.5 2.2-2.2 8.5-2.2-8.5L1.3 12l8.5-2.2z"/><circle class="c" cx="12" cy="12" r="1.3"/>` },
+  plume:     { nom: "Plume",           svg: `<path class="p" d="M21 2.5c-6.8.4-12.3 5-13.8 12.1l-.4 1.8c3.2-.6 6.1-2.2 8.2-4.6l-3.1.1 3.9-2.1c2.7-2.2 4.4-4.6 5.2-7.3z"/><path class="t" d="M12.5 10.5 3.5 21.5"/>` },
   balance:   { nom: "Balance",         d: "M12 3.5v17M7.5 20.5h9M4 7h16M7 7l-3 7h6zM17 7l-3 7h6z" },
-  bouclier:  { nom: "Bouclier",        d: "M12 3l8 3v5.5c0 4.7-3.4 8.3-8 9.5-4.6-1.2-8-4.8-8-9.5V6zM12 3v18M4.5 10.5h15" },
-  lyre:      { nom: "Lyre",            d: "M7.5 4C5 7.5 5.5 13 9 16h6c3.5-3 4-8.5 1.5-12M7.5 8h9M10.5 8v8M13.5 8v8M9 20h6M12 16v4" },
+  bouclier:  { nom: "Bouclier",        svg: `<path class="p" fill-rule="evenodd" d="M12 2l8.5 3.2v6.1c0 5.1-3.6 9-8.5 10.7-4.9-1.7-8.5-5.6-8.5-10.7V5.2zM12 6.5l-3.6 4.6 3.6 4.6 3.6-4.6z"/>` },
+  lyre:      { nom: "Lyre",            svg: `<path class="t" d="M7 3.2C4 6.5 4.3 12.6 8.4 15.6h7.2c4.1-3 4.4-9.1 1.4-12.4M6.6 7.6h10.8M10.2 7.6v8M13.8 7.6v8"/><path class="p" d="M8.5 15.2h7l.8 2.6H7.7zM9 19.2h6v2.3H9z"/><circle class="p" cx="7" cy="3.2" r="1.5"/><circle class="p" cx="17" cy="3.2" r="1.5"/>` },
   navire:    { nom: "Navire",          d: "M3 16.5h18l-2.5 4h-13zM12 3v13.5M12 4.5l6 9h-6M11 6.5 6 13.5h5" },
   oeil:      { nom: "Œil",             d: "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" },
   livre:     { nom: "Livre",           d: "M12 6.5C10 5 7 4.5 3.5 5v13c3.5-.5 6.5 0 8.5 1.5m0-13c2-1.5 5-2 8.5-1.5v13c-3.5-.5-6.5 0-8.5 1.5m0-13v13" },
@@ -115,8 +117,10 @@ const EMBLEMES = {
 };
 
 const nomFamille = (f, langue = LANGUE) => (langue === "en" && f.nom_en) || (langue === "he" && f.nom_he) || f.nom;
-const dessinEmbleme = cle =>
-  `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${(EMBLEMES[cle] || EMBLEMES.etoile).d}"/></svg>`;
+const dessinEmbleme = cle => {
+  const e = EMBLEMES[cle] || EMBLEMES.etoile;
+  return `<svg class="embleme" viewBox="0 0 24 24" aria-hidden="true">${e.svg ?? `<path d="${e.d}"/>`}</svg>`;
+};
 
 // Symbole de religion, en bas de la carte à côté du rond de la gamme (personnages seulement).
 const SYMBOLES_RELIGION = {
@@ -130,10 +134,10 @@ function symboleReligion(carte, langue) {
   return dessin ? `<span class="carte-religion" title="${nomReligion(carte.religion, langue)}"><svg viewBox="0 0 24 24" aria-hidden="true">${dessin}</svg></span>` : "";
 }
 
-// Médaillon de la famille, dans le coin de l'illustration.
+// Médaillon de la famille, en bas de la carte avec la gamme et la religion.
 function medaillonFamille(carte, langue) {
   const f = carte.famille && FAMILLES[carte.famille];
-  return f ? `<span class="medaillon-famille" title="${echapper(nomFamille(f, langue))}">${dessinEmbleme(f.embleme)}</span>` : "";
+  return f ? `<span class="carte-famille" title="${echapper(nomFamille(f, langue))}">${dessinEmbleme(f.embleme)}</span>` : "";
 }
 
 // ---------- Finitions (par-dessus la rareté) ----------
@@ -184,14 +188,14 @@ function rendreCarte(carte, numeroTexte) {
     <div class="carte-cadre">
       <div class="carte-interieur">
         <header class="carte-tete"><h2 class="carte-nom" style="font-size:${tailleNom.toFixed(2)}cqw">${nom}</h2></header>
-        <div class="carte-illus">${illus}${decor.illus}${medaillonFamille(carte, L)}</div>
+        <div class="carte-illus">${illus}${decor.illus}</div>
         <div class="carte-bandeau"><span class="gemme"></span>${nomRarete(carte.rarete, L)}<span class="gemme"></span></div>
         <div class="carte-corps">
           <p class="carte-dates">${echapper(carte.dates)}</p>
           <p class="carte-lieu">${echapper(carte.lieu)} · ${nomRegion(carte.region, L)}</p>
           <p class="carte-texte">${echapper(carte.texte)}</p>
         </div>
-        <footer class="carte-pied"><span>${nomEpoque(carte.extension, L)}</span><span class="carte-signes"><span class="carte-gamme" title="${nomGamme(carte.gamme)}">${nomGamme(carte.gamme).charAt(0)}</span>${symboleReligion(carte, L)}</span><span>${t("numero", {}, L)} ${numeroTexte}</span></footer>
+        <footer class="carte-pied"><span>${nomEpoque(carte.extension, L)}</span><span class="carte-signes"><span class="carte-gamme" title="${nomGamme(carte.gamme)}">${nomGamme(carte.gamme).charAt(0)}</span>${medaillonFamille(carte, L)}${symboleReligion(carte, L)}</span><span>${t("numero", {}, L)} ${numeroTexte}</span></footer>
       </div>
       ${decor.cadre}
     </div>

@@ -96,7 +96,7 @@ body.admin { font-size: 16px; }
   display: grid; place-items: center;
   background: radial-gradient(circle at 35% 30%, #3a3020, #17130c 75%); box-shadow: 0 0 0 2px #c9a85a;
 }
-.embleme-apercu svg { width: 64%; height: 64%; fill: none; stroke: #f0d590; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.embleme-apercu svg { width: 64%; height: 64%; color: #f0d590; --fond-embleme: #2a2317; }
 
 /* ---------- Formulaire + aperçu ---------- */
 .edition { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: clamp(20px, 4vw, 48px); align-items: start; }
