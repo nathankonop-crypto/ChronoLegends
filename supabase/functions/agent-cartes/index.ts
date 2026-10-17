@@ -97,7 +97,7 @@ Format des champs (respecte exactement le style des exemples) :
 - nom : le nom de la carte, court (au plus 40 caractères). Pour un archétype : le rôle et le peuple (« Scribe sumérien »). Pour un objet, un événement ou un lieu : son nom usuel (« Cylindre de Cyrus », « Bataille de Qadesh », « Pétra »).
 - dates : pour un personnage, années de naissance et de mort, avec un tiret demi-cadratin entouré d'espaces ; « v. » devant une date approximative, « av. J.-C. » ou « apr. J.-C. » si utile, ou un règne (« règne v. 1479 – 1458 av. J.-C. »). Pour un archétype : la période où il existe (« v. 3000 – 2000 av. J.-C. », « XIVe – XVIIe s. »). Pour un objet : sa date de création (« v. 1754 av. J.-C. »). Pour un événement : sa date (« 1274 av. J.-C. », « 1453 »). Pour un lieu : sa période de construction ou d'apogée (« Ier s. av. J.-C. – IIe s. apr. J.-C. »).
 - lieu : le lieu principal associé, court (« Ur, Mésopotamie », « Empire ottoman »).
-- description : 2 ou 3 phrases, 140 à 230 caractères en tout (pour un personnage : 190 caractères AU MAXIMUM, espaces et ponctuation compris, vise 150 à 180), au présent de narration, sans répéter le nom en premier mot. Pour un archétype : son rôle, son quotidien, ce qui le rend typique de son époque. Pour un objet : ce qu'il est, qui l'a fait, pourquoi il compte. Pour un événement : ce qui s'est passé et ce que ça a changé. Pour un lieu : ce que c'était, qui l'a bâti, ce qui le rend célèbre.
+- description : 2 ou 3 phrases, 195 caractères AU MAXIMUM, espaces et ponctuation compris (vise 150 à 180, sinon le texte déborde de la carte), au présent de narration, sans répéter le nom en premier mot. Pour un archétype : son rôle, son quotidien, ce qui le rend typique de son époque. Pour un objet : ce qu'il est, qui l'a fait, pourquoi il compte. Pour un événement : ce qui s'est passé et ce que ça a changé. Pour un lieu : ce que c'était, qui l'a bâti, ce qui le rend célèbre.
 - epoque : l'époque du jeu.
 - rarete : pour un archétype, ordinaire (figure du quotidien : paysan, artisan…), notable (métier qualifié ou recherché : scribe, marchand, soldat d'élite…) ou rare (figure prestigieuse ou d'élite : Immortel perse, grand vizir…), jamais plus. Pour un personnage, un objet, un événement ou un lieu : de ordinaire à legendaire selon sa célébrité et son importance historique (legendaire = ce qui a le plus marqué l'histoire mondiale) ; jamais mythique. L'administrateur choisira au final.
 - famille : pour un personnage, l'identifiant de la famille qui lui correspond le mieux dans la liste fournie (chaîne vide si aucune ne convient) ; pour tout autre type, chaîne vide.
@@ -107,7 +107,7 @@ Format des champs (respecte exactement le style des exemples) :
 Version anglaise (champs *_en), pour les joueurs anglophones :
 - nom_en : le nom usuel en anglais (« Sumerian Scribe », « Julius Caesar »).
 - dates_en : même information, notation anglaise : « BCE » / « CE », « c. » pour vers, « r. » pour règne, « 5th c. BCE » pour un siècle.
-- lieu_en, description_en : en anglais naturel (pas mot à mot), même ton neutre ; description_en de 140 à 230 caractères (190 au maximum pour un personnage).
+- lieu_en, description_en : en anglais naturel (pas mot à mot), même ton neutre ; description_en de 195 caractères au maximum (vise 150 à 180).
 - en_savoir_plus_en : le texte « Learn more » en anglais (chaîne vide si en_savoir_plus l'est).
 - en_savoir_plus_he : le même texte en hébreu moderne naturel, au passé, avec les noms propres dans leur forme hébraïque usuelle (chaîne vide si en_savoir_plus l'est).
 
