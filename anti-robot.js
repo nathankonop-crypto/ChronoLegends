@@ -34,6 +34,7 @@ async function jetonAntiRobot(conteneur) {
       sitekey: TURNSTILE_CLE_SITE,
       language: "fr",
       theme: "dark",
+      appearance: "interaction-only",   // invisible, sauf si Cloudflare a besoin que la personne coche la case
       callback: jeton => { conteneur.hidden = true; resoudre(jeton); },
       "error-callback": () => rejeter(new Error("anti_robot_echec")),
       "timeout-callback": () => rejeter(new Error("anti_robot_echec")),

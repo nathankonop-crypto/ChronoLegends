@@ -41,7 +41,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261017-1721">
+<link rel="stylesheet" href="style.css?v=20261017-1844">
 </head>
 <body>
 
@@ -90,6 +90,7 @@
       <label class="interrupteur" id="bloc-notifications" hidden><span data-t="reglageNotifications">Notifications (booster gratuit)</span><input type="checkbox" id="reglage-notifications" role="switch"></label>
       <!-- Rubrique « Infos » : règles, chances, historique -->
       <p class="reglages-rubrique" data-t="rubriqueInfos">Infos</p>
+      <button class="lien-reglages" id="bouton-tutoriel" data-t="revoirTutoriel">Revoir le tutoriel</button>
       <button class="lien-reglages" id="bouton-regles" data-t="reglesDuJeu">Règles du jeu</button>
       <button class="lien-reglages" id="bouton-chances" data-t="chancesTirage">Chances de tirage</button>
       <button class="lien-reglages" id="bouton-historique" data-t="historiqueBoosters">Historique des boosters</button>
@@ -125,8 +126,6 @@
         <span class="guide-dechirure" aria-hidden="true"></span>
         <svg class="ligne-dechirure" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline/></svg>
         <span class="pointe-coupe" aria-hidden="true"></span>
-        <!-- 1er booster : un doigt montre le geste de découpe (une seule fois) -->
-        <span class="tuto-doigt" aria-hidden="true">👆</span>
       </button>
       <p class="consigne" id="consigne"></p>
       <!-- Plus de booster : compte à rebours jusqu'au prochain booster gratuit -->
@@ -219,7 +218,6 @@
 </main>
 
 <footer class="pied">
-  <p data-t="piedPrototype">Prototype — votre collection est enregistrée sur nos serveurs, liée à ce navigateur.</p>
   <p class="pied-geo" data-t="piedGeo">Un compte anonyme (sans e-mail) est créé automatiquement pour garder votre collection. Vos boosters dépendent de votre région, déterminée par notre serveur à partir du pays de votre adresse IP. Seuls le pays et la région sont enregistrés, jamais votre adresse IP ni votre position.</p>
 </footer>
 
@@ -269,6 +267,20 @@
     <button class="savoir-plus-fermer" id="fermer-chances" aria-label="Fermer" data-t-aria="fermer">×</button>
     <h2 id="titre-chances" data-t="chancesTirage">Chances de tirage</h2>
     <div id="contenu-chances"></div>
+  </section>
+</div>
+
+<!-- Tutoriel : 4 écrans au premier lancement (app.js : afficherTutoriel), à revoir depuis les Paramètres -->
+<div class="fond-dialogue" id="tutoriel" hidden>
+  <section class="dialogue-chances tutoriel" role="dialog" aria-modal="true" aria-labelledby="titre-tutoriel">
+    <div class="tuto-visuel" id="tuto-visuel" aria-hidden="true"></div>
+    <h2 id="titre-tutoriel"></h2>
+    <p class="tuto-texte" id="tuto-texte"></p>
+    <div class="tuto-points" id="tuto-points" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    <div class="tuto-boutons">
+      <button class="lien" id="tuto-passer" data-t="tutoPasser">Passer</button>
+      <button class="bouton bouton-or" id="tuto-suivant" data-t="tutoSuivant">Suivant</button>
+    </div>
   </section>
 </div>
 
@@ -332,15 +344,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261017-1721"></script>
-<script src="langue.js?v=20261017-1721"></script>
-<script src="anti-robot.js?v=20261017-1721"></script>
-<script src="carte.js?v=20261017-1721"></script>
-<script src="partage.js?v=20261017-1721"></script>
-<script src="monuments.js?v=20261017-1721"></script>
-<script src="sons.js?v=20261017-1721"></script>
-<script src="app.js?v=20261017-1721"></script>
-<script src="compte.js?v=20261017-1721"></script>
-<script src="quetes.js?v=20261017-1721"></script>
+<script src="reglages.js?v=20261017-1844"></script>
+<script src="langue.js?v=20261017-1844"></script>
+<script src="anti-robot.js?v=20261017-1844"></script>
+<script src="carte.js?v=20261017-1844"></script>
+<script src="partage.js?v=20261017-1844"></script>
+<script src="monuments.js?v=20261017-1844"></script>
+<script src="sons.js?v=20261017-1844"></script>
+<script src="app.js?v=20261017-1844"></script>
+<script src="compte.js?v=20261017-1844"></script>
+<script src="quetes.js?v=20261017-1844"></script>
 </body>
 </html>

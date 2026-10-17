@@ -235,7 +235,6 @@ function majConsigne() {
   // Roue grisée tant qu'aucun booster ne peut être ouvert.
   $("#roue").classList.toggle("inactive", $("#booster").disabled);
   // Tant que le joueur n'a jamais découpé de paquet : le doigt montre le geste.
-  $("#booster").classList.toggle("tuto", !prefs.tutoDecoupe && !$("#booster").disabled && !prefs.ouvertureRapide);
 }
 
 // « 05:12:33 » jusqu'au prochain booster gratuit.
@@ -888,7 +887,9 @@ function afficherCollection() {
   const mode = prefs.possession || "toutes";
   $("#filtre-possession").querySelectorAll("button").forEach(b => b.classList.toggle("actif", b.dataset.possession === mode));
   const obtenues = liste.filter(c => etat.collection[c.id]);
-  const manquantes = liste.filter(c => !etat.collection[c.id]);
+  // Manquantes : les plus faciles à obtenir d'abord (Ordinaire → Mythique), puis par numéro.
+  const manquantes = liste.filter(c => !etat.collection[c.id])
+    .sort((a, b) => RARETES[a.rarete].ordre - RARETES[b.rarete].ordre);
   const doublons = obtenues.filter(c => etat.collection[c.id] > 1);
   const affichees = { obtenues, manquantes, doublons }[mode] || [...obtenues, ...manquantes];
   $("#collection-vide").hidden = affichees.length > 0 || total === 0;
@@ -916,7 +917,7 @@ function afficherCollection() {
       el.setAttribute("aria-label", `${carte.nom}${nb > 1 ? ` ×${nb}` : ""}, ${t("agrandir")}`);
       el.addEventListener("click", () => ouvrirModale(versionCarte, possedeesAffichees));
     } else {
-      el.innerHTML = `<div class="manquante"><span>${t("numero")} ${numero(carte)}</span><span class="manquante-rarete">${nomRarete(carte.rarete)}</span></div>`;
+      el.innerHTML = `<div class="manquante rarete-${carte.rarete}"><span>${t("numero")} ${numero(carte)}</span><span class="manquante-rarete">${nomRarete(carte.rarete)}</span></div>`;
     }
     grille.appendChild(el);
   }
@@ -943,6 +944,7 @@ let listeModale = [];
 let indexModale = -1;
 
 function ouvrirModale(carte, liste = []) {
+  if (!proposerGyroscope.fait) { proposerGyroscope.fait = true; setTimeout(proposerGyroscope, 500); }   // iPhone seulement
   listeModale = liste;
   indexModale = liste.findIndex(c => c.id === carte.id);
   montrerCarteModale(carte);
@@ -1270,6 +1272,47 @@ function afficherRegles() {
 }
 const fermerRegles = () => { $("#dialogue-regles").hidden = true; };
 $("#bouton-regles").addEventListener("click", afficherRegles);
+$("#bouton-tutoriel").addEventListener("click", () => { basculerReglages(false); afficherTutoriel(); });
+
+// ---------- Tutoriel : 4 écrans pour comprendre le jeu (premier lancement, ou depuis les Paramètres) ----------
+const ECRANS_TUTORIEL = [
+  { cle: "tuto1", visuel: '<img class="tuto-logo" src="images/logo-etoile.webp" alt="">' },
+  { cle: "tuto2", visuel: '<span class="tuto-paquet"><span class="tuto-coupe"></span><span class="tuto-pointe"></span></span>' },
+  { cle: "tuto3", visuel: '<svg class="tuto-globe" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26"/><ellipse cx="32" cy="32" rx="11" ry="26"/><path d="M6 32h52M10 19h44M10 45h44"/><path class="tuto-repere" d="M44 14c-5 0-8 3.6-8 7.6 0 5.4 8 12.4 8 12.4s8-7 8-12.4c0-4-3-7.6-8-7.6zm0 4.6a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/></svg>' },
+  { cle: "tuto4", visuel: '<span class="piece-chronos tuto-piece"></span>' },
+];
+let ecranTutoriel = 0;
+
+function afficherTutoriel() {
+  ecranTutoriel = 0;
+  dessinerTutoriel();
+  $("#tutoriel").hidden = false;
+}
+
+function dessinerTutoriel() {
+  const e = ECRANS_TUTORIEL[ecranTutoriel];
+  $("#tuto-visuel").innerHTML = e.visuel;
+  $("#titre-tutoriel").textContent = t(`${e.cle}Titre`);
+  $("#tuto-texte").textContent = t(`${e.cle}Texte`);
+  $("#tuto-points").querySelectorAll("span").forEach((p, i) => p.classList.toggle("actif", i === ecranTutoriel));
+  const dernier = ecranTutoriel === ECRANS_TUTORIEL.length - 1;
+  $("#tuto-suivant").textContent = t(dernier ? "tutoCommencer" : "tutoSuivant");
+  $("#tuto-passer").hidden = dernier;
+}
+
+function fermerTutoriel() {
+  $("#tutoriel").hidden = true;
+  prefs.tutorielVu = true;
+  sauvegarderPrefs();
+}
+
+$("#tuto-suivant").addEventListener("click", () => {
+  jouerSon("retournement");
+  if (ecranTutoriel === ECRANS_TUTORIEL.length - 1) return fermerTutoriel();
+  ecranTutoriel++;
+  dessinerTutoriel();
+});
+$("#tuto-passer").addEventListener("click", fermerTutoriel);
 $("#fermer-regles").addEventListener("click", fermerRegles);
 $("#dialogue-regles").addEventListener("click", e => { if (e.target.id === "dialogue-regles") fermerRegles(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape") fermerRegles(); });
@@ -1514,7 +1557,6 @@ function choisirMonument(cle = null) {
 // douce s'échappe de l'ouverture, le paquet descend et les cartes en sortent.
 function dechirerBooster(trace) {
   dechirure = null;
-  if (!prefs.tutoDecoupe) { prefs.tutoDecoupe = true; sauvegarderPrefs(); boosterEl.classList.remove("tuto"); }
   boosterEl.dataset.glisse = "1";   // le « clic » qui suit le geste ne doit pas afficher l'aide
   vibrer([25, 40, 45]);
   jouerSon("decoupe");
@@ -1999,11 +2041,14 @@ document.addEventListener("pointerdown", function premierAppui() {
 // un 2e appui le passe. Il est retiré une fois effacé.
 const intro = getComputedStyle($("#intro")).display === "none" ? null : $("#intro");
 const racine = document.documentElement;
-// Retire l'écran d'ouverture (une seule fois), puis propose le gyroscope sur iPhone.
+// Retire l'écran d'ouverture (une seule fois), puis le tutoriel au tout premier lancement.
 function retirerIntro() {
   if (!intro.isConnected) return;
   intro.remove();
-  setTimeout(proposerGyroscope, 400);
+  setTimeout(premierLancement, 400);
+}
+function premierLancement() {
+  if (!prefs.tutorielVu) afficherTutoriel();
 }
 function lancerIntro() {
   if (racine.classList.contains("intro-lancee")) return;
@@ -2024,7 +2069,7 @@ if (intro) {
   });
   if (racine.classList.contains("intro-lancee")) setTimeout(retirerIntro, 3500);   // sons coupés : sécurité
 } else {
-  setTimeout(proposerGyroscope, 600);
+  setTimeout(premierLancement, 600);
 }
 
 async function demarrer() {
