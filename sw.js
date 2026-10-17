@@ -24,7 +24,7 @@ self.addEventListener("push", e => {
   e.waitUntil(self.registration.showNotification(d.titre || "ChronoLegends", {
     body: d.texte || "",
     icon: "images/app/icone-192.png",
-    badge: "images/app/favicon.png",
+    badge: "images/app/badge.png",   // petite icône Android : blanche sur fond transparent (sinon carré blanc)
     tag: "booster-quotidien",          // une seule à la fois : la nouvelle remplace l'ancienne
     data: { url: d.url || "./" },
   }));
