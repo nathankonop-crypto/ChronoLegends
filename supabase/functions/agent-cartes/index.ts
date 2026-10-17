@@ -80,6 +80,11 @@ Ligne éditoriale du jeu :
 
 Époques : antiquite (jusqu'au Ve siècle), moyen-age (Ve – XVe siècle), temps-modernes (fin XVe siècle – 1789), epoque-contemporaine (après 1789).`;
 
+// Comment Claude décrit l'illustration à peindre (pour l'agent et pour le formulaire manuel).
+const CONSIGNE_PROMPT_IMAGE = `prompt_image : en ANGLAIS, 70 à 130 mots, la description de l'image à peindre. Commence par situer précisément la scène : le siècle ou l'année, la culture et le lieu (« Ancient Egypt, New Kingdom, around 1250 BCE »). Puis le sujet (âge, allure, coiffure), ce qu'il fait, le décor, la lumière et l'ambiance. Sans texte dans l'image.
+COHÉRENCE AVEC L'ÉPOQUE (essentiel) : nomme précisément les vêtements, tissus, coiffures, armes, armures, outils, objets et l'architecture propres à CETTE époque et CE lieu (ex. « linen shendyt kilt, broad beaded collar », « lorica segmentata, gladius », « lamellar armour, katana in a tachi mount »). Évite tout anachronisme : rien d'une autre époque ou d'une autre culture (pas de casques à cornes vikings, pas d'armure de plates avant le XIVe siècle, pas d'étriers dans l'Antiquité méditerranéenne, pas de plantes ou d'animaux venus d'un autre continent avant leur arrivée…). Dans le doute, choisis ce qui est le mieux attesté par l'archéologie et les sources.
+Pour un archétype ou un personnage : un seul sujet principal, en plan américain ou en pied. Pour un personnage réel, appuie-toi sur ses représentations historiques connues (statues, monnaies, portraits) quand elles existent. Pour un objet : l'objet lui-même, en gros plan, tel qu'il était à l'origine (couleurs, matériaux), mis en valeur dans un décor de son époque. Pour un événement : la scène à son moment le plus marquant, avec des personnages en action. Pour un lieu : le site à son époque de gloire, animé (quelques personnages pour l'échelle), sous une belle lumière. Ne décris PAS le style artistique (il est ajouté automatiquement).`;
+
 const CONSIGNES_IDEES = `${LIGNE_EDITORIALE}
 
 Ta tâche : proposer de NOUVELLES cartes pour une région, absentes du jeu (la liste des cartes existantes t'est donnée ; pas de doublon, ni de quasi-doublon : pour les archétypes, pas deux fois le même métier à la même époque).
@@ -112,7 +117,7 @@ Version anglaise (champs *_en), pour les joueurs anglophones :
 - en_savoir_plus_he : le même texte en hébreu moderne naturel, au passé, avec les noms propres dans leur forme hébraïque usuelle (chaîne vide si en_savoir_plus l'est).
 
 Illustration :
-- prompt_image : en ANGLAIS, 60 à 120 mots, la description de l'image à peindre : le sujet (âge, allure, vêtements, coiffure, objets exacts de l'époque et du lieu), ce qu'il fait, le décor, la lumière et l'ambiance. Sans texte dans l'image. Pour un archétype ou un personnage : un seul sujet principal, en plan américain ou en pied. Pour un personnage réel, appuie-toi sur ses représentations historiques connues (statues, monnaies, portraits) quand elles existent. Pour un objet : l'objet lui-même, en gros plan, tel qu'il était à l'origine (couleurs, matériaux), mis en valeur dans un décor de son époque. Pour un événement : la scène à son moment le plus marquant, avec des personnages en action. Pour un lieu : le site à son époque de gloire, animé (quelques personnages pour l'échelle), sous une belle lumière. Ne décris PAS le style artistique (il est ajouté automatiquement).
+- ${CONSIGNE_PROMPT_IMAGE}
 
 Exemples de cartes existantes :
 - Jules César | 100 – 44 av. J.-C. | Rome | Général et homme politique romain. Il conquiert la Gaule, remporte la guerre civile et devient dictateur. Il est assassiné lors d'une séance du Sénat.
@@ -140,6 +145,19 @@ const schemaIdees = (epoques: string[], regions: string[]) => ({
   required: ["idees"],
   additionalProperties: false,
 });
+
+// Pour le formulaire manuel : seulement la description de l'illustration.
+const CONSIGNES_PROMPT = `${LIGNE_EDITORIALE}
+
+Ta tâche : à partir d'une carte déjà rédigée, écrire la description de son illustration (champ prompt_image), pour le modèle qui la peindra.
+- ${CONSIGNE_PROMPT_IMAGE}`;
+
+const schemaPrompt = {
+  type: "object",
+  properties: { prompt_image: { type: "string" } },
+  required: ["prompt_image"],
+  additionalProperties: false,
+};
 
 const schemaCarte = (familles: string[]) => ({
   type: "object",
@@ -346,6 +364,17 @@ Deno.serve(async (req) => {
         `Cartes déjà dans le jeu (toutes régions) :\n${liste || "(aucune)"}` +
         (exclues.length ? `\n\nIdées déjà proposées et écartées, à ne pas reproposer :\n${exclues.map((n) => `- ${n}`).join("\n")}` : "");
       return reponse(await demanderClaude(CONSIGNES_IDEES, demande, schemaIdees(epoque ? [epoque] : EPOQUES, toutesRegions ? Object.keys(REGIONS) : [region]), 6000));
+    }
+
+    if (corps.action === "prompt") {
+      const champ = (cle: string, max: number) => String(corps[cle] ?? "").trim().slice(0, max);
+      const nom = champ("nom", 80);
+      if (!nom) return reponse({ erreur: "Nom de la carte manquant." }, 400);
+      const demande = `Type : ${TYPES_SINGULIER[gamme]}.\nRégion : ${REGIONS[region]}.\n` +
+        (epoque ? `Époque du jeu : ${NOMS_EPOQUES[epoque]}.\n` : "") +
+        `Carte : ${nom}\nDates : ${champ("dates", 120) || "(non précisées)"}\nLieu : ${champ("lieu", 120) || "(non précisé)"}\n` +
+        `Description : ${champ("description", 600) || "(aucune)"}${consignePrecision}`;
+      return reponse(await demanderClaude(CONSIGNES_PROMPT, demande, schemaPrompt, 4000));
     }
 
     if (corps.action === "carte") {
