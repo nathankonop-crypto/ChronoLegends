@@ -39,7 +39,7 @@ alter table public.ouvertures add column if not exists dore boolean;
 insert into public.reglages_tirage (cle, valeur, explication) values
   ('prix_booster_chronos', 400, 'Prix d''un booster en plus, en Chronos'),
   ('bonus_quetes_chronos', 15,  'Bonus en Chronos quand les 3 quêtes du jour sont récupérées'),
-  ('quiz_max_jour',        20,  'Nombre maximum de questions de quiz par jour et par joueur')
+  ('quiz_max_jour',        10,  'Nombre maximum de questions de quiz par jour et par joueur')
 on conflict (cle) do nothing;
 
 -- ---------- Tables ----------
@@ -382,7 +382,7 @@ begin
     'fin_du_jour', ((v_jour + 1)::timestamp at time zone coalesce(j.fuseau, 'Asia/Jerusalem')),
     'prix_booster', public.reglage_tirage('prix_booster_chronos', 400),
     'serie', j.serie,
-    'quiz_restants', greatest(0, public.reglage_tirage('quiz_max_jour', 20)::int
+    'quiz_restants', greatest(0, public.reglage_tirage('quiz_max_jour', 10)::int
                                  - case when j.quiz_jour = v_jour then j.quiz_nb_jour else 0 end));
 end $$;
 
@@ -466,7 +466,7 @@ begin
   if found then return existante.question; end if;
 
   select * into j from public.joueurs where user_id = uid for update;
-  if j.quiz_jour = v_jour and j.quiz_nb_jour >= public.reglage_tirage('quiz_max_jour', 20) then
+  if j.quiz_jour = v_jour and j.quiz_nb_jour >= public.reglage_tirage('quiz_max_jour', 10) then
     raise exception 'quiz_fini_pour_aujourdhui';
   end if;
 
