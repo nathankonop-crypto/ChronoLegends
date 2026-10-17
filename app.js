@@ -68,6 +68,8 @@ async function chargerCartes() {
     // Contenu en anglais si le joueur joue en anglais (le français sert de secours).
     id: l.id, gamme: l.gamme, region: l.region, extension: l.epoque, rarete: l.rarete, famille: l.famille || null,
     religion: l.religion || null,
+    // Régions où la carte sort dans les boosters : la principale (écrite sur la carte) + les secondaires.
+    regions: [l.region, ...(l.regions_secondaires || [])],
     nom: champ(l, "nom"), dates: champ(l, "dates"), lieu: champ(l, "lieu"), texte: champ(l, "description"),
     image: l.image, ordre: l.ordre,
     // « En savoir plus » existe aussi en hébreu (le reste de la carte reste en anglais).
@@ -170,7 +172,7 @@ function appliquerRegion(data) {
 
 // Filtre géographique : un booster ne contient QUE des cartes de la région du joueur
 // (le serveur applique la même règle lors du tirage).
-const cartesRegion = () => CARTES.filter(c => c.region === etat.region);
+const cartesRegion = () => CARTES.filter(c => c.regions.includes(etat.region));
 
 // « 5 h 12 min », « 12 min »…
 function formatAttente(ms) {

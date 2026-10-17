@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261017-1113">
-<link rel="stylesheet" href="admin.css?v=20261017-1113">
+<link rel="stylesheet" href="style.css?v=20261017-1117">
+<link rel="stylesheet" href="admin.css?v=20261017-1117">
 </head>
 <body class="admin">
 
@@ -223,6 +223,11 @@
             <label><span>Époque <span class="requis">*</span></span><select name="epoque" required></select></label>
             <label><span>Région <span class="requis">*</span></span><select name="region" required></select></label>
           </div>
+          <!-- Régions secondaires : la carte sort aussi dans les boosters de ces régions (admin.js : regionsCochees) -->
+          <fieldset class="regions-secondaires">
+            <legend>Aussi dans <small>(la carte peut aussi sortir dans les boosters de ces régions ; la région principale reste écrite sur la carte)</small></legend>
+            <div id="cases-regions"></div>
+          </fieldset>
           <div class="ligne-champs">
             <label>Dates<input type="text" name="dates" maxlength="60" placeholder="ex. v. 1412 – 1431"></label>
             <label>Lieu<input type="text" name="lieu" maxlength="60" placeholder="ex. Royaume de France"></label>
@@ -331,10 +336,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261017-1113"></script>
-<script src="langue.js?v=20261017-1113"></script>
-<script src="anti-robot.js?v=20261017-1113"></script>
-<script src="carte.js?v=20261017-1113"></script>
-<script src="admin.js?v=20261017-1113"></script>
+<script src="reglages.js?v=20261017-1117"></script>
+<script src="langue.js?v=20261017-1117"></script>
+<script src="anti-robot.js?v=20261017-1117"></script>
+<script src="carte.js?v=20261017-1117"></script>
+<script src="admin.js?v=20261017-1117"></script>
 </body>
 </html>

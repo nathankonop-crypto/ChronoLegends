@@ -66,6 +66,10 @@ function versCarte(l, langue = "fr") {
     texte: champ("description"), image: l.image };
 }
 
+// La carte compte dans cette région : principale ou secondaire.
+const dansRegion = (c, region) => c.region === region || (c.regions_secondaires || []).includes(region);
+const nomsRegions = c => [c.region, ...(c.regions_secondaires || [])].map(r => REGIONS[r]).join(" + ");
+
 function cartesEpoque(epoque) {
   return cartes.filter(c => c.epoque === epoque)
     .sort((a, b) => a.ordre - b.ordre || a.nom.localeCompare(b.nom));
@@ -169,13 +173,14 @@ function afficherListe() {
   $("#vue-pyramide").hidden = true;
 
   const texte = $("#recherche").value.trim().toLowerCase();
-  const filtres = { rarete: $("#filtre-rarete").value, gamme: $("#filtre-gamme").value,
-    region: $("#filtre-region").value, epoque: $("#filtre-epoque").value };
+  const filtres = { rarete: $("#filtre-rarete").value, gamme: $("#filtre-gamme").value, epoque: $("#filtre-epoque").value };
+  const region = $("#filtre-region").value;
   const famille = $("#filtre-famille").value;   // "" = toutes, "-" = sans famille
   const statut = $("#filtre-statut").value;
 
   const visibles = cartes.filter(c =>
     Object.entries(filtres).every(([champ, v]) => !v || c[champ] === v) &&
+    (!region || dansRegion(c, region)) &&
     (!famille || (famille === "-" ? !c.famille : c.famille === famille)) &&
     (!statut || (c.statut ?? "validee") === statut) &&
     (!texte || [c.nom, c.nom_en, c.lieu, c.dates, c.id].join(" ").toLowerCase().includes(texte)));
@@ -196,7 +201,7 @@ function afficherListe() {
       <td><span class="pastille rarete-${c.rarete}">${RARETES[c.rarete].nom}</span></td>
       <td>${GAMMES[c.gamme]}</td>
       <td>${c.famille && FAMILLES[c.famille] ? echapper(FAMILLES[c.famille].nom) : ""}</td>
-      <td>${REGIONS[c.region]}</td>
+      <td>${nomsRegions(c)}</td>
       <td class="col-actions">
         <button class="bouton petit" data-modifier="${echapper(c.id)}">Modifier</button>
         <button class="bouton petit bouton-danger" data-supprimer="${echapper(c.id)}">Supprimer</button>
@@ -235,6 +240,7 @@ function ouvrirFormulaire(ligne) {
   for (const champ of ["nom", "id", "gamme", "rarete", "famille", "religion", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN, ...CHAMPS_PLUS]) {
     form.elements[champ].value = l[champ] ?? "";
   }
+  for (const caseRegion of $("#cases-regions").querySelectorAll("input")) caseRegion.checked = (l.regions_secondaires || []).includes(caseRegion.value);
   // Carte existante : son statut (« validee » si la colonne n'existe pas encore) ; nouvelle carte : brouillon.
   form.elements.statut.value = ligne ? (ligne.statut || "validee") : "brouillon";
   form.elements.id.readOnly = !!ligne;
@@ -346,6 +352,7 @@ function valeursFormulaire() {
   return {
     id: f.id.value.trim(), nom: f.nom.value.trim(), gamme: f.gamme.value, rarete: f.rarete.value,
     epoque: f.epoque.value, region: f.region.value, statut: f.statut.value,
+    regions_secondaires: regionsCochees(),
     // Famille : seulement pour les personnages historiques.
     famille: (f.gamme.value === "personnage" && f.famille.value) || null,
     religion: (f.gamme.value === "personnage" && f.religion.value) || null,
@@ -357,7 +364,23 @@ function valeursFormulaire() {
   };
 }
 
+// Régions secondaires cochées (jamais la région principale).
+function regionsCochees() {
+  return [...$("#cases-regions").querySelectorAll("input:checked")].map(i => i.value).filter(r => r !== form.elements.region.value);
+}
+
+// La case de la région principale est grisée : elle est déjà la région de la carte.
+function majCasesRegions() {
+  for (const caseRegion of $("#cases-regions").querySelectorAll("input")) {
+    const principale = caseRegion.value === form.elements.region.value;
+    caseRegion.disabled = principale;
+    if (principale) caseRegion.checked = false;
+    caseRegion.parentElement.classList.toggle("principale", principale);
+  }
+}
+
 function majApercu() {
+  majCasesRegions();
   const v = valeursFormulaire();
   $("#compte-description").textContent = form.elements.description.value.length;
   $("#retirer-image").hidden = !imageActuelle();
@@ -890,7 +913,7 @@ function cartesPyramide({ sansRegion = false } = {}) {
   const region = $("#pyramide-region").value, epoque = $("#pyramide-epoque").value;
   const gamme = $("#pyramide-gamme").value, statut = $("#pyramide-statut").value;
   return cartes.filter(c =>
-    (sansRegion || !region || c.region === region) && (!epoque || c.epoque === epoque) &&
+    (sansRegion || !region || dansRegion(c, region)) && (!epoque || c.epoque === epoque) &&
     (!gamme || c.gamme === gamme) && (!statut || (c.statut ?? "validee") === statut));
 }
 
@@ -932,7 +955,7 @@ function afficherPyramide() {
     const ecart = n - objectif(i);
     const lignObjectif = !sommet ? "" : `<span class="etage-objectif">Objectif ≈ ${objectif(i)} · ${
       ecart < 0 ? `<b class="manque">il en manque ${-ecart}</b>` : ecart > 0 ? `${ecart} en plus` : "✓ juste"}</span>`;
-    const enAttente = brouillons.filter(c => c.rarete === r && (!$("#pyramide-region").value || c.region === $("#pyramide-region").value)
+    const enAttente = brouillons.filter(c => c.rarete === r && (!$("#pyramide-region").value || dansRegion(c, $("#pyramide-region").value))
       && (!$("#pyramide-epoque").value || c.epoque === $("#pyramide-epoque").value)
       && (!$("#pyramide-gamme").value || c.gamme === $("#pyramide-gamme").value)).length;
     const largeur = 28 + (72 * i) / (RARETES_PYRAMIDE.length - 1);
@@ -953,7 +976,7 @@ function afficherPyramide() {
     return `<td class="${n ? "" : "zero"}">${n}</td>`;
   }).join("")}<td class="total">${cartesLigne.length}</td></tr>`;
   $("#repartition").innerHTML = `<thead><tr><th></th>${RARETES_PYRAMIDE.map(r => `<th>${RARETES[r].nom}</th>`).join("")}<th>Total</th></tr></thead>
-    <tbody>${Object.entries(REGIONS).map(([cle, nom]) => ligne(nom, toutes.filter(c => c.region === cle),
+    <tbody>${Object.entries(REGIONS).map(([cle, nom]) => ligne(nom, toutes.filter(c => dansRegion(c, cle)),
       cle === $("#pyramide-region").value ? "choisie" : "")).join("")}${ligne("Total", toutes, "ligne-total")}</tbody>`;
 }
 
@@ -990,6 +1013,8 @@ remplirSelect(form.elements.gamme, GAMMES);
 remplirSelect(form.elements.rarete, nomsRarete);
 remplirSelect(form.elements.epoque, nomsEpoque);
 remplirSelect(form.elements.region, REGIONS);
+$("#cases-regions").innerHTML = Object.entries(REGIONS)
+  .map(([cle, nom]) => `<label><input type="checkbox" value="${cle}"> ${nom}</label>`).join("");
 remplirSelect($("#pyramide-region"), REGIONS, true);
 remplirSelect($("#pyramide-epoque"), nomsEpoque, true);
 remplirSelect($("#pyramide-gamme"), GAMMES, true);

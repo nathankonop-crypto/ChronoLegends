@@ -165,6 +165,14 @@ body.admin { font-size: 16px; }
 .menu-demo-liste a:hover { background: rgba(212, 178, 106, .12); }
 .menu-demo-liste small { font-size: 12px; }
 
+/* ---------- Régions secondaires (formulaire) ---------- */
+.regions-secondaires { border: 1px solid rgba(212, 178, 106, .25); border-radius: 10px; padding: 8px 14px 12px; }
+.regions-secondaires legend { padding: 0 6px; }
+.regions-secondaires legend small { color: var(--texte-doux); }
+#cases-regions { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+#cases-regions label { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; white-space: nowrap; }
+#cases-regions label.principale { opacity: .45; }
+
 /* ---------- Agent de cartes ---------- */
 .agent-reglages { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 18px; }
 .agent-reglages label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--texte-doux); }
