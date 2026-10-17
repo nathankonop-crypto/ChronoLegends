@@ -322,6 +322,7 @@ $("#bouton-ia").addEventListener("click", async () => {
   } else {
     noteIA("Rempli par l'IA : relisez et corrigez si besoin avant d'enregistrer.", { annulable: true });
   }
+  if (!imageActuelle()) peindreIllustration();   // comme l'agent : le texte, puis l'image
 });
 
 $("#annuler-ia").addEventListener("click", () => {
@@ -422,6 +423,7 @@ function oublierRetouches() {
   avantRetouche = [];
   $("#annuler-retouche").hidden = true;
   $("#consigne-retouche").value = "";
+  $("#consigne-peindre").value = "";
 }
 
 const versBase64 = blob => new Promise((ok, echec) => {
@@ -462,6 +464,58 @@ async function retoucherImage() {
 }
 
 $("#bouton-retouche").addEventListener("click", retoucherImage);
+
+// ---------- Illustration peinte par l'IA (Nano Banana, action « image » d'agent-cartes) ----------
+// Décrite à partir des champs de la carte (+ la précision facultative) ; le style est ajouté par le serveur.
+
+const CADRAGE_IMAGE = {
+  archetype: "A single main subject, medium-long shot or full figure, doing something typical of their role.",
+  personnage: "A single main subject, medium-long shot or full figure, based on known historical depictions (statues, coins, portraits) when they exist.",
+  objet: "The object itself in close-up, as it looked originally (colours, materials), showcased in a setting of its era.",
+  evenement: "The scene at its most striking moment, with people in action.",
+  lieu: "The site at its time of glory, lively (a few people for scale), under beautiful light.",
+};
+let peintureEnCours = false;
+
+async function peindreIllustration() {
+  const v = valeursFormulaire();
+  if (!v.nom) return ($("#info-peindre").textContent = "Écrivez d'abord le nom de la carte.");
+  if (peintureEnCours) return;
+  peintureEnCours = true;
+  const bouton = $("#bouton-peindre");
+  bouton.disabled = true;
+  bouton.textContent = "🎨 Peinture…";
+  $("#info-peindre").textContent = "Nano Banana peint l'illustration… (20 à 60 secondes)";
+  const precision = $("#consigne-peindre").value.trim();
+  const prompt = [
+    `Illustration for a historical trading card: ${v.nom_en || v.nom}${v.nom_en ? ` (${v.nom})` : ""}.`,
+    v.dates_en || v.dates ? `Period: ${v.dates_en || v.dates}.` : "",
+    v.lieu_en || v.lieu ? `Place: ${v.lieu_en || v.lieu}.` : "",
+    v.description_en || v.description ? `About the subject: ${v.description_en || v.description}` : "",
+    "Use clothing, hairstyles, objects and architecture that are accurate for this exact era and place. No text in the image.",
+    CADRAGE_IMAGE[v.gamme] || "",
+    precision ? `Important, requested by the author: ${precision}` : "",
+  ].filter(Boolean).join("\n");
+  try {
+    const peinte = await appelAgent({ action: "image", prompt });
+    const brute = await (await fetch(`data:${peinte.mime};base64,${peinte.data}`)).blob();
+    const prete = await preparerImage(brute);
+    avantRetouche.push(nouvelleImage);   // l'image d'avant reste récupérable (« Revenir à l'image d'avant »)
+    nouvelleImage = { blob: prete.blob, url: URL.createObjectURL(prete.blob) };
+    imageRetiree = false;
+    $("#annuler-retouche").hidden = false;
+    $("#info-peindre").textContent = "Peinte ✓ Cliquez sur « Enregistrer » pour la garder, peignez-en une autre, ou retouchez-la ci-dessous.";
+    majApercu();
+  } catch (err) {
+    $("#info-peindre").textContent = `✗ ${err.message}`;
+  } finally {
+    peintureEnCours = false;
+    bouton.disabled = false;
+    bouton.textContent = "🎨 Peindre l'illustration";
+  }
+}
+
+$("#bouton-peindre").addEventListener("click", peindreIllustration);
 $("#annuler-retouche").addEventListener("click", () => {
   if (!avantRetouche.length || retoucheEnCours) return;
   nouvelleImage && URL.revokeObjectURL(nouvelleImage.url);

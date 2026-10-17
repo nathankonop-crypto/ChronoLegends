@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261017-1035">
-<link rel="stylesheet" href="admin.css?v=20261017-1035">
+<link rel="stylesheet" href="style.css?v=20261017-1041">
+<link rel="stylesheet" href="admin.css?v=20261017-1041">
 </head>
 <body class="admin">
 
@@ -254,6 +254,16 @@
             <small id="info-image">Recadrée automatiquement au centre en paysage 4:3, puis compressée (WebP 800×600).</small>
           </label>
           <button type="button" class="lien" id="retirer-image" hidden>Retirer l'illustration</button>
+          <!-- Illustration peinte par Nano Banana (admin.js : peindreIllustration ; Edge Function agent-cartes) -->
+          <div class="retouche">
+            <label>Peindre l'illustration avec l'IA
+              <textarea id="consigne-peindre" rows="2" maxlength="500" placeholder="Facultatif. Ex. : de profil, sur un champ de bataille au coucher du soleil, tenant une lance…"></textarea>
+            </label>
+            <div class="ligne-retouche">
+              <button type="button" class="bouton bouton-ia" id="bouton-peindre">🎨 Peindre l'illustration</button>
+            </div>
+            <small id="info-peindre">Peinte à partir du nom, des dates, du lieu et de la description, dans le style des cartes. Faite automatiquement après « Remplir avec l'IA » si la carte n'a pas encore d'image. Rien n'est enregistré avant « Enregistrer ».</small>
+          </div>
           <!-- Retouche de l'illustration par Nano Banana (admin.js : retoucherImage ; Edge Function agent-cartes) -->
           <div class="retouche" id="zone-retouche" hidden>
             <label>Retoucher l'illustration avec l'IA
@@ -309,10 +319,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261017-1035"></script>
-<script src="langue.js?v=20261017-1035"></script>
-<script src="anti-robot.js?v=20261017-1035"></script>
-<script src="carte.js?v=20261017-1035"></script>
-<script src="admin.js?v=20261017-1035"></script>
+<script src="reglages.js?v=20261017-1041"></script>
+<script src="langue.js?v=20261017-1041"></script>
+<script src="anti-robot.js?v=20261017-1041"></script>
+<script src="carte.js?v=20261017-1041"></script>
+<script src="admin.js?v=20261017-1041"></script>
 </body>
 </html>
