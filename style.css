@@ -1944,3 +1944,75 @@ body.en-revelation #consigne-pile, body.en-revelation #actions-tirage { visibili
 .erreur-compte { min-height: 1em; color: #f1b3ab !important; font-size: 13px; }
 .erreur-compte:empty { display: none; }
 .avertissement-compte { padding: 8px 10px; border-radius: 8px; background: rgba(220, 150, 60, .12); border: 1px solid rgba(220, 150, 60, .35); font-size: 13px; }
+
+/* ---------- Onglet Quêtes (quetes.js) ---------- */
+/* Pièce de Chronos : disque d'or frappé de l'étoile-boussole du logo (le logo sert de masque). */
+.piece-chronos {
+  position: relative; display: inline-block; width: 1.05em; height: 1.05em; border-radius: 50%;
+  vertical-align: -.18em; flex: none;
+  background: radial-gradient(circle at 35% 30%, #fff4c8, #f0cd6e 38%, #c8962e 70%, #8f6519 100%);
+  box-shadow: inset 0 0 0 .07em #9b7022, inset 0 0 0 .13em rgba(255, 236, 170, .7), 0 .05em .15em rgba(0, 0, 0, .4);
+}
+.piece-chronos::after {
+  content: ""; position: absolute; inset: 16%;
+  background: linear-gradient(160deg, #7a5214, #a87828);
+  -webkit-mask: url(images/logo-etoile.webp) center / contain no-repeat; mask: url(images/logo-etoile.webp) center / contain no-repeat;
+}
+.piece-chronos.grande { width: 34px; height: 34px; }
+#vue-quetes { max-width: 560px; margin: 0 auto; padding-bottom: 30px; }
+.solde {
+  display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px auto 18px;
+  font-family: var(--serif-titre); font-size: 15px; letter-spacing: .12em; text-transform: uppercase; color: var(--or-clair);
+}
+.solde b { font-size: 30px; letter-spacing: .02em; color: #fff3cf; }
+.solde.gagne .piece-chronos { animation: piece-saute .6s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes piece-saute { 40% { transform: translateY(-8px) rotateY(180deg) scale(1.15); } to { transform: none; } }
+.quetes-indispo { text-align: center; color: var(--texte-doux); font-style: italic; }
+.bloc-quetes {
+  margin: 0 0 18px; padding: 14px 16px 16px; border-radius: 16px;
+  background: var(--encre-2); border: 1px solid rgba(212, 178, 106, .18);
+}
+.bloc-quetes h2 { margin: 0; font-family: var(--serif-titre); font-weight: 600; font-size: 17px; letter-spacing: .12em; color: var(--or-clair); }
+.quetes-sous-titre { margin: 2px 0 12px; font-size: 14px; font-style: italic; color: var(--texte-doux); }
+.liste-quetes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.quete {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px;
+  background: var(--encre-3); border: 1px solid rgba(212, 178, 106, .12);
+}
+.quete.finie:not(.recuperee) { border-color: var(--or); box-shadow: 0 0 14px -6px rgba(241, 200, 110, .7); }
+.quete.recuperee, .succes.recupere { opacity: .55; }
+.quete-texte { flex: 1; min-width: 0; display: grid; grid-template-columns: 1fr auto; gap: 5px 8px; align-items: center; }
+.quete-nom { grid-column: 1 / -1; font-size: 15px; line-height: 1.25; }
+.quete-barre { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.quete-barre > span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #b18d45, #f0d590); transition: width .4s; }
+.quete-progres { font-size: 12px; color: var(--texte-doux); font-variant-numeric: tabular-nums; }
+.quete-gain { flex: none; font-weight: 600; color: #f6dc97; font-size: 14px; white-space: nowrap; }
+.quete .bouton, .succes .bouton { flex: none; padding: 7px 12px; font-size: 12px; }
+.quete-changer { flex: none; font-size: 12px; }
+.quete-faite { flex: none; font-size: 12px; color: var(--texte-doux); }
+.bonus-quetes { margin: 12px 0 0; font-size: 14px; color: var(--texte); }
+.quetes-aide { margin: 6px 0 0; font-size: 13px; color: var(--texte-doux); font-style: italic; }
+.quetes-aide:empty { display: none; }
+.succes-medaille { flex: none; font-size: 20px; color: rgba(212, 178, 106, .45); }
+.succes.obtenu .succes-medaille { color: #f6d27a; text-shadow: 0 0 10px rgba(246, 210, 122, .6); }
+/* Quiz */
+.quiz-question { font-family: var(--serif); font-size: 18px; line-height: 1.35; margin: 0 0 12px; }
+.quiz-choix { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.quiz-reponse { white-space: normal; line-height: 1.2; min-height: 48px; }
+.quiz-reponse.juste { background: linear-gradient(180deg, #3f8f5a, #2b6b42); border-color: #8fd19e; color: #fff; }
+.quiz-reponse.faux { background: linear-gradient(180deg, #8f3f3f, #6b2b2b); border-color: #f1b3ab; color: #fff; }
+.quiz-resultat { min-height: 1.3em; margin: 0 0 10px; font-weight: 600; }
+.quiz-resultat.juste { color: #8fd19e; }
+.quiz-resultat.faux { color: #f1b3ab; font-weight: 500; }
+/* Boutique */
+.article-boutique { display: flex; align-items: center; gap: 12px; }
+.article-nom { flex: 1; font-size: 15px; }
+.article-prix { font-weight: 600; color: #f6dc97; white-space: nowrap; }
+/* « +15 » qui s'envole quand on récupère des Chronos */
+.envol-chronos {
+  position: fixed; z-index: 60; translate: -50% 0; pointer-events: none;
+  font-family: var(--serif-titre); font-weight: 700; font-size: 20px; color: #ffe9a8; text-shadow: 0 2px 8px rgba(0, 0, 0, .7);
+  animation: envol-chronos 1s ease-out forwards;
+}
+@keyframes envol-chronos { from { transform: translateY(0) scale(.8); opacity: 0; } 20% { opacity: 1; transform: translateY(-10px) scale(1.15); } to { transform: translateY(-70px) scale(1); opacity: 0; } }
+@media (max-width: 420px) { .quiz-choix { grid-template-columns: 1fr; } }

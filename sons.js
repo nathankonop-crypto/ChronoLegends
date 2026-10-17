@@ -227,6 +227,20 @@ const SONS = {
     montee(ctx, t, 1.7, 1.3);
     [0, 0.55, 0.95, 1.25, 1.48].forEach((d, i) => boum(ctx, t + d, 0.3 + i * 0.08));
   },
+  // Chronos gagnés : deux tintements de pièce d'or.
+  piece(ctx, t) {
+    cloche(ctx, t, MI6, 0.45, 0.22);
+    cloche(ctx, t + 0.08, SOL6, 0.7, 0.2);
+    etincelles(ctx, t + 0.1, 3, 0.25, 0.05);
+  },
+  // Quiz : bonne réponse (petit arpège qui monte) ou mauvaise (deux notes qui descendent, douces).
+  bonneReponse(ctx, t) {
+    [DO5, MI5, SOL5, DO6].forEach((f, i) => cloche(ctx, t + i * 0.07, f, 0.8, 0.2));
+  },
+  mauvaiseReponse(ctx, t) {
+    cloche(ctx, t, SOL4, 0.5, 0.18);
+    cloche(ctx, t + 0.16, DO4, 0.8, 0.16);
+  },
   // Une carte se retourne : un petit souffle de carton.
   retournement(ctx, t) {
     bruit(ctx, t, 0.14, 700, 1800, 0.35, 0.8, 0.01);

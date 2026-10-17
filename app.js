@@ -364,6 +364,8 @@ function afficherVue(nom) {
   document.querySelectorAll(".onglet").forEach(o => o.classList.toggle("actif", o.dataset.vue === nom));
   $("#vue-booster").hidden = nom !== "booster";
   $("#vue-collection").hidden = nom !== "collection";
+  $("#vue-quetes").hidden = nom !== "quetes";
+  if (nom === "quetes") afficherQuetes();   // quetes.js
   if (nom === "collection") {
     voirNouvelles();
     afficherCollection();
@@ -491,6 +493,7 @@ async function ouvrirBooster(dechire = false) {
   }
   majCompteur();
   majPointCollection();
+  if (typeof quetesApresOuverture === "function") quetesApresOuverture();   // quetes.js : les quêtes ont pu avancer
   sortirCartes(animation, tirage, data.cartes.map(c => c.nouvelle));
 }
 

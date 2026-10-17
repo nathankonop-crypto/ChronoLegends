@@ -173,6 +173,16 @@ body.admin { font-size: 16px; }
 #cases-regions label { display: inline-flex; flex-direction: row; align-items: center; gap: 6px; white-space: nowrap; }
 #cases-regions label.principale { opacity: .45; }
 
+/* ---------- Succès (admin.js : ligneSucces) ---------- */
+.tableau-succes input:not([type="checkbox"]) { width: 100%; min-width: 120px; }
+.tableau-succes td input[name="chronos"], .tableau-succes td input[name="ordre"] { min-width: 0; width: 80px; }
+.condition-succes { min-width: 280px; }
+.condition-succes > select { width: 100%; margin-bottom: 6px; }
+.condition-succes .parametres { display: flex; flex-wrap: wrap; gap: 6px; }
+.condition-succes .parametres[hidden] { display: none; }
+.condition-succes .parametres select, .condition-succes .parametres input { flex: 1 1 120px; }
+.apercu-ensemble { flex: 1 1 100%; color: var(--texte-doux); }
+
 /* ---------- Agent de cartes ---------- */
 .agent-reglages { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 18px; }
 .agent-reglages label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--texte-doux); }

@@ -169,6 +169,7 @@ function afficherListe() {
   $("#vue-liste").hidden = false;
   $("#vue-formulaire").hidden = true;
   $("#vue-familles").hidden = true;
+  $("#vue-succes").hidden = true;
   $("#vue-agent").hidden = true;
   $("#vue-pyramide").hidden = true;
 
@@ -254,6 +255,7 @@ function ouvrirFormulaire(ligne) {
   $("#bouton-enregistrer").textContent = ligne ? "Enregistrer les modifications" : "Créer la carte";
 
   $("#vue-liste").hidden = true;
+  $("#vue-succes").hidden = true;
   $("#vue-formulaire").hidden = false;
   window.scrollTo(0, 0);
   majApercu();
@@ -672,6 +674,7 @@ function afficherFamillesAdmin() {
   $("#vue-pyramide").hidden = true;
   $("#vue-agent").hidden = true;
   $("#vue-liste").hidden = true;
+  $("#vue-succes").hidden = true;
   $("#vue-formulaire").hidden = true;
   $("#vue-familles").hidden = false;
   const liste = Object.values(FAMILLES).sort((a, b) => a.ordre - b.ordre || a.nom.localeCompare(b.nom));
@@ -762,6 +765,172 @@ $("#famille-nouvelle").addEventListener("click", () => {
   tr.querySelector('[name="nom"]').focus();
 });
 
+// ---------- Succès : la liste que les joueurs peuvent débloquer (table « succes ») ----------
+// Chaque succès : un type (la condition), des paramètres, un seuil et des Chronos.
+
+const TYPES_SUCCES = {
+  ensemble: "Ensemble de cartes (toutes possédées)",
+  cartes_differentes: "Nombre de cartes différentes",
+  boosters_ouverts: "Nombre de boosters ouverts",
+  booster_dore: "Nombre de boosters dorés ouverts",
+  rarete: "Première carte d'une rareté",
+  finition: "Première finition (Émeraude, Diamant)",
+  serie: "Jours de jeu d'affilée",
+  quiz: "Bonnes réponses au quiz",
+};
+const AVEC_SEUIL = ["cartes_differentes", "boosters_ouverts", "booster_dore", "serie", "quiz"];
+const RELIGIONS_ADMIN = { christianisme: "Christianisme", judaisme: "Judaïsme", islam: "Islam" };
+let SUCCES = [];
+
+const optionsSelect = (valeurs, choisi, vide = "") =>
+  (vide ? `<option value="">${vide}</option>` : "") +
+  Object.entries(valeurs).map(([k, v]) => `<option value="${k}"${k === choisi ? " selected" : ""}>${echapper(v)}</option>`).join("");
+
+// Cartes validées qui correspondent aux critères d'un « ensemble » (comme le serveur : progres_succes).
+function cartesEnsemble(p) {
+  const mots = (p.mots || []).map(m => m.toLowerCase());
+  return cartes.filter(c => (c.statut ?? "validee") === "validee"
+    && (!p.famille || c.famille === p.famille) && (!p.epoque || c.epoque === p.epoque)
+    && (!p.gamme || c.gamme === p.gamme) && (!p.rarete || c.rarete === p.rarete)
+    && (!p.religion || c.religion === p.religion)
+    && (!p.region || p.region === "joueur" || dansRegion(c, p.region))
+    && (!mots.length || mots.some(m => c.nom.toLowerCase().includes(m)))
+    && (!p.cartes || p.cartes.includes(c.id)));
+}
+
+async function afficherSuccesAdmin() {
+  for (const v of ["#vue-pyramide", "#vue-agent", "#vue-liste", "#vue-formulaire", "#vue-familles"]) $(v).hidden = true;
+  $("#vue-succes").hidden = false;
+  const { data, error } = await sb.from("succes").select("*").order("ordre").order("id");
+  if (error) {
+    $("#lignes-succes").innerHTML = `<tr><td colspan="8">Succès indisponibles : ${echapper(error.message)} (le script 24_quetes_succes.sql a-t-il été lancé ?)</td></tr>`;
+    return;
+  }
+  SUCCES = data;
+  $("#nb-succes").textContent = `(${data.length})`;
+  const tbody = $("#lignes-succes");
+  tbody.innerHTML = "";
+  data.forEach(s => tbody.appendChild(ligneSucces(s)));
+}
+
+function ligneSucces(s) {
+  const nouveau = !s;
+  s ||= { id: "", nom: "", nom_en: "", nom_he: "", type: "ensemble", param: {}, seuil: 1, chronos: 100,
+          ordre: Math.max(0, ...SUCCES.map(x => x.ordre)) + 1, actif: true };
+  const p = s.param || {};
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input name="nom" maxlength="60" value="${echapper(s.nom)}" placeholder="ex. Tous les mendiants" aria-label="Nom français"></td>
+    <td><input name="nom_en" maxlength="60" value="${echapper(s.nom_en || "")}" lang="en" aria-label="Nom anglais"></td>
+    <td><input name="nom_he" maxlength="60" value="${echapper(s.nom_he || "")}" lang="he" dir="rtl" aria-label="Nom hébreu"></td>
+    <td class="condition-succes">
+      <select name="type" aria-label="Condition">${optionsSelect(TYPES_SUCCES, s.type)}</select>
+      <span class="parametres" data-pour="ensemble">
+        <select name="famille" aria-label="Famille">${optionsSelect(Object.fromEntries(Object.values(FAMILLES).map(f => [f.id, f.nom])), p.famille, "Toute famille")}</select>
+        <select name="epoque" aria-label="Époque">${optionsSelect(nomsEpoque, p.epoque, "Toute époque")}</select>
+        <select name="region" aria-label="Région">${optionsSelect({ joueur: "Région du joueur", ...REGIONS }, p.region, "Toute région")}</select>
+        <select name="gamme" aria-label="Type de carte">${optionsSelect(GAMMES, p.gamme, "Tout type")}</select>
+        <select name="rarete_e" aria-label="Rareté">${optionsSelect(nomsRarete, p.rarete, "Toute rareté")}</select>
+        <select name="religion" aria-label="Religion">${optionsSelect(RELIGIONS_ADMIN, p.religion, "Toute religion")}</select>
+        <input name="mots" value="${echapper((p.mots || []).join(", "))}" placeholder="mots du nom, ex. mendiant" aria-label="Mots dans le nom">
+        <input name="cartes" value="${echapper((p.cartes || []).join(", "))}" placeholder="ou identifiants, ex. saladin, cyrus-ii" aria-label="Liste de cartes">
+        <small class="apercu-ensemble"></small>
+      </span>
+      <span class="parametres" data-pour="rarete"><select name="rarete" aria-label="Rareté">${optionsSelect(nomsRarete, p.rarete)}</select></span>
+      <span class="parametres" data-pour="finition"><select name="finition" aria-label="Finition">${optionsSelect({ emeraude: "Émeraude", diamant: "Diamant" }, p.finition)}</select></span>
+      <span class="parametres" data-pour="seuil"><input name="seuil" type="number" min="1" value="${s.seuil}" aria-label="Nombre à atteindre"></span>
+    </td>
+    <td><input name="chronos" type="number" min="0" step="10" value="${s.chronos}" aria-label="Chronos"></td>
+    <td><input name="ordre" type="number" min="0" value="${s.ordre}" aria-label="Ordre"></td>
+    <td><input name="actif" type="checkbox"${s.actif ? " checked" : ""} aria-label="Actif"></td>
+    <td class="col-actions">
+      <button class="bouton petit bouton-or" data-action="enregistrer">${nouveau ? "Créer" : "Enregistrer"}</button>
+      ${nouveau ? `<button class="bouton petit" data-action="annuler">Annuler</button>`
+                : `<button class="bouton petit bouton-danger" data-action="supprimer">Supprimer</button>`}
+    </td>`;
+  const champ = nom => tr.querySelector(`[name="${nom}"]`);
+  const liste = nom => champ(nom).value.split(",").map(x => x.trim()).filter(Boolean);
+  const parametres = () => {
+    const type = champ("type").value;
+    if (type === "rarete") return { rarete: champ("rarete").value };
+    if (type === "finition") return { finition: champ("finition").value };
+    if (type !== "ensemble") return {};
+    const q = {};
+    for (const n of ["famille", "epoque", "region", "gamme", "religion"]) if (champ(n).value) q[n] = champ(n).value;
+    if (champ("rarete_e").value) q.rarete = champ("rarete_e").value;
+    if (liste("mots").length) q.mots = liste("mots");
+    if (liste("cartes").length) q.cartes = liste("cartes");
+    return q;
+  };
+  // Seuls les réglages de la condition choisie sont visibles ; aperçu du nombre de cartes de l'ensemble.
+  const maj = () => {
+    const type = champ("type").value;
+    tr.querySelectorAll(".parametres").forEach(el => {
+      el.hidden = el.dataset.pour === "seuil" ? !AVEC_SEUIL.includes(type) : el.dataset.pour !== type;
+    });
+    if (type === "ensemble") {
+      const n = cartesEnsemble(parametres()).length;
+      tr.querySelector(".apercu-ensemble").textContent = champ("region").value === "joueur"
+        ? `${n} cartes en tout (le joueur : seulement celles de sa région)`
+        : `${n} carte${n > 1 ? "s" : ""} validée${n > 1 ? "s" : ""}${n ? "" : " : ce succès sera caché"}`;
+    }
+  };
+  tr.addEventListener("input", maj);
+  maj();
+
+  tr.querySelector('[data-action="enregistrer"]').addEventListener("click", async e => {
+    const valeurs = {
+      nom: champ("nom").value.trim(), nom_en: champ("nom_en").value.trim() || null, nom_he: champ("nom_he").value.trim() || null,
+      type: champ("type").value, param: parametres(),
+      seuil: AVEC_SEUIL.includes(champ("type").value) ? Math.max(1, Number(champ("seuil").value) || 1) : 1,
+      chronos: Math.max(0, Number(champ("chronos").value) || 0), ordre: Number(champ("ordre").value) || 0,
+      actif: champ("actif").checked,
+    };
+    if (!valeurs.nom) return notifier("Le nom français est obligatoire.");
+    let requete;
+    if (nouveau) {
+      const id = versIdentifiant(valeurs.nom);
+      if (!id) return notifier("Nom invalide.");
+      if (SUCCES.some(x => x.id === id)) return notifier("Un succès porte déjà ce nom.");
+      requete = sb.from("succes").insert({ id, ...valeurs }).select();
+    } else {
+      requete = sb.from("succes").update(valeurs).eq("id", s.id).select();
+    }
+    e.target.disabled = true;
+    const { data, error } = await requete;
+    e.target.disabled = false;
+    if (error || !data?.length) return notifier(`Enregistrement refusé${error ? ` : ${error.message}` : ""}.`);
+    notifier(nouveau ? `Succès « ${valeurs.nom} » créé.` : `Succès « ${valeurs.nom} » enregistré.`);
+    afficherSuccesAdmin();
+  });
+
+  tr.querySelector('[data-action="annuler"]')?.addEventListener("click", () => tr.remove());
+
+  // Suppression en deux temps (les joueurs qui l'avaient obtenu le perdent de leur liste).
+  const supprimer = tr.querySelector('[data-action="supprimer"]');
+  supprimer?.addEventListener("click", async () => {
+    if (!supprimer.dataset.confirme) {
+      supprimer.dataset.confirme = "1";
+      supprimer.textContent = "Confirmer";
+      setTimeout(() => { delete supprimer.dataset.confirme; supprimer.textContent = "Supprimer"; }, 4000);
+      return;
+    }
+    const { data, error } = await sb.from("succes").delete().eq("id", s.id).select();
+    if (error || !data?.length) return notifier(`Suppression refusée${error ? ` : ${error.message}` : ""}.`);
+    notifier(`Succès « ${s.nom} » supprimé.`);
+    afficherSuccesAdmin();
+  });
+  return tr;
+}
+
+$("#bouton-succes").addEventListener("click", afficherSuccesAdmin);
+$("#succes-retour").addEventListener("click", afficherListe);
+$("#succes-nouveau").addEventListener("click", () => {
+  const tr = ligneSucces(null);
+  $("#lignes-succes").prepend(tr);
+  tr.querySelector('[name="nom"]').focus();
+});
+
 // ---------- Agent de cartes (Edge Function « agent-cartes ») ----------
 // 1. Claude propose des idées pour une région ; 2. pour chaque idée cochée, il rédige la carte,
 // Nano Banana la peint, et la carte est enregistrée en BROUILLON (à relire puis valider).
@@ -773,6 +942,7 @@ let agentEnCours = false;
 function afficherAgent() {
   $("#vue-pyramide").hidden = true;
   $("#vue-liste").hidden = true;
+  $("#vue-succes").hidden = true;
   $("#vue-formulaire").hidden = true;
   $("#vue-familles").hidden = true;
   $("#vue-agent").hidden = false;
@@ -930,7 +1100,7 @@ function repartirTotal(total, poids) {
 }
 
 function afficherPyramide() {
-  for (const v of ["#vue-liste", "#vue-formulaire", "#vue-familles", "#vue-agent"]) $(v).hidden = true;
+  for (const v of ["#vue-liste", "#vue-formulaire", "#vue-familles", "#vue-agent", "#vue-succes"]) $(v).hidden = true;
   $("#vue-pyramide").hidden = false;
 
   const liste = cartesPyramide();

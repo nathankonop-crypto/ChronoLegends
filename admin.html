@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261017-1624">
-<link rel="stylesheet" href="admin.css?v=20261017-1624">
+<link rel="stylesheet" href="style.css?v=20261017-1721">
+<link rel="stylesheet" href="admin.css?v=20261017-1721">
 </head>
 <body class="admin">
 
@@ -74,6 +74,7 @@
           <button class="bouton" id="bouton-pyramide">🔺 Pyramide</button>
           <button class="bouton" id="bouton-agent">🤖 Agent</button>
           <button class="bouton" id="bouton-familles">Familles</button>
+          <button class="bouton" id="bouton-succes">🏆 Succès</button>
           <button class="bouton bouton-or" id="bouton-nouvelle">+ Nouvelle carte</button>
         </div>
       </div>
@@ -115,6 +116,27 @@
             <tr><th>Emblème</th><th>Nom (français)</th><th>English</th><th>עברית</th><th>Ordre</th><th>Cartes</th><th></th></tr>
           </thead>
           <tbody id="lignes-familles"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Succès des joueurs : liste modifiable (admin.js : afficherSuccesAdmin ; table « succes »,
+         supabase/24_quetes_succes.sql). Un succès se gagne une seule fois et rapporte des Chronos. -->
+    <section id="vue-succes" hidden>
+      <div class="barre-liste">
+        <h1>Les succès <span id="nb-succes"></span></h1>
+        <div class="barre-boutons">
+          <button class="bouton" id="succes-retour">← Retour à la liste</button>
+          <button class="bouton bouton-or" id="succes-nouveau">+ Nouveau succès</button>
+        </div>
+      </div>
+      <p class="aide-familles">Chaque succès se gagne une seule fois et rapporte des Chronos (400 Chronos = 1 booster). Le plus utile : <b>« Ensemble de cartes »</b>, gagné quand le joueur possède TOUTES les cartes validées qui correspondent aux critères (famille, époque, région, type, rareté, religion, mots dans le nom — ex. « mendiant » — ou une liste d'identifiants). Le nombre de cartes concernées s'affiche à côté. Un ensemble vide n'est pas montré aux joueurs. Région « du joueur » = la région où il ouvre ses boosters.</p>
+      <div class="tableau-conteneur">
+        <table class="tableau tableau-succes">
+          <thead>
+            <tr><th>Nom (français)</th><th>English</th><th>עברית</th><th>Condition</th><th>Chronos</th><th>Ordre</th><th>Actif</th><th></th></tr>
+          </thead>
+          <tbody id="lignes-succes"></tbody>
         </table>
       </div>
     </section>
@@ -336,10 +358,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261017-1624"></script>
-<script src="langue.js?v=20261017-1624"></script>
-<script src="anti-robot.js?v=20261017-1624"></script>
-<script src="carte.js?v=20261017-1624"></script>
-<script src="admin.js?v=20261017-1624"></script>
+<script src="reglages.js?v=20261017-1721"></script>
+<script src="langue.js?v=20261017-1721"></script>
+<script src="anti-robot.js?v=20261017-1721"></script>
+<script src="carte.js?v=20261017-1721"></script>
+<script src="admin.js?v=20261017-1721"></script>
 </body>
 </html>
