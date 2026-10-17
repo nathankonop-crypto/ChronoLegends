@@ -899,6 +899,9 @@ html[lang="he"] .carte { font-family: var(--serif); }   /* sinon la carte hérit
   background: #1a1a22;
 }
 .carte-illus > svg, .carte-illus > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Appui long sur l'illustration : pas de menu « Copier / Télécharger l'image » ni de surlignage
+   (le doigt sert à pencher la carte) ; le geste passe à la carte elle-même. */
+.carte img { pointer-events: none; -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
 
 /* Emblèmes de famille (carte.js : EMBLEMES). Couleur du dessin = color ; --fond-embleme = couleur du fond
    derrière, pour les découpes des silhouettes pleines. */

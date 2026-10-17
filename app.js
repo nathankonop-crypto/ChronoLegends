@@ -1976,6 +1976,9 @@ $("#bouton-savoir-plus").addEventListener("click", () => {
 });
 $("#savoir-plus-fermer").addEventListener("click", () => { $("#savoir-plus").hidden = true; });
 document.querySelectorAll(".onglet").forEach(o => o.addEventListener("click", () => afficherVue(o.dataset.vue)));
+// Appui long n'importe où dans le jeu : pas de menu du navigateur (copier, enregistrer l'image…),
+// sauf dans les champs où l'on écrit.
+document.addEventListener("contextmenu", e => { if (!e.target.closest("input, textarea")) e.preventDefault(); });
 $("#modale").addEventListener("click", e => { if (e.target.id === "modale" || e.target.id === "modale-fermer") fermerModale(); });
 document.addEventListener("keydown", e => {
   if (e.key !== "Escape" || $("#modale").hidden) return;
