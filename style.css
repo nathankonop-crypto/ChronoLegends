@@ -432,7 +432,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
   animation: scintiller 1.8s ease-in-out infinite alternate;
 }
 @keyframes scintiller { from { opacity: .2; } to { opacity: 1; } }
-.booster.dechire::after { display: none; }
+/* (pendant l'ouverture, ::after sert au halo de l'éclair : voir plus bas) */
 
 /* ---------- Déchirer le booster (glisser de haut en bas, voir app.js) ---------- */
 
@@ -476,15 +476,32 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 /* Découpé : la bande du haut s'envole, la lumière jaillit par l'ouverture, puis le paquet descend. */
 .booster.dechire { animation: none; background: transparent; box-shadow: none; }
 .booster.dechire > :not(.moitie, .cartes-sortantes, .interieur-paquet) { visibility: hidden; }
-/* Lumière douce qui s'échappe par l'ouverture, le long de la coupe */
-.booster.dechire::before {
-  content: ""; position: absolute; left: -15%; right: -15%; top: calc(var(--coupe-y, 8%) - 14%); height: 28%; z-index: 3;
-  border-radius: 50%; pointer-events: none;
-  background: radial-gradient(closest-side, rgba(255, 252, 240, .95), rgba(255, 224, 160, .5) 45%, transparent);
-  animation: lueur-ouverture .95s ease-out forwards;
+/* Éclair à la fin de la coupe (à la Pokémon TCG Pocket) : un trait de lumière blanche et dorée très vif
+   jaillit le long de la coupe et déborde largement du paquet (::before), avec un halo doré autour (::after). */
+.booster.dechire::before, .booster.dechire::after {
+  content: ""; position: absolute; pointer-events: none; z-index: 5;
 }
-.booster.dore.dechire::before { background: radial-gradient(closest-side, rgba(255, 246, 215, 1), rgba(255, 200, 90, .65) 45%, transparent); }
-@keyframes lueur-ouverture { from { transform: scale(.3, .08); opacity: 0; } 25% { opacity: 1; } to { transform: scale(1, 1.6); opacity: 0; } }
+.booster.dechire::before {
+  display: block; left: -45%; right: -45%; top: calc(var(--coupe-y, 8%) - 3.5%); height: 7%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #fff 0%, #fff 30%, rgba(255, 236, 180, .9) 55%, rgba(255, 210, 120, 0) 100%);
+  filter: blur(1px);
+  animation: eclair-coupe .5s ease-out forwards;
+}
+.booster.dechire::after {
+  display: block; left: -25%; right: -25%; top: calc(var(--coupe-y, 8%) - 16%); height: 32%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 244, 210, .85), rgba(255, 205, 110, .35) 50%, transparent);
+  animation: halo-coupe .6s ease-out forwards;
+}
+.booster.dore.dechire::after { background: radial-gradient(closest-side, rgba(255, 248, 220, 1), rgba(255, 195, 80, .6) 50%, transparent); }
+@keyframes eclair-coupe {
+  from { transform: scaleX(.15); opacity: 0; }
+  14% { transform: scaleX(1); opacity: 1; }
+  45% { transform: scale(1.1, .7); opacity: .95; }
+  to { transform: scale(1.2, .2); opacity: 0; }
+}
+@keyframes halo-coupe { from { transform: scale(.4, .2); opacity: 0; } 20% { opacity: 1; } to { transform: scale(1.1, 1.3); opacity: 0; } }
 
 /* Sans pile sortie du paquet (cas de secours) : les cartes apparaissent une à une, puis s'empilent */
 .tirage.pile.sortie .emplacement { animation: sortir-du-paquet .65s cubic-bezier(.2, .9, .3, 1.15) both; animation-delay: calc(var(--rang, 0) * 80ms); }
@@ -502,17 +519,23 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
    la bande découpée passe par-dessus tout. */
 .moitie.bas { z-index: 2; }
 .moitie.haut { z-index: 4; }
-/* La bande découpée saute, tourne et s'envole sur le côté */
-.moitie.haut { transform-origin: 50% var(--coupe-y, 8%); animation: envol-bande .75s cubic-bezier(.25, .6, .5, 1) forwards; }
-@keyframes envol-bande { 25% { transform: translate(3%, -9%) rotate(5deg); } to { transform: translate(55%, -40%) rotate(38deg); opacity: 0; } }
-/* Le paquet tressaille, descend pendant que les cartes en sortent (elles restent ainsi sous le titre du jeu),
-   puis tombe et s'efface. */
-.moitie.bas { animation: descendre-paquet 1.35s .1s ease-in-out forwards; }
-@keyframes descendre-paquet {
+/* La bande découpée se soulève à peine pendant l'éclair, puis s'envole en tournoyant vers le haut à droite
+   et sort de l'écran (on la suit des yeux, sans fondu). */
+.moitie.haut { transform-origin: 70% var(--coupe-y, 8%); animation: envol-bande .7s cubic-bezier(.45, .05, .7, .6) forwards; }
+@keyframes envol-bande {
   0% { transform: none; }
-  8% { transform: translateY(-2%) scale(1.02); }
-  62% { transform: translateY(34%); opacity: 1; }
-  to { transform: translateY(105%) scale(.94); opacity: 0; }
+  22% { transform: perspective(700px) translate(1%, -4%) rotate(-4deg) rotateX(18deg); }
+  to { transform: perspective(700px) translate(120%, -190%) rotate(70deg) rotateX(55deg) rotateY(35deg); }
+}
+/* Le paquet ouvert : petit sursaut pendant l'éclair, un court instant immobile, puis il tombe d'un coup
+   vers le bas (sans fondu) pendant que les cartes montent. app.js attend la fin de cette animation. */
+.moitie.bas { animation: descendre-paquet .85s forwards; }
+@keyframes descendre-paquet {
+  0% { transform: none; animation-timing-function: ease-out; }
+  10% { transform: translateY(-2.5%) scale(1.025); animation-timing-function: ease-in-out; }
+  24% { transform: none; }
+  45% { transform: none; animation-timing-function: cubic-bezier(.5, 0, .9, .6); }
+  to { transform: translateY(130%) scale(.96); }
 }
 
 /* L'intérieur du paquet (à la Pokémon TCG Pocket) : par l'ouverture, on voit la face arrière de l'intérieur,
@@ -520,7 +543,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
    l'intérieur descend avec le paquet (même animation que .moitie.bas). */
 .interieur-paquet {
   position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  animation: descendre-paquet 1.35s .1s ease-in-out forwards;
+  animation: descendre-paquet .85s forwards;
 }
 .bouche-paquet {
   position: absolute; left: 1%; right: 1%; top: calc(var(--coupe-y, 8%) - 7%); height: 11%; overflow: hidden;
@@ -581,7 +604,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .cartes-sortantes {
   position: absolute; z-index: 1; left: 6%; width: 88%; top: calc(var(--coupe-y, 8%) + 1.5%);
   aspect-ratio: 63 / 88; pointer-events: none;
-  animation: cartes-montent .85s .3s cubic-bezier(.25, .8, .3, 1.06) both;   /* après l'ouverture de la bouche argentée */
+  animation: cartes-montent .5s .36s cubic-bezier(.4, 0, .7, 1) both;   /* pendant la chute du paquet, sans s'arrêter */
 }
 .cartes-sortantes > span { position: absolute; inset: 0; container-type: inline-size; }
 /* Épaisseur de la pile : les cartes du dessous dépassent un peu en bas */
@@ -592,7 +615,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 .booster.dore .cartes-sortantes > span:last-child .dos { animation-name: lueur-cartes-dore; }
 @keyframes cartes-montent {
   from { transform: translateY(0); }
-  to { transform: translateY(-16%); }
+  to { transform: translateY(-9%) scale(1.04); }   /* peu : la pile part ensuite vers le centre de l'écran, plus bas */
 }
 @keyframes lueur-cartes {
   from { box-shadow: 0 0 0 1px rgba(212, 178, 106, .5) inset, 0 0 0 0 rgba(255, 220, 150, 0); }
@@ -606,7 +629,7 @@ main { flex: 1; padding: clamp(20px, 4vw, 48px) 16px; }
 }
 
 /* La pile arrive de l'endroit où les cartes sont sorties du paquet (app.js : afficherPile). */
-.tirage.pile.arrivee { transition: transform .2s ease-out, translate .5s cubic-bezier(.3, .8, .3, 1), scale .5s cubic-bezier(.3, .8, .3, 1); }
+.tirage.pile.arrivee { transition: transform .2s ease-out, translate .42s cubic-bezier(.15, .75, .3, 1), scale .42s cubic-bezier(.15, .75, .3, 1); }
 @keyframes secouer {
   20% { transform: rotate(-4deg) scale(1.03); }
   40% { transform: rotate(4deg) scale(1.05); }

@@ -143,13 +143,11 @@ async function reclamerQuotidien() {
 // Booster doré : de meilleures chances, visible AVANT l'ouverture.
 function appliquerBoosterDore() {
   const b = $("#booster"), info = b.querySelector(".booster-info");
-  const avant = b.classList.contains("dore");
   if (DEMO === "dore") etat.boosterDore = true;   // mode démo : tous les paquets sont dorés
   b.classList.toggle("dore", etat.boosterDore);
   info.dataset.t = etat.boosterDore ? "boosterDore" : "cinqCartes";
   info.textContent = t(info.dataset.t);
   majAspectRoue();
-  if (etat.boosterDore && !avant && etat.boosters > 0) { notifier(t("boosterDoreArrive")); vibrer(40); jouerSon("dore"); }
 }
 
 // ---------- Région du joueur ----------
@@ -449,7 +447,7 @@ async function ouvrirBooster(dechire = false) {
 
   const booster = $("#booster");
   if (!dechire) booster.classList.add("ouverture");
-  // Découpé : les cartes sortent du paquet, puis le paquet tombe (style.css, environ 1,5 s).
+  // Découpé : éclair, le paquet tombe pendant que les cartes en sortent (style.css, environ 0,85 s).
   // On attend la vraie fin de sa chute (un téléphone lent peut prendre du retard), 3 s au plus.
   const animation = new Promise(r => {
     const bas = booster.querySelector(".moitie.bas");
@@ -557,7 +555,7 @@ function afficherPile(tirage, nouvelles, depart = null) {
     void zone.offsetWidth;
     zone.classList.add("arrivee");
     zone.style.translate = zone.style.scale = "";
-    setTimeout(() => zone.classList.remove("arrivee"), 600);
+    setTimeout(() => zone.classList.remove("arrivee"), 500);
     return;
   }
   // Cas de secours : les cartes apparaissent une à une, puis l'animation s'efface (pour ne pas gêner les suivantes).
@@ -1517,15 +1515,13 @@ function dechirerBooster(trace) {
   vibrer([25, 40, 45]);
   jouerSon("decoupe");
   musiqueOuverture(true, boosterEl.classList.contains("dore"));
-  setTimeout(() => jouerSon("glissement"), 330);   // les cartes sortent du paquet (style.css : cartes-montent)
+  setTimeout(() => jouerSon("glissement"), 380);   // les cartes sortent du paquet (style.css : cartes-montent)
   // Tracé de gauche à droite, prolongé jusqu'aux deux bords du paquet.
   const t = trace[0][0] > trace[trace.length - 1][0] ? [...trace].reverse() : [...trace];
   t.unshift([0, t[0][1]]);
   t.push([100, t[t.length - 1][1]]);
   const points = l => l.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(", ");
   boosterEl.style.setProperty("--coupe-y", (t.reduce((s, [, y]) => s + y, 0) / t.length).toFixed(1) + "%");
-  // L'intérieur argenté du paquet, visible par l'ouverture (derrière les cartes).
-  boosterEl.insertAdjacentHTML("beforeend", '<span class="interieur-paquet" aria-hidden="true"><span class="bouche-paquet"></span></span>');
   // Les cartes, face cachée, attendent dans le paquet : elles vont sortir par l'ouverture.
   boosterEl.insertAdjacentHTML("beforeend", `<span class="cartes-sortantes" aria-hidden="true">${`<span>${HTML_DOS}</span>`.repeat(3)}</span>`);
   const contenu = [...boosterEl.querySelectorAll(".booster-sachet, .booster-bord, .booster-titre, .booster-logo, .booster-info")];
