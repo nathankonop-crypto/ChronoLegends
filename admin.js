@@ -699,7 +699,7 @@ $("#famille-nouvelle").addEventListener("click", () => {
 // 1. Claude propose des idées pour une région ; 2. pour chaque idée cochée, il rédige la carte,
 // Nano Banana la peint, et la carte est enregistrée en BROUILLON (à relire puis valider).
 
-let agentIdees = [];          // { nom, epoque, resume } proposées
+let agentIdees = [];          // { nom, epoque, region, resume } proposées
 let agentEcartees = [];       // noms déjà proposés, pour que « Autres idées » en trouve de nouvelles
 let agentEnCours = false;
 
@@ -729,7 +729,7 @@ async function appelAgent(corps) {
 
 function bloquerAgent(oui) {
   agentEnCours = oui;
-  for (const id of ["#agent-idees", "#agent-autres", "#agent-creer", "#agent-gamme", "#agent-region", "#agent-epoque", "#agent-nombre"]) $(id).disabled = oui;
+  for (const id of ["#agent-idees", "#agent-autres", "#agent-creer", "#agent-gamme", "#agent-region", "#agent-epoque", "#agent-nombre", "#agent-demande"]) $(id).disabled = oui;
 }
 
 async function chercherIdees(autres = false) {
@@ -740,13 +740,13 @@ async function chercherIdees(autres = false) {
   try {
     const data = await appelAgent({
       action: "idees", gamme: $("#agent-gamme").value, region: $("#agent-region").value, epoque: $("#agent-epoque").value,
-      nombre: Number($("#agent-nombre").value) || 5, exclure: agentEcartees,
+      nombre: Number($("#agent-nombre").value) || 5, exclure: agentEcartees, demande: $("#agent-demande").value.trim(),
     });
     agentIdees = data.idees || [];
     $("#agent-liste").innerHTML = agentIdees.map((idee, i) => `
       <li data-index="${i}">
         <input type="checkbox" checked aria-label="Créer ${echapper(idee.nom)}">
-        <span class="agent-texte"><b>${echapper(idee.nom)}</b><small>${echapper(nomsEpoque[idee.epoque] || idee.epoque)} — ${echapper(idee.resume)}</small></span>
+        <span class="agent-texte"><b>${echapper(idee.nom)}</b><small>${echapper(nomsEpoque[idee.epoque] || idee.epoque)}${idee.region ? ` · ${echapper(REGIONS[idee.region] || idee.region)}` : ""} — ${echapper(idee.resume)}</small></span>
         <span class="agent-statut"></span>
       </li>`).join("");
     $("#agent-propositions").hidden = agentIdees.length === 0;
@@ -767,9 +767,10 @@ function identifiantLibre(nom) {
 }
 
 async function creerCarteAgent(idee, gamme, region, statut) {
+  region = idee.region || region;   // « Toutes les régions » : chaque idée a sa région
   statut.className = "agent-statut";
   statut.textContent = "✍️ Rédaction…";
-  const c = await appelAgent({ action: "carte", gamme, region, nom: idee.nom, resume: idee.resume });
+  const c = await appelAgent({ action: "carte", gamme, region, nom: idee.nom, resume: idee.resume, demande: $("#agent-demande").value.trim() });
 
   // L'illustration : si elle échoue, la carte est quand même enregistrée (image à ajouter à la main).
   statut.textContent = "🎨 Illustration…";
@@ -928,7 +929,7 @@ remplirSelect(form.elements.region, REGIONS);
 remplirSelect($("#pyramide-region"), REGIONS, true);
 remplirSelect($("#pyramide-epoque"), nomsEpoque, true);
 remplirSelect($("#pyramide-gamme"), GAMMES, true);
-remplirSelect($("#agent-region"), REGIONS);
+remplirSelect($("#agent-region"), REGIONS, true);
 $("#agent-region").value = "moyen-orient";
 remplirSelect($("#agent-epoque"), nomsEpoque, true);
 

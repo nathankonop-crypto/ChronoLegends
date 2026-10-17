@@ -119,7 +119,7 @@ Exemples de cartes existantes :
 - Hatchepsout | règne v. 1479 – 1458 av. J.-C. | Égypte | Femme pharaon de la XVIIIe dynastie. Son règne prospère est marqué par de grands chantiers, dont le temple de Deir el-Bahari, et une expédition vers le pays de Pount.
   (en anglais : Julius Caesar | 100 – 44 BCE | Rome | Roman general and statesman. He conquers Gaul, wins the civil war and becomes dictator. He is assassinated during a session of the Senate.)`;
 
-const schemaIdees = (epoques: string[]) => ({
+const schemaIdees = (epoques: string[], regions: string[]) => ({
   type: "object",
   properties: {
     idees: {
@@ -129,9 +129,10 @@ const schemaIdees = (epoques: string[]) => ({
         properties: {
           nom: { type: "string" },
           epoque: { type: "string", enum: epoques },
+          region: { type: "string", enum: regions },
           resume: { type: "string" },
         },
-        required: ["nom", "epoque", "resume"],
+        required: ["nom", "epoque", "region", "resume"],
         additionalProperties: false,
       },
     },
@@ -299,6 +300,11 @@ Deno.serve(async (req) => {
   try { corps = await req.json(); } catch { /* corps invalide */ }
   const region = String(corps.region ?? "");
   const gamme = String(corps.gamme ?? "");
+  // Ce que l'administrateur a écrit pour préciser sa demande ; vide = rien de plus.
+  const precision = String(corps.demande ?? "").trim().slice(0, 500);
+  const consignePrecision = precision
+    ? `\n\nDemande précise de l'administrateur (à respecter en priorité, dans le cadre de la ligne éditoriale) : ${precision}`
+    : "";
   // Époque choisie dans l'admin ; vide = toutes les époques.
   const epoque = NOMS_EPOQUES[String(corps.epoque ?? "")] ? String(corps.epoque) : "";
 
@@ -318,7 +324,9 @@ Deno.serve(async (req) => {
       return reponse(await retoucher({ type: "image", mime_type: mime, data }, consigne));
     }
 
-    if (!REGIONS[region] || !GAMMES.includes(gamme)) return reponse({ erreur: "Région ou type de carte inconnu." }, 400);
+    // Région vide = toutes les régions (seulement pour chercher des idées : chaque idée reçoit la sienne).
+    const toutesRegions = region === "" && corps.action === "idees";
+    if ((!REGIONS[region] && !toutesRegions) || !GAMMES.includes(gamme)) return reponse({ erreur: "Région ou type de carte inconnu." }, 400);
     const typeTexte = TYPES_PLURIEL[gamme];
 
     if (corps.action === "idees") {
@@ -330,10 +338,14 @@ Deno.serve(async (req) => {
       const consigneEpoque = epoque
         ? `Toutes les idées doivent appartenir à cette seule époque : ${NOMS_EPOQUES[epoque]}.`
         : "Toutes les époques sont possibles : varie-les.";
-      const demande = `Région : ${REGIONS[region]}.\nPropose ${nombre} idées de cartes : ${typeTexte}.\n${consigneEpoque}\n\n` +
+      const consigneRegion = toutesRegions
+        ? "Région : toutes les régions du monde. Varie-les, et donne pour chaque idée sa région parmi : " +
+          Object.entries(REGIONS).map(([cle, nom]) => `${cle} = ${nom}`).join(" ; ") + "."
+        : `Région : ${REGIONS[region]} (pour chaque idée, region = ${region}).`;
+      const demande = `${consigneRegion}\nPropose ${nombre} idées de cartes : ${typeTexte}.\n${consigneEpoque}${consignePrecision}\n\n` +
         `Cartes déjà dans le jeu (toutes régions) :\n${liste || "(aucune)"}` +
         (exclues.length ? `\n\nIdées déjà proposées et écartées, à ne pas reproposer :\n${exclues.map((n) => `- ${n}`).join("\n")}` : "");
-      return reponse(await demanderClaude(CONSIGNES_IDEES, demande, schemaIdees(epoque ? [epoque] : EPOQUES), 6000));
+      return reponse(await demanderClaude(CONSIGNES_IDEES, demande, schemaIdees(epoque ? [epoque] : EPOQUES, toutesRegions ? Object.keys(REGIONS) : [region]), 6000));
     }
 
     if (corps.action === "carte") {
@@ -343,7 +355,7 @@ Deno.serve(async (req) => {
       const { data: familles } = await sb.from("familles").select("id, nom");
       const listeFamilles = (familles ?? []).map((f) => `- ${f.id} : ${f.nom}`).join("\n");
       const demande = `Type : ${TYPES_SINGULIER[gamme]}.\nRégion : ${REGIONS[region]}.\n` +
-        `Carte à rédiger : ${nom}${resume ? ` (idée : ${resume})` : ""}.\n\nFamilles disponibles :\n${listeFamilles || "(aucune)"}`;
+        `Carte à rédiger : ${nom}${resume ? ` (idée : ${resume})` : ""}.${consignePrecision}\n\nFamilles disponibles :\n${listeFamilles || "(aucune)"}`;
       return reponse(await demanderClaude(CONSIGNES_CARTE, demande, schemaCarte((familles ?? []).map((f) => f.id)), 12000));
     }
 

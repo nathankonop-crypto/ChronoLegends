@@ -169,6 +169,8 @@ body.admin { font-size: 16px; }
 .agent-reglages { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; margin-bottom: 18px; }
 .agent-reglages label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--texte-doux); }
 .agent-reglages input { width: 90px; }
+.agent-reglages .agent-demande { flex: 1 1 100%; }
+.agent-demande textarea { width: 100%; max-width: 860px; resize: vertical; font: inherit; }
 .agent-etat { margin: 0 0 14px; color: var(--texte-doux); font-style: italic; }
 .agent-etat.alerte { color: #f1b3ab; font-style: normal; }
 .agent-liste { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 8px; max-width: 860px; }
