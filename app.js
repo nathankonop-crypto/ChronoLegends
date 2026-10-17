@@ -140,12 +140,13 @@ async function reclamerQuotidien() {
   return data;
 }
 
-// Booster doré : de meilleures chances, visible AVANT l'ouverture.
+// Booster doré : de meilleures chances, mais c'est une SURPRISE : le paquet paraît normal
+// et ne devient doré qu'à la découpe (dechirerBooster).
 function appliquerBoosterDore() {
   const b = $("#booster"), info = b.querySelector(".booster-info");
   if (DEMO === "dore") etat.boosterDore = true;   // mode démo : tous les paquets sont dorés
-  b.classList.toggle("dore", etat.boosterDore);
-  info.dataset.t = etat.boosterDore ? "boosterDore" : "cinqCartes";
+  b.classList.remove("dore");
+  info.dataset.t = "cinqCartes";
   info.textContent = t(info.dataset.t);
   majAspectRoue();
 }
@@ -1514,18 +1515,23 @@ function dechirerBooster(trace) {
   boosterEl.dataset.glisse = "1";   // le « clic » qui suit le geste ne doit pas afficher l'aide
   vibrer([25, 40, 45]);
   jouerSon("decoupe");
-  musiqueOuverture(true, boosterEl.classList.contains("dore"));
+  // Booster doré : révélé à la découpe (le paquet et ses deux moitiés deviennent dorés, l'éclair aussi).
+  if (etat.boosterDore) {
+    boosterEl.classList.add("dore");
+    boosterEl.querySelector(".booster-info").textContent = t("boosterDore");
+  }
+  musiqueOuverture(true, !!etat.boosterDore);
   setTimeout(() => jouerSon("glissement"), 380);   // les cartes sortent du paquet (style.css : cartes-montent)
   // Tracé de gauche à droite, prolongé jusqu'aux deux bords du paquet.
-  const t = trace[0][0] > trace[trace.length - 1][0] ? [...trace].reverse() : [...trace];
-  t.unshift([0, t[0][1]]);
-  t.push([100, t[t.length - 1][1]]);
+  const tr = trace[0][0] > trace[trace.length - 1][0] ? [...trace].reverse() : [...trace];
+  tr.unshift([0, tr[0][1]]);
+  tr.push([100, tr[tr.length - 1][1]]);
   const points = l => l.map(([x, y]) => `${x.toFixed(1)}% ${y.toFixed(1)}%`).join(", ");
-  boosterEl.style.setProperty("--coupe-y", (t.reduce((s, [, y]) => s + y, 0) / t.length).toFixed(1) + "%");
+  boosterEl.style.setProperty("--coupe-y", (tr.reduce((s, [, y]) => s + y, 0) / tr.length).toFixed(1) + "%");
   // Les cartes, face cachée, attendent dans le paquet : elles vont sortir par l'ouverture.
   boosterEl.insertAdjacentHTML("beforeend", `<span class="cartes-sortantes" aria-hidden="true">${`<span>${HTML_DOS}</span>`.repeat(3)}</span>`);
   const contenu = [...boosterEl.querySelectorAll(".booster-sachet, .booster-bord, .booster-titre, .booster-logo, .booster-info")];
-  for (const [cote, forme] of [["haut", `0% 0%, 100% 0%, ${points([...t].reverse())}`], ["bas", `${points(t)}, 100% 100%, 0% 100%`]]) {
+  for (const [cote, forme] of [["haut", `0% 0%, 100% 0%, ${points([...tr].reverse())}`], ["bas", `${points(tr)}, 100% 100%, 0% 100%`]]) {
     const moitie = document.createElement("span");
     moitie.className = `moitie ${cote}`;
     moitie.style.clipPath = `polygon(${forme})`;
@@ -1533,7 +1539,7 @@ function dechirerBooster(trace) {
     // Bord de la face avant, qui suit exactement la coupe : un fin liseré argenté irisé (l'intérieur du film)
     // et, juste dessous, le reflet du film qui se courbe vers nous (style.css : .levre-paquet, .pli-paquet).
     if (cote === "bas") {
-      const bande = h => `polygon(${points(t)}, ${points(t.map(([x, y]) => [x, y + h]).reverse())})`;
+      const bande = h => `polygon(${points(tr)}, ${points(tr.map(([x, y]) => [x, y + h]).reverse())})`;
       moitie.insertAdjacentHTML("beforeend", `<span class="pli-paquet" style="clip-path: ${bande(9)}"></span>`
         + `<span class="levre-paquet" style="clip-path: ${bande(1.2)}"></span>`);
     }
@@ -1666,13 +1672,12 @@ function construireRoue() {
   dimensionnerRoue();
 }
 
-// Couleur de la région, booster doré : comme le grand paquet.
+// Couleur de la région, comme le grand paquet (jamais doré : le booster doré est une surprise).
 function majAspectRoue() {
   document.querySelectorAll(".paquet-roue, .paquet-dos").forEach(p => {
     if (etat.region) p.dataset.region = etat.region;
-    p.classList.toggle("dore", !!etat.boosterDore);
   });
-  document.querySelectorAll(".paquet-roue .booster-info").forEach(i => { i.textContent = t(etat.boosterDore ? "boosterDore" : "cinqCartes"); });
+  document.querySelectorAll(".paquet-roue .booster-info").forEach(i => { i.textContent = t("cinqCartes"); });
 }
 
 // Rayon du manège selon la taille des paquets (ils ne se chevauchent pas sur le devant).
