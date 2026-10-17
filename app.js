@@ -1693,6 +1693,13 @@ function placerRoue() {
     const proximite = (Math.cos((i * 360 / NB_ROUE - roue.angle) * Math.PI / 180) + 1) / 2;   // 1 devant, 0 derrière
     place.style.setProperty("--ombre", (0.72 * (1 - proximite) ** 1.3).toFixed(3));
   });
+  // Petite vibration à chaque paquet qui passe devant, quand c'est le doigt qui fait tourner la roue
+  // (ou son élan) ; pas pendant la rotation tranquille toute seule.
+  const cran = Math.round(roue.angle / (360 / NB_ROUE));
+  if (cran !== roue.cran) {
+    if (roue.cran !== undefined && (roue.glisse?.bouge || Math.abs(roue.vitesse) > 0.6)) vibrer(10);
+    roue.cran = cran;
+  }
 }
 
 // Animation : la roue tourne toute seule, ou garde l'élan donné par le doigt (qui s'amortit).
