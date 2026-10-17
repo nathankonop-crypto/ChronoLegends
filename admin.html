@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261017-1057">
-<link rel="stylesheet" href="admin.css?v=20261017-1057">
+<link rel="stylesheet" href="style.css?v=20261017-1104">
+<link rel="stylesheet" href="admin.css?v=20261017-1104">
 </head>
 <body class="admin">
 
@@ -210,6 +210,15 @@
             <select name="famille"></select>
             <small>Personnages historiques : une « collection dans la collection » (emblème dans le coin de l'illustration). Les familles se gèrent avec le bouton « Familles » de la liste.</small>
           </label>
+          <label id="bloc-religion">Religion
+            <select name="religion">
+              <option value="">— Aucun symbole —</option>
+              <option value="christianisme">✝ Christianisme</option>
+              <option value="judaisme">✡ Judaïsme</option>
+              <option value="islam">☪ Islam</option>
+            </select>
+            <small>Petit symbole en bas de la carte, à côté du rond « P ». Seulement si le personnage pratiquait clairement cette religion.</small>
+          </label>
           <div class="ligne-champs">
             <label><span>Époque <span class="requis">*</span></span><select name="epoque" required></select></label>
             <label><span>Région <span class="requis">*</span></span><select name="region" required></select></label>
@@ -322,10 +331,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261017-1057"></script>
-<script src="langue.js?v=20261017-1057"></script>
-<script src="anti-robot.js?v=20261017-1057"></script>
-<script src="carte.js?v=20261017-1057"></script>
-<script src="admin.js?v=20261017-1057"></script>
+<script src="reglages.js?v=20261017-1104"></script>
+<script src="langue.js?v=20261017-1104"></script>
+<script src="anti-robot.js?v=20261017-1104"></script>
+<script src="carte.js?v=20261017-1104"></script>
+<script src="admin.js?v=20261017-1104"></script>
 </body>
 </html>

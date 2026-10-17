@@ -118,6 +118,18 @@ const nomFamille = (f, langue = LANGUE) => (langue === "en" && f.nom_en) || (lan
 const dessinEmbleme = cle =>
   `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${(EMBLEMES[cle] || EMBLEMES.etoile).d}"/></svg>`;
 
+// Symbole de religion, en bas de la carte à côté du rond de la gamme (personnages seulement).
+const SYMBOLES_RELIGION = {
+  christianisme: `<path d="M10.6 2h2.8v5.6h5.2v2.8h-5.2V22h-2.8V10.4H5.4V7.6h5.2z"/>`,
+  judaisme: `<path class="trait" d="M12 2.5 20.7 17.5H3.3zM12 21.5 3.3 6.5h17.4z"/>`,
+  islam: `<path d="M15.04 4.52A8.5 8.5 0 1 0 15.04 19.48 7.5 7.5 0 1 1 15.04 4.52z"/>` +
+    `<path d="M18.3 7.1L19.1 9.4L21.5 9.4L19.6 10.9L20.3 13.3L18.3 11.9L16.3 13.3L17.0 10.9L15.1 9.4L17.5 9.4z"/>`,
+};
+function symboleReligion(carte, langue) {
+  const dessin = SYMBOLES_RELIGION[carte.religion];
+  return dessin ? `<span class="carte-religion" title="${nomReligion(carte.religion, langue)}"><svg viewBox="0 0 24 24" aria-hidden="true">${dessin}</svg></span>` : "";
+}
+
 // Médaillon de la famille, dans le coin de l'illustration.
 function medaillonFamille(carte, langue) {
   const f = carte.famille && FAMILLES[carte.famille];
@@ -179,7 +191,7 @@ function rendreCarte(carte, numeroTexte) {
           <p class="carte-lieu">${echapper(carte.lieu)} · ${nomRegion(carte.region, L)}</p>
           <p class="carte-texte">${echapper(carte.texte)}</p>
         </div>
-        <footer class="carte-pied"><span>${nomEpoque(carte.extension, L)}</span><span class="carte-gamme" title="${nomGamme(carte.gamme)}">${nomGamme(carte.gamme).charAt(0)}</span><span>${t("numero", {}, L)} ${numeroTexte}</span></footer>
+        <footer class="carte-pied"><span>${nomEpoque(carte.extension, L)}</span><span class="carte-signes"><span class="carte-gamme" title="${nomGamme(carte.gamme)}">${nomGamme(carte.gamme).charAt(0)}</span>${symboleReligion(carte, L)}</span><span>${t("numero", {}, L)} ${numeroTexte}</span></footer>
       </div>
       ${decor.cadre}
     </div>

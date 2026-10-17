@@ -62,7 +62,7 @@ const CHAMPS_PLUS = ["en_savoir_plus", "en_savoir_plus_en", "en_savoir_plus_he"]
 function versCarte(l, langue = "fr") {
   const champ = nom => (langue === "en" && l[`${nom}_en`]) || l[nom] || "";
   return { id: l.id, nom: champ("nom"), gamme: l.gamme, dates: champ("dates"), lieu: champ("lieu"),
-    region: l.region, extension: l.epoque, rarete: l.rarete, famille: l.famille || null,
+    region: l.region, extension: l.epoque, rarete: l.rarete, famille: l.famille || null, religion: l.religion || null,
     texte: champ("description"), image: l.image };
 }
 
@@ -232,7 +232,7 @@ function ouvrirFormulaire(ligne) {
 
   const l = ligne || { nom: "", id: "", gamme: "personnage", rarete: "ordinaire",
     epoque: "antiquite", region: "moyen-orient", dates: "", lieu: "", description: "" };
-  for (const champ of ["nom", "id", "gamme", "rarete", "famille", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN, ...CHAMPS_PLUS]) {
+  for (const champ of ["nom", "id", "gamme", "rarete", "famille", "religion", "epoque", "region", "dates", "lieu", "description", ...CHAMPS_EN, ...CHAMPS_PLUS]) {
     form.elements[champ].value = l[champ] ?? "";
   }
   // Carte existante : son statut (« validee » si la colonne n'existe pas encore) ; nouvelle carte : brouillon.
@@ -348,6 +348,7 @@ function valeursFormulaire() {
     epoque: f.epoque.value, region: f.region.value, statut: f.statut.value,
     // Famille : seulement pour les personnages historiques.
     famille: (f.gamme.value === "personnage" && f.famille.value) || null,
+    religion: (f.gamme.value === "personnage" && f.religion.value) || null,
     dates: f.dates.value.trim(), lieu: f.lieu.value.trim(), description: f.description.value.trim(),
     // Anglais : vide = null, le jeu affiche alors le français.
     ...Object.fromEntries(CHAMPS_EN.map(c => [c, f[c].value.trim() || null])),
@@ -373,7 +374,7 @@ function majApercu() {
   $("#compte-plus").textContent = form.elements.en_savoir_plus.value.length;
   $("#compte-plus-en").textContent = form.elements.en_savoir_plus_en.value.length;
   $("#compte-plus-he").textContent = form.elements.en_savoir_plus_he.value.length;
-  $("#bloc-plus").hidden = $("#bloc-plus-en").hidden = $("#bloc-plus-he").hidden = $("#bloc-famille").hidden = v.gamme !== "personnage";
+  $("#bloc-plus").hidden = $("#bloc-plus-en").hidden = $("#bloc-plus-he").hidden = $("#bloc-famille").hidden = $("#bloc-religion").hidden = v.gamme !== "personnage";
   const carte = { ...versCarte({ ...v, nom: v.nom || "Nom de la carte", image: imageActuelle() }, langueApercu), finition: finitionApercu };
   LANGUE = langueApercu;                      // le dessin de la carte suit la langue de l'aperçu
   $("#apercu").innerHTML = rendreCarte(carte, numero);
@@ -837,6 +838,7 @@ async function creerCarteAgent(idee, gamme, region, statut) {
   const ligne = {
     id, nom: c.nom, gamme, region, epoque: c.epoque, rarete: c.rarete, statut: "brouillon",
     famille: (personnage && FAMILLES[c.famille] && c.famille) || null,
+    religion: (personnage && c.religion) || null,
     dates: c.dates, lieu: c.lieu, description: c.description,
     nom_en: c.nom_en || null, dates_en: c.dates_en || null, lieu_en: c.lieu_en || null, description_en: c.description_en || null,
     en_savoir_plus: (personnage && c.en_savoir_plus) || null,

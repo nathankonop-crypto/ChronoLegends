@@ -67,6 +67,7 @@ async function chargerCartes() {
   CARTES = data.filter(l => (l.statut ?? "validee") === "validee").map(l => ({
     // Contenu en anglais si le joueur joue en anglais (le français sert de secours).
     id: l.id, gamme: l.gamme, region: l.region, extension: l.epoque, rarete: l.rarete, famille: l.famille || null,
+    religion: l.religion || null,
     nom: champ(l, "nom"), dates: champ(l, "dates"), lieu: champ(l, "lieu"), texte: champ(l, "description"),
     image: l.image, ordre: l.ordre,
     // « En savoir plus » existe aussi en hébreu (le reste de la carte reste en anglais).

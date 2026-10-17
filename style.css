@@ -920,13 +920,18 @@ html[lang="he"] .carte { font-family: var(--serif); }   /* sinon la carte hérit
 
 .carte-pied > span { white-space: nowrap; }
 /* Gamme : son initiale (P, A, É, L, M, O) dans un petit rond, entre l'époque et le numéro. */
-.carte-pied > .carte-gamme {
+.carte-pied .carte-gamme {
   flex: none; width: 4.2cqw; height: 4.2cqw; box-sizing: border-box;
   display: inline-flex; align-items: center; justify-content: center;
   border: .25cqw solid currentColor; border-radius: 50%;
   font-size: 2.6cqw; font-weight: 700; letter-spacing: 0; line-height: 1;
 }
-.carte-pied > .carte-gamme:empty { display: none; }
+.carte-pied .carte-gamme:empty { display: none; }
+/* Rond de la gamme + symbole de religion éventuel, groupés au centre du pied. */
+.carte-pied > .carte-signes { flex: none; display: inline-flex; align-items: center; gap: 1.2cqw; }
+.carte-religion { display: inline-flex; }
+.carte-religion svg { width: 4.2cqw; height: 4.2cqw; fill: currentColor; }
+.carte-religion .trait { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linejoin: round; }
 
 /* Raretés : couleurs de cadre, filet, gemme */
 .rarete-ordinaire {

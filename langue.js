@@ -65,6 +65,12 @@ const GAMMES_CARTE = {
   en: { personnage: "Figure", archetype: "Archetype", evenement: "Event", lieu: "Landmark", mythologie: "Mythology", objet: "Object" },
 };
 const nomGamme = (k, langue = langueCartes()) => GAMMES_CARTE[langue]?.[k] ?? GAMMES_CARTE.en[k] ?? "";
+// Religion d'un personnage : son symbole s'affiche en bas de la carte, à côté de la gamme.
+const RELIGIONS_CARTE = {
+  fr: { christianisme: "Christianisme", judaisme: "Judaïsme", islam: "Islam" },
+  en: { christianisme: "Christianity", judaisme: "Judaism", islam: "Islam" },
+};
+const nomReligion = (k, langue = langueCartes()) => RELIGIONS_CARTE[langue]?.[k] ?? RELIGIONS_CARTE.en[k] ?? "";
 // Finitions (versions plus rares d'une carte, tirées au sort à l'ouverture).
 const NOMS_FINITIONS = {
   fr: { normale: "Normale", emeraude: "Émeraude", diamant: "Diamant" },

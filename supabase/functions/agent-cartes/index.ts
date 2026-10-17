@@ -106,6 +106,7 @@ Format des champs (respecte exactement le style des exemples) :
 - epoque : l'époque du jeu.
 - rarete : pour un archétype, ordinaire (figure du quotidien : paysan, artisan…), notable (métier qualifié ou recherché : scribe, marchand, soldat d'élite…) ou rare (figure prestigieuse ou d'élite : Immortel perse, grand vizir…), jamais plus. Pour un personnage, un objet, un événement ou un lieu : de ordinaire à legendaire selon sa célébrité et son importance historique (legendaire = ce qui a le plus marqué l'histoire mondiale) ; jamais mythique. L'administrateur choisira au final.
 - famille : pour un personnage, l'identifiant de la famille qui lui correspond le mieux dans la liste fournie (chaîne vide si aucune ne convient) ; pour tout autre type, chaîne vide.
+- religion : pour un personnage, « christianisme », « judaisme » ou « islam » s'il pratiquait clairement l'une de ces religions (rois d'Israël et de Juda, rabbins, figures juives ; souverains, saints et figures chrétiennes ; califes, savants et figures musulmanes) ; chaîne vide dans tous les autres cas (autres religions, religion incertaine) et pour tout autre type.
 - probleme : chaîne vide si tout va bien ; sinon une phrase courte (dates très débattues, existence incertaine, sujet sensible…).
 - en_savoir_plus : seulement pour un personnage (chaîne vide pour tous les autres types). Il PROLONGE la description sans la répéter : origines, épisodes marquants, œuvres, fin de vie, héritage, traces aujourd'hui. 4 à 6 phrases, 400 à 600 caractères, au présent de narration, même neutralité. Signale ce qui relève de la tradition ou reste débattu.
 
@@ -177,10 +178,11 @@ const schemaCarte = (familles: string[]) => ({
     en_savoir_plus: { type: "string" },
     en_savoir_plus_en: { type: "string" },
     en_savoir_plus_he: { type: "string" },
+    religion: { type: "string", enum: ["", "christianisme", "judaisme", "islam"] },
     prompt_image: { type: "string" },
   },
   required: ["nom", "dates", "lieu", "description", "epoque", "rarete", "famille", "probleme", "nom_en", "dates_en",
-    "lieu_en", "description_en", "en_savoir_plus", "en_savoir_plus_en", "en_savoir_plus_he", "prompt_image"],
+    "lieu_en", "description_en", "en_savoir_plus", "en_savoir_plus_en", "en_savoir_plus_he", "religion", "prompt_image"],
   additionalProperties: false,
 });
 
