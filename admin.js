@@ -892,6 +892,18 @@ function cartesPyramide({ sansRegion = false } = {}) {
     (!gamme || c.gamme === gamme) && (!statut || (c.statut ?? "validee") === statut));
 }
 
+// Partage « total » proportionnellement aux poids, en nombres entiers dont la somme fait exactement « total »
+// (les cartes restantes après l'arrondi vont aux étages qui ont perdu le plus à l'arrondi).
+function repartirTotal(total, poids) {
+  const somme = poids.reduce((s, p) => s + p, 0);
+  const exacts = poids.map(p => (total * p) / somme);
+  const parts = exacts.map(Math.floor);
+  const ordre = exacts.map((x, i) => [x - parts[i], i]).sort((a, b) => b[0] - a[0]);
+  const reste = total - parts.reduce((s, n) => s + n, 0);
+  for (let k = 0; k < reste; k++) parts[ordre[k][1]]++;
+  return parts;
+}
+
 function afficherPyramide() {
   for (const v of ["#vue-liste", "#vue-formulaire", "#vue-familles", "#vue-agent"]) $(v).hidden = true;
   $("#vue-pyramide").hidden = false;
@@ -905,9 +917,14 @@ function afficherPyramide() {
   // pour que les deux étages du haut soient respectés ; on en déduit les étages du dessous.
   const facteur = Math.max(1.1, Math.min(4, Number($("#pyramide-facteur").value) || 1.6));
   const nb = r => liste.filter(c => c.rarete === r).length;
-  const sommet = Math.max(nb("mythique"), nb("legendaire") / facteur);
-  const objectif = i => Math.round(sommet * facteur ** i);
-  const totalObjectif = RARETES_PYRAMIDE.reduce((s, _, i) => s + objectif(i), 0);
+  // Nombre de cartes visé (facultatif) : on répartit exactement ce total entre les étages,
+  // sinon on part des Mythiques et Légendaires déjà là.
+  const vise = Math.round(Number($("#pyramide-total").value)) || 0;
+  const poids = RARETES_PYRAMIDE.map((_, i) => facteur ** i);
+  const sommet = vise > 0 ? vise / poids.reduce((s, p) => s + p, 0) : Math.max(nb("mythique"), nb("legendaire") / facteur);
+  const objectifs = vise > 0 ? repartirTotal(vise, poids) : poids.map(p => Math.round(sommet * p));
+  const objectif = i => objectifs[i];
+  const totalObjectif = objectifs.reduce((s, n) => s + n, 0);
   $("#pyramide").innerHTML = RARETES_PYRAMIDE.map((r, i) => {
     const n = nb(r);
     const ecart = n - objectif(i);
@@ -924,7 +941,8 @@ function afficherPyramide() {
       ${lignObjectif}
     </div>`;
   }).join("") + `<p class="pyramide-total">${total} carte${total > 1 ? "s" : ""} au total${
-    sommet ? ` · objectif ≈ ${totalObjectif} cartes pour une pyramide équilibrée` : ""}</p>`;
+    vise > 0 ? ` · objectif : ${totalObjectif} cartes (encore ${Math.max(0, totalObjectif - total)} à créer)`
+      : sommet ? ` · objectif ≈ ${totalObjectif} cartes pour une pyramide équilibrée` : ""}</p>`;
 
   // Tableau par région : une ligne par région, une colonne par rareté.
   const toutes = cartesPyramide({ sansRegion: true });
@@ -941,6 +959,7 @@ $("#bouton-pyramide").addEventListener("click", afficherPyramide);
 $("#pyramide-retour").addEventListener("click", afficherListe);
 for (const id of ["#pyramide-region", "#pyramide-epoque", "#pyramide-gamme", "#pyramide-statut"]) $(id).addEventListener("change", afficherPyramide);
 $("#pyramide-facteur").addEventListener("input", afficherPyramide);
+$("#pyramide-total").addEventListener("input", afficherPyramide);
 
 // Menu « Tester un booster » : se referme après un choix ou un clic ailleurs.
 document.addEventListener("click", e => {

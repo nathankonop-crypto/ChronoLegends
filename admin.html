@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20261017-1049">
-<link rel="stylesheet" href="admin.css?v=20261017-1049">
+<link rel="stylesheet" href="style.css?v=20261017-1054">
+<link rel="stylesheet" href="admin.css?v=20261017-1054">
 </head>
 <body class="admin">
 
@@ -163,6 +163,9 @@
       <label class="pyramide-facteur">Chaque étage contient
         <input type="number" id="pyramide-facteur" min="1.1" max="4" step="0.1" value="1.6">
         fois plus de cartes que l'étage du dessus</label>
+      <label class="pyramide-facteur">Nombre de cartes visé
+        <input type="number" id="pyramide-total" min="1" max="100000" step="1" placeholder="—">
+        <small>(facultatif : répartit ce total entre les étages ; vide = objectif calculé à partir des cartes Mythiques et Légendaires)</small></label>
       <div class="pyramide" id="pyramide"></div>
       <h2 class="titre-repartition">Par région</h2>
       <div class="tableau-conteneur"><table class="tableau tableau-repartition" id="repartition"></table></div>
@@ -319,10 +322,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
         integrity="sha384-GFr3yTh5lJznCbZfpTtXnwboFsxqtTQoeTZCRHhE0579KrRmlCzen5AA8ohaB5ug"
         crossorigin="anonymous"></script>
-<script src="reglages.js?v=20261017-1049"></script>
-<script src="langue.js?v=20261017-1049"></script>
-<script src="anti-robot.js?v=20261017-1049"></script>
-<script src="carte.js?v=20261017-1049"></script>
-<script src="admin.js?v=20261017-1049"></script>
+<script src="reglages.js?v=20261017-1054"></script>
+<script src="langue.js?v=20261017-1054"></script>
+<script src="anti-robot.js?v=20261017-1054"></script>
+<script src="carte.js?v=20261017-1054"></script>
+<script src="admin.js?v=20261017-1054"></script>
 </body>
 </html>
